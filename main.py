@@ -7,6 +7,7 @@ from utils import video_utils
 def main():
     args = io.get_command_line_args()
     input_video = args.input_video
+    frames_to_process_each_second = args.fps
 
     video = io.read_video(input_video)
 
@@ -24,7 +25,7 @@ def main():
     frame_number = 0
     # Read frame by frame until video is completed
     while video.isOpened():
-        frame_number += 1
+        frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
 
         ret, frame = video.read()
         if ret:  # Pipeline is implemented Here
@@ -32,6 +33,9 @@ def main():
 
             verbose.imshow(frame, delay=1)
             verbose.print(f"[INFO] Processing Frame #{frame_number}")
+
+            # Seek the video to the required frame
+            video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
 
             verbose.print(f"[INFO] Video Current Time is {round(video.get(cv2.CAP_PROP_POS_MSEC), 3)} sec")
 
