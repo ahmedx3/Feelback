@@ -25,43 +25,42 @@ def main():
     frame_number = 0
     # Read frame by frame until video is completed
     while video.isOpened():
+        ok, frame = video.read()
+        if not ok:
+            break
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        verbose.imshow(frame, delay=1)
+        verbose.print(f"[INFO] Processing Frame #{frame_number}")
+
+        # ============================================= Preprocessing =============================================
+
+        # ============================================= Face Detection ============================================
+
+        # ========================================= Emotion Classification ========================================
+
+        # ============================================= Face Tracking =============================================
+
+        # ============================================ Gaze Estimation ============================================
+
+        # ==================================== Profiling (Age/Gender Detection) ===================================
+
+        # =========================================== Integrate Modules ===========================================
+
+        # =============================================== Analytics ===============================================
+
+        # =========================================================================================================
+
         frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
 
-        ret, frame = video.read()
-        if ret:  # Pipeline is implemented Here
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Seek the video to the required frame
+        video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
 
-            verbose.imshow(frame, delay=1)
-            verbose.print(f"[INFO] Processing Frame #{frame_number}")
-
-            # Seek the video to the required frame
-            video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-
-            verbose.print(f"[INFO] Video Current Time is {round(video.get(cv2.CAP_PROP_POS_MSEC), 3)} sec")
-
-            # ============================================= Preprocessing =============================================
-
-            # ============================================= Face Detection ============================================
-
-            # ========================================= Emotion Classification ========================================
-
-            # ============================================= Face Tracking =============================================
-
-            # ============================================ Gaze Estimation ============================================
-
-            # ==================================== Profiling (Age/Gender Detection) ===================================
-
-            # =========================================== Integrate Modules ===========================================
-
-            # =============================================== Analytics ===============================================
-
-
-        else:
-            break
+        verbose.print(f"[INFO] Video Current Time is {round(video.get(cv2.CAP_PROP_POS_MSEC), 3)} sec")
 
     # When everything done, release the video capture object
     video.release()
-
 
 
 if __name__ == '__main__':
