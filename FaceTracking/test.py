@@ -10,6 +10,7 @@ sys.path.append(__PARENT_DIR__)
 from utils import io
 from utils import verbose
 import face_track
+import numpy as np
 import cv2
 
 
@@ -27,7 +28,6 @@ def test():
     frame_number = 0
     # Read frame by frame until video is completed
     while video.isOpened():
-        frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
 
         ret, frame = video.read()
         if ret:  # Pipeline is implemented Here
@@ -35,11 +35,11 @@ def test():
 
             faces: list = face_detector.detectMultiScale(frame_grey, scaleFactor=1.3, minNeighbors=5)
 
-            # # Process each face, and draw a rectangle around it
+            # Process each face, and draw a rectangle around it
             for (x, y, w, h) in faces:
-                id = face_track.get_id(frame_grey, (x, y, w, h))
+                ids = face_track.get_ids(frame_grey, np.array([(x, y, x + w, y + h)]), frame_number)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, f"Person #{id}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                cv2.putText(frame, f"Person #{ids[0]}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
             verbose.imshow(frame, delay=1)
             verbose.print(f"Processing Frame #{frame_number}")
@@ -51,6 +51,8 @@ def test():
 
         else:
             break
+
+        frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
 
     # When everything done, release the video capture object
     video.release()
