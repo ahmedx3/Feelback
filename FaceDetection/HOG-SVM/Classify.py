@@ -1,5 +1,6 @@
 # For Drawing Rectangle on Faces
 import cv2
+from matplotlib.pyplot import sca
 import numpy as np
 import time
 from Preprocessing import HistogramEqualization
@@ -7,16 +8,17 @@ from FeaturesExtraction import ExtractHOGFeatures
 from SlidingWindow import sliding_window, pyramid 
 import pickle as pickle
 import time
+import threading
 
 ################################## Hyperparameters ##################################
-maxwidth, maxheight = 72, 72 # max width and height of the image after resizing
-(winW, winH) = (8, 8) # window width and height
-pyramidScale = 2 # Scale factor for the pyramid
-stepSize = 1 # Step size for the sliding window
+maxwidth, maxheight = 72*5, 72*5 # max width and height of the image after resizing
+(winW, winH) = (10, 10) # window width and height
+pyramidScale = 1.5 # Scale factor for the pyramid
+stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test1.jpg",0)
+originalImg = cv2.imread("../HOG-SVM/Examples/Test4.jpg",0)
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
@@ -27,34 +29,66 @@ f = min(maxwidth / originalImg.shape[1], maxheight / originalImg.shape[0])
 dim = (int(originalImg.shape[1] * f), int(originalImg.shape[0] * f))
 originalImg = cv2.resize(originalImg, dim)
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
+
 shapeAfter = originalImg.shape
 
-scaleFactor = shapeBefore[0] / shapeAfter[0]
-
-model = pickle.load(open('Model.sav', 'rb'))
+model = pickle.load(open('ModelCBCL.sav', 'rb'))
 faces = []
 
 # Calculate time before processing
 start_time = time.time()
 
+def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model):
+    x,y,window = windowList
+    if window.shape[0] != winH or window.shape[1] != winW:
+        return
+
+    x = int(x * scaleFactor)
+    y = int(y * scaleFactor)
+    w = int(winW * scaleFactor)
+    h = int(winH * scaleFactor)
+
+    originalImg = HistogramEqualization(window)
+    image_features = ExtractHOGFeatures(originalImg)
+    predicted_label = model.predict([image_features])
+
+    if predicted_label == "Faces":
+        faces.append((x, y, x+w,y+h))
+
+
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
     windows = sliding_window(image, stepSize, windowSize=(winW, winH))
-    for (x, y, window) in windows:
-        if window.shape[0] != winH or window.shape[1] != winW:
-            continue
+    print("[INFO] Num of windows in the current image pyramid ",len(windows))
 
-        x = int(x * scaleFactor)
-        y = int(y * scaleFactor)
-        w = int(winW * scaleFactor)
-        h = int(winH * scaleFactor)
+    threads = []
+    for i,window in enumerate(windows):
+        t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model))
+        threads.append(t)
+        t.start()
+    
+    for t in threads:
+        t.join()
 
-        originalImg = HistogramEqualization(window)
-        image_features = ExtractHOGFeatures(originalImg)
-        predicted_label = model.predict([image_features])
+    # for (x, y, window) in windows:
+    #     if window.shape[0] != winH or window.shape[1] != winW:
+    #         continue
 
-        if predicted_label == "Faces":
-            faces.append((x, y, x+w,y+h))
+    #     x = int(x * scaleFactor)
+    #     y = int(y * scaleFactor)
+    #     w = int(winW * scaleFactor)
+    #     h = int(winH * scaleFactor)
+
+    #     # # start_time = time.time()    
+    #     originalImg = HistogramEqualization(window)
+    #     image_features = ExtractHOGFeatures(originalImg)
+    #     predicted_label = model.predict([image_features])
+
+    #     if predicted_label == "Faces":
+    #         faces.append((x, y, x+w,y+h))
+        
+        # # end_time = time.time()
+        # # print("[INFO] Time taken to proecess a frame: {}".format(end_time - start_time))
 
 # Remove overlapping rectangles by using non-maximum suppression
 def non_max_suppression(faces, overlapThresh=0.3):

@@ -31,6 +31,8 @@ def sliding_window(img, stepSize, windowSize):
     Yields:
         _type_: array of windows
     """
+    windowsArr = []
     for y in range(0, img.shape[0], stepSize):
         for x in range(0, img.shape[1], stepSize):
-            yield (x, y, img[y:y + windowSize[1], x:x + windowSize[0]])
+            windowsArr.append((x, y, img[y:y + windowSize[1], x:x + windowSize[0]]))
+    return windowsArr
