@@ -1,4 +1,5 @@
 import cv2
+from Preprocessing import HistogramEqualization
 
 def ExtractHOGFeatures(img, target_img_size=(32, 32)):
     """
@@ -10,6 +11,7 @@ def ExtractHOGFeatures(img, target_img_size=(32, 32)):
     :return: HOG features
     """
     img = cv2.resize(img, target_img_size)
+    img = HistogramEqualization(img)
 
     cellSize = (3,3)
     blockSize = (6,6)
