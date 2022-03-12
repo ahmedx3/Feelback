@@ -2,21 +2,23 @@
 import cv2
 import numpy as np
 import time
-from Preprocessing import HistogramEqualization
 from FeaturesExtraction import ExtractHOGFeatures
 from SlidingWindow import sliding_window, pyramid 
+from SkinColorDetection import DetectSkinColor
 import pickle as pickle
 import time
+import threading
 
 ################################## Hyperparameters ##################################
-maxwidth, maxheight = 72, 72 # max width and height of the image after resizing
-(winW, winH) = (8, 8) # window width and height
-pyramidScale = 2 # Scale factor for the pyramid
-stepSize = 1 # Step size for the sliding window
+maxwidth, maxheight = 72*2, 72*2 # max width and height of the image after resizing
+(winW, winH) = (19, 19) # window width and height
+pyramidScale = 12 # Scale factor for the pyramid
+stepSize = 3 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
+skinThreshold = 0.4 # threshold for skin color in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test1.jpg",0)
+originalImg = cv2.imread("../HOG-SVM/Examples/Test1.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
@@ -27,34 +29,80 @@ f = min(maxwidth / originalImg.shape[1], maxheight / originalImg.shape[0])
 dim = (int(originalImg.shape[1] * f), int(originalImg.shape[0] * f))
 originalImg = cv2.resize(originalImg, dim)
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
-shapeAfter = originalImg.shape
 
-scaleFactor = shapeBefore[0] / shapeAfter[0]
-
-model = pickle.load(open('Model.sav', 'rb'))
+modelName = "./Models/ModelCBCL.sav"
+model = pickle.load(open(modelName, 'rb'))
 faces = []
 
+print("[INFO] (maxwidth,maxheight) ",maxwidth,maxheight, " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
 start_time = time.time()
 
+def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model):
+    (x,y),window = windowList
+    if window.shape[0] != winH or window.shape[1] != winW:
+        return
+
+    x = int(x * scaleFactor)
+    y = int(y * scaleFactor)
+    w = int(winW * scaleFactor)
+    h = int(winH * scaleFactor)
+
+    # resize window
+    image_features = ExtractHOGFeatures(window)
+    predicted_label = model.predict([image_features])
+
+    if predicted_label == "Faces":
+        faces.append((x, y, x+w,y+h))
+
+
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
-    windows = sliding_window(image, stepSize, windowSize=(winW, winH))
-    for (x, y, window) in windows:
-        if window.shape[0] != winH or window.shape[1] != winW:
-            continue
+    mask = DetectSkinColor(image)
+    windows = sliding_window(image, stepSize,(winW, winH),mask,skinThreshold)
+    print("[INFO] Num of windows in the current image pyramid ",len(windows))
 
-        x = int(x * scaleFactor)
-        y = int(y * scaleFactor)
-        w = int(winW * scaleFactor)
-        h = int(winH * scaleFactor)
+    threads = []
+    for i,window in enumerate(windows):
+        t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model))
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
 
-        originalImg = HistogramEqualization(window)
-        image_features = ExtractHOGFeatures(originalImg)
-        predicted_label = model.predict([image_features])
+    # for ((x, y), window) in windows:
+    #     predictTime = 0
+    #     if window.shape[0] != winH or window.shape[1] != winW:
+    #         continue
 
-        if predicted_label == "Faces":
-            faces.append((x, y, x+w,y+h))
+    #     indices = mask.astype(np.uint8)  #convert to an unsigned byte
+    #     indices *= 255
+    #     cv2.imshow("mask", indices[y:y+winH,x:x+winW])
+    #     cv2.waitKey(1)
+    #     time.sleep(0.025)
+    #     print(window.size)
+    #     skinRatio = np.sum(mask[y:y+winH,x:x+winW])/ (winW * winH)
+    #     if skinRatio < 0.2:
+    #         continue
+
+    #     # Debugging
+    #     clone = image.copy()
+    #     cv2.rectangle(clone, (x, y), (x+winW,y+winH), (0, 255, 0), 1)
+    #     cv2.imshow("Window", clone)
+    #     cv2.waitKey(1)
+    #     time.sleep(0.025)
+
+    #     x = int(x * scaleFactor)
+    #     y = int(y * scaleFactor)
+    #     w = int(winW * scaleFactor)
+    #     h = int(winH * scaleFactor)
+
+    #     image_features = ExtractHOGFeatures(window)
+    #     predicted_label = model.predict([image_features])
+
+    #     if predicted_label == "Faces":
+    #         faces.append((x, y, x+w,y+h))
+        
 
 # Remove overlapping rectangles by using non-maximum suppression
 def non_max_suppression(faces, overlapThresh=0.3):

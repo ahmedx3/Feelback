@@ -10,7 +10,8 @@ def HistogramEqualization(grayScaleImage):
     Returns:
         _type_: equalized grayscale image
     """
-    equlizedImage = cv2.equalizeHist(grayScaleImage)
+    gray = cv2.cvtColor(grayScaleImage, cv2.COLOR_BGR2GRAY)
+    equlizedImage = cv2.equalizeHist(gray)
     return equlizedImage
 
 def ConvertToGrayScale(image):

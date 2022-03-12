@@ -7,6 +7,11 @@ Bounding Box Type is tuple of (x1, y1, x2, y2)
 """
 BoundingBox = Tuple[int, int, int, int]
 
+"""
+Bounding Box 2 Type is tuple of (x, y, w, h)
+"""
+BoundingBox2 = Tuple[int, int, int, int]
+
 
 def intersection_over_union(rect_a: BoundingBox, rect_b: npt.NDArray[BoundingBox]) -> npt.NDArray[float]:
     """
@@ -42,3 +47,13 @@ def intersection_over_union(rect_a: BoundingBox, rect_b: npt.NDArray[BoundingBox
     iou = intersection_area / union_area
 
     return iou
+
+
+def to_x_y_w_h_bounding_box(rect: BoundingBox) -> BoundingBox2:
+    x1, y1, x2, y2 = rect
+    return x1, y1, x2 - x1, y2 - y1
+
+
+def to_x1_y1_x2_y2_bounding_box(rect: BoundingBox2) -> BoundingBox:
+    x, y, w, h = rect
+    return x, y, x + w, y + h

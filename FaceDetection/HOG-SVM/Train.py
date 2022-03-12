@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import svm
 import random
 import pickle
+import time
 
 random_seed = 1
 random.seed(random_seed)
@@ -36,7 +37,6 @@ def load_dataset(path_to_dataset):
                     #read the image and extract features
                     img = cv2.imread(fileName)
                     img = ConvertToGrayScale(img)
-                    img = HistogramEqualization(img)
                     features.append(ExtractHOGFeatures(img))
             
     return features, labels
@@ -51,7 +51,7 @@ def train_classifier(path_to_dataset):
     # Since we don't want to know the performance of our classifier on images it has seen before
     # we are going to withhold some images that we will test the classifier on after training
     train_features, test_features, train_labels, test_labels = train_test_split(
-        features, labels, test_size=0.1, random_state=random_seed, stratify=labels, shuffle=True)
+        features, labels, test_size=0.2, random_state=random_seed, stratify=labels, shuffle=True)
 
     print('############## Training ', used_classifier, "##############")
     # Train the model only on the training features
@@ -69,8 +69,12 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = 'Model.sav'
+    filename = './Models/ModelCBCL-Small.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":
+    # calculate training time
+    start_time = time.time()
     main()
+    end_time = time.time()
+    print("[INFO] Training time is {:.5f} seconds".format(end_time - start_time))

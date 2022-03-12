@@ -9,7 +9,7 @@ import os
 from sklearn.metrics import confusion_matrix
 
 # load the model from disk
-model = pickle.load(open('Model.sav', 'rb'))
+model = pickle.load(open('./Models/ModelCBCL.sav', 'rb'))
 
 path_to_testset = os.path.join(os.getcwd(), "Test")
 
