@@ -1,10 +1,19 @@
 from scipy.signal import convolve2d
 import numpy as np
 
-def extractLPQ(img, winSize=5):
+def extract_LPQ(img, winSize=5):
+    """Extract LPQ 
+
+    Args:
+        img (image): Image to extract from
+        winSize (int, optional): Size of Fourier Transform Window. Defaults to 5.
+
+    Returns:
+        np.array: Histogram values of LPQ for Image
+    """
 
     img = np.float64(img)  # Convert np.image to double
-    radius = (winSize-1)/2  # Get radius from window size
+    radius = winSize / 2 - 0.5  # Get radius from window size
     # Form spatial coordinates in window
     x = np.arange(-radius, radius+1)[np.newaxis]
 
@@ -34,3 +43,8 @@ def extractLPQ(img, winSize=5):
     LPQdesc = LPQdesc/LPQdesc.sum()
 
     return LPQdesc
+
+
+def extract_features(img, feature="LPQ"):
+    if feature == 'LPQ':
+        return extract_LPQ(img, winSize=5)

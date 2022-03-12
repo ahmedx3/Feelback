@@ -16,8 +16,6 @@ random_seed = 1
 random.seed(random_seed)
 np.random.seed(random_seed)
 
-used_classifier = "SVM"
-
 classifiers = {
     # SVM with gaussian kernel
     'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
@@ -26,33 +24,36 @@ classifiers = {
 """
 Functions
 """
-def train_classifier():
+def train_classifier(used_classifier):
+    """Trains the model on the selected dataset
+    """
 
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
-    features, labels = DatasetLoading.load_Gender_Kaggle_dataset()
+    features, labels = DatasetLoading.load_Gender_Kaggle_dataset(type="Training")
     print('Finished loading dataset.')
 
-    # Since we don't want to know the performance of our classifier on images it has seen before
-    # we are going to withhold some images that we will test the classifier on after training
+    # Split Dataset to train and test for model fitting 
     train_features, test_features, train_labels, test_labels = train_test_split(
-        features, labels, test_size=0.2, random_state=random_seed, stratify=labels, shuffle=True)
+        features, labels, test_size=0.1, random_state=random_seed, stratify=labels, shuffle=True)
 
+    # Training the model
     print('############## Training ', used_classifier, "##############")
-    # Train the model only on the training features
     model = classifiers[used_classifier]
     model.fit(train_features, train_labels)
 
-    # Test the model on images it hasn't seen before
+    # Test the model
     accuracy = model.score(test_features, test_labels)
     train_accuracy = model.score(train_features, train_labels)
 
+    # Print Accuracies of train and test
     print(used_classifier, ' Train accuracy:', train_accuracy *
           100, '%', ' Test accuracy:', accuracy*100, '%')
+    
+    return model
 
 def main():
-    train_classifier()
-    classifier = classifiers[used_classifier]
+    classifier = train_classifier("SVM")
     # save the model to disk
     filename = 'Model.sav'
     pickle.dump(classifier, open(filename, 'wb'))
