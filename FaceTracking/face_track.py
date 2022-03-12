@@ -30,9 +30,11 @@ def get_ids(frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox], frame_
 
     ids = np.empty(faces_positions.shape[0], dtype=int)
 
-    trackers = database['tracker']
-    for tracker in trackers:
-        tracker.update(frame)
+    trackers: np.ndarray = database['tracker']
+    for i in range(trackers.shape[0]):
+        success, bounding_box = trackers[i].update(frame)
+        if success:
+            database[i]['last-seen-position'] = img_utils.to_x1_y1_x2_y2_bounding_box(bounding_box)
 
     for i, face_position in enumerate(faces_positions):
         iou = img_utils.intersection_over_union(face_position, database['last-seen-position'])
@@ -53,7 +55,7 @@ def add_new_face(frame: np.ndarray, face_position: BoundingBox, frame_number: in
     global database
 
     tracker: cv2.TrackerCSRT = cv2.TrackerCSRT_create()
-    tracker.init(frame, face_position)
+    tracker.init(frame, img_utils.to_x_y_w_h_bounding_box(face_position))
 
     face_data = np.array([(tracker, frame_number, face_position)], dtype=dtype)
     database = np.append(database, face_data)
