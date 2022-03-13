@@ -1,13 +1,14 @@
-import numpy as np
 import os
+import numpy as np
 import cv2
 from FeaturesExtraction import ExtractHOGFeatures
-from Preprocessing import ConvertToGrayScale, HistogramEqualization
 from sklearn.model_selection import train_test_split
 from sklearn import svm
+from sklearn.svm import LinearSVC
 import random
 import pickle
 import time
+from sklearn.decomposition import PCA
 
 random_seed = 1
 random.seed(random_seed)
@@ -17,7 +18,8 @@ used_classifier = "SVM"
 
 classifiers = {
     # SVM with gaussian kernel
-    'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
+    'SVM': svm.SVC(random_state=random_seed, kernel="rbf",cache_size=1000),
+    'LinearSVM': LinearSVC(random_state=random_seed),
 }
 
 def load_dataset(path_to_dataset):
@@ -36,7 +38,6 @@ def load_dataset(path_to_dataset):
                     labels.append(directory)
                     #read the image and extract features
                     img = cv2.imread(fileName)
-                    img = ConvertToGrayScale(img)
                     features.append(ExtractHOGFeatures(img))
             
     return features, labels
@@ -47,6 +48,14 @@ def train_classifier(path_to_dataset):
     print('Loading dataset. This will take time ...')
     features, labels = load_dataset(path_to_dataset)
     print('Finished loading dataset.')
+    D_before = len(features[0])
+    pca = PCA(n_components=50)
+    pca.fit(features)
+    filename = './Models/PCAModel.sav'
+    pickle.dump(pca, open(filename, 'wb'))
+    features = pca.transform(features)
+    D_after = len(features[0])
+    print('Reduced the dimension from ', D_before, ' to ', D_after)
 
     # Since we don't want to know the performance of our classifier on images it has seen before
     # we are going to withhold some images that we will test the classifier on after training
@@ -69,7 +78,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/ModelCBCL-Small.sav'
+    filename = './Models/ModelCBCL-Small-PCA.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

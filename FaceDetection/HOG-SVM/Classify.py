@@ -2,23 +2,23 @@
 import cv2
 import numpy as np
 import time
-from FeaturesExtraction import ExtractHOGFeatures
-from SlidingWindow import sliding_window, pyramid 
-from SkinColorDetection import DetectSkinColor
+from FeaturesExtraction import *
+from Preprocessing import *
+from SlidingWindow import *
 import pickle as pickle
 import time
 import threading
 
 ################################## Hyperparameters ##################################
-maxwidth, maxheight = 72*2, 72*2 # max width and height of the image after resizing
+maxwidth, maxheight = 72*7, 72*7 # max width and height of the image after resizing
 (winW, winH) = (19, 19) # window width and height
-pyramidScale = 12 # Scale factor for the pyramid
-stepSize = 3 # Step size for the sliding window
+pyramidScale = 2 # Scale factor for the pyramid
+stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 skinThreshold = 0.4 # threshold for skin color in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test1.jpg")
+originalImg = cv2.imread("../HOG-SVM/Examples/Test5.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
@@ -30,9 +30,11 @@ dim = (int(originalImg.shape[1] * f), int(originalImg.shape[0] * f))
 originalImg = cv2.resize(originalImg, dim)
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-modelName = "./Models/ModelCBCL.sav"
+modelName = "./Models/ModelCBCL-Small-PCA.sav"
 model = pickle.load(open(modelName, 'rb'))
 faces = []
+
+pca = pickle.load(open("./Models/PCAModel.sav", 'rb'))
 
 print("[INFO] (maxwidth,maxheight) ",maxwidth,maxheight, " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
@@ -57,18 +59,29 @@ def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model):
 
 
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
+    
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
     mask = DetectSkinColor(image)
     windows = sliding_window(image, stepSize,(winW, winH),mask,skinThreshold)
-    print("[INFO] Num of windows in the current image pyramid ",len(windows))
+    if(len(windows)) == 0:
+        break
+    # print("[INFO] Num of windows in the current image pyramid ",len(windows))
 
-    threads = []
-    for i,window in enumerate(windows):
-        t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model))
-        threads.append(t)
-        t.start()
-    for t in threads:
-        t.join()
+    # threads = []
+    # for i,window in enumerate(windows):
+    #     t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model))
+    #     threads.append(t)
+    #     t.start()
+    # for t in threads:
+    #     t.join()
+
+
+    indices, patches = zip(*windows)
+    patches_hog = np.array([ApplyPCA(ExtractHOGFeatures(patch),pca) for patch in patches])
+    predicted_label = model.predict(patches_hog)
+    indices = np.array(indices)
+    for i, j in indices[predicted_label == "Faces"]:
+        faces.append((int(i * scaleFactor), int(j * scaleFactor), int((i + winW) * scaleFactor), int((j + winH) * scaleFactor)))
 
     # for ((x, y), window) in windows:
     #     predictTime = 0
@@ -161,6 +174,7 @@ print("[INFO] Time taken is {:.5f} seconds".format(end_time - start_time))
 
 for (x, y, lenX,lenY) in faces:
     cv2.rectangle(copyOriginalImage, (int(x), int(y)), (int(lenX), int(lenY)), (0, 255, 0), 2)
-
+# Save the image result
+cv2.imwrite("result.jpg", copyOriginalImage)
 cv2.imshow("Window", copyOriginalImage)
 cv2.waitKey()

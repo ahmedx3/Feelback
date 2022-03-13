@@ -9,3 +9,9 @@
 [INFO] (maxwidth,maxheight)  936 936  (winW,winH)  19 19  pyramidScale  18  stepSize  2  overlappingThreshold  0.3  SkinThreshold  0.3 Model  ./Models/ModelCBCL.sav
 [INFO] Num of windows in the current image pyramid  0
 [INFO] Time taken is 35.03930 seconds (with both skin and threading)
+********************************************************************
+[INFO] Shape of the original image  (1362, 2048, 3)
+[INFO] Shape of the image after reshaping (622, 936, 3)
+[INFO] (maxwidth,maxheight)  936 936  (winW,winH)  19 19  pyramidScale  15  stepSize  2  overlappingThreshold  0.3  SkinThreshold  0.4 Model  ./Models/ModelCBCL-Small.sav
+[INFO] Num of windows in the current image pyramid  0
+[INFO] Time taken is 7.03730 seconds (ya farag el allah xD) (with numpy) --> 2.54442 seconds with pca
