@@ -1,7 +1,8 @@
 import cv2
 from Preprocessing import HistogramEqualization
+from sklearn.decomposition import PCA
 
-def ExtractHOGFeatures(img, target_img_size=(32, 32)):
+def ExtractHOGFeatures(img,target_img_size=(19,19)):
     """
     Extracts HOG features from an image
     :param img: image to extract features from
@@ -23,4 +24,14 @@ def ExtractHOGFeatures(img, target_img_size=(32, 32)):
     hog = cv2.HOGDescriptor(win_size, blockSize, block_stride, cellSize, nBins)
     hog = hog.compute(img)
     hog = hog.flatten()
+    
     return hog
+
+def ApplyPCA(features,pca):
+    """
+    Applies PCA to a feature vector
+    :param feature: feature vector
+    :param pca: PCA object
+    :return: PCA transformed feature vector
+    """
+    return pca.transform(features.reshape(1,-1))[0]
