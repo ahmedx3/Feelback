@@ -26,11 +26,17 @@ Functions
 """
 def train_classifier(used_classifier):
     """Trains the model on the selected dataset
+
+    Args:
+        used_classifier (string): Name of Sklearn Model to use
+
+    Returns:
+        Any: Trained SKlearn model selected
     """
 
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
-    features, labels = DatasetLoading.load_Gender_Kaggle_dataset(type="Training")
+    features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(type="Training")
     print('Finished loading dataset.')
 
     # Split Dataset to train and test for model fitting 

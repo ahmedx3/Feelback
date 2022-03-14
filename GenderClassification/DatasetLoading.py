@@ -10,7 +10,7 @@ def load_Gender_Kaggle_dataset(type="Validation"):
         type (str, optional): Load Either Training or Validation Datasets. Defaults to "Validation".
 
     Returns:
-        Tuple(features, labels): Features and Labels of the dataset
+        Tuple(features, labels, image_paths): Features, Labels, and Image Paths of the dataset
     """
 
     # Check data set type
@@ -23,6 +23,7 @@ def load_Gender_Kaggle_dataset(type="Validation"):
     # Initialize Variables
     features = []
     labels = []
+    image_paths = []
     directoriesNames = os.listdir(path_to_dataset)
 
     # Loop over directories and get Images
@@ -35,8 +36,11 @@ def load_Gender_Kaggle_dataset(type="Validation"):
             # Add Label
             labels.append(directory)
 
-            # Extract Image features
+            # Extract path
             path = os.path.join(path_to_dataset, directory, fn)
+            image_paths.append(path)
+
+            # Extract Image features
             img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
             features.append(FeaturesExtraction.extract_features(img, feature="LPQ"))
 
@@ -44,7 +48,7 @@ def load_Gender_Kaggle_dataset(type="Validation"):
             if count % 500 == 0:
                 print(F"Gender Kaggle {type} Dataset: Finished Reading {count}")
 
-    return features, labels
+    return features, labels, image_paths
 
 
 def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
@@ -59,9 +63,8 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
         Exception: Wrong age range is supplied
 
     Returns:
-        Tuple(features, labels): Features and Labels of the dataset
+        Tuple(features, labels, image_paths): Features, Labels, and Image Paths of the dataset
     """
-
     # Args checking
     if label != "gender" and label != "age":
         raise Exception("Wrong Parameter For label argument")
@@ -75,6 +78,7 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
     # Initialize Variables
     features = []
     labels = []
+    image_paths = []
 
     # Loop over directories and get Images
     count = 0
@@ -98,8 +102,11 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
         elif label == "age":
             labels.append(age)
 
-        # Extract Image features
+        # Get Image path
         path = os.path.join(path_to_dataset, fn)
+        image_paths.append(path)
+
+        # Extract Image features
         img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         features.append(FeaturesExtraction.extract_features(img, feature="LPQ"))
 
@@ -108,4 +115,4 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
             # Utils.show_image(img, gender)
             print(F"UTK Gender_Age Dataset: Finished Reading {count}")
 
-    return features, labels
+    return features, labels, image_paths
