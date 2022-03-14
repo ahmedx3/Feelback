@@ -65,13 +65,9 @@ class KmeansIdentification:
 
         while iterations > 0:
             for i, row in enumerate(x):
-                min_distance = np.inf
-                for idx, centroid in enumerate(centroids):
-                    distance = np.linalg.norm(centroid - row)
-
-                    if distance < min_distance:
-                        min_distance = distance
-                        clusters[i] = idx
+                # The cluster of the ith sample point is the closest one to this sample point
+                distances = np.linalg.norm(centroids - row, axis=1)
+                clusters[i] = np.argmin(distances)
 
             new_centroids = np.array([x[clusters == c].mean(axis=0) for c in np.unique(clusters)])
 
@@ -116,13 +112,10 @@ class KmeansIdentification:
 
         while iterations > 0:
             for i, row in enumerate(x):
-                min_distance = np.inf
-                for idx, centroid in enumerate(centroids):
-                    distance = np.linalg.norm(centroid - row)
-
-                    if distance < min_distance:
-                        min_distance = distance
-                        clusters[i] = idx
+                # The cluster of the ith sample point is the closest one to this sample point
+                distances = np.linalg.norm(centroids - row, axis=1)
+                clusters[i] = np.argmin(distances)
+                min_distance = distances[clusters[i]]
 
                 # Create a new cluster if the current row is too far from existing clusters
                 if min_distance > self.threshold:
