@@ -1,12 +1,13 @@
 import os
 import cv2
 import FeaturesExtraction
-import Utils
 
-def load_Gender_Kaggle_dataset(type="Validation"):
+
+def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation"):
     """Loads the Kaggle Gender Dataset
 
     Args:
+        selected_feature (str, optional): selected feature for extraction if None feature List is returned empty. Defaults to "LPQ".
         type (str, optional): Load Either Training or Validation Datasets. Defaults to "Validation".
 
     Returns:
@@ -18,7 +19,7 @@ def load_Gender_Kaggle_dataset(type="Validation"):
         __file__), "../Data/Gender_Kaggle/Validation")
     if type == "Training":
         path_to_dataset = os.path.join(os.path.dirname(
-        __file__), "../Data/Gender_Kaggle/Training")
+            __file__), "../Data/Gender_Kaggle/Training")
 
     # Initialize Variables
     features = []
@@ -41,20 +42,24 @@ def load_Gender_Kaggle_dataset(type="Validation"):
             image_paths.append(path)
 
             # Extract Image features
-            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-            features.append(FeaturesExtraction.extract_features(img, feature="LPQ"))
+            if selected_feature != None:
+                img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+                features.append(FeaturesExtraction.extract_features(
+                    img, feature=selected_feature))
 
             # Show progress for debugging purposes
             if count % 500 == 0:
-                print(F"Gender Kaggle {type} Dataset: Finished Reading {count}")
+                print(
+                    F"Gender Kaggle {type} Dataset: Finished Reading {count}")
 
     return features, labels, image_paths
 
 
-def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
+def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range=(1, 90)):
     """Loads the UTK AgeGender Dataset
 
     Args:
+        selected_feature (str, optional): selected feature for extraction if None feature List is returned empty. Defaults to "LPQ".
         label (str, optional): label type for the data. Defaults to "gender".
         age_range (tuple, optional): max and min ages. Defaults to (1,90).
 
@@ -68,7 +73,7 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
     # Args checking
     if label != "gender" and label != "age":
         raise Exception("Wrong Parameter For label argument")
-    if type(age_range) != tuple or age_range[0] < 1 or age_range[1] > 90 :
+    if type(age_range) != tuple or age_range[0] < 1 or age_range[1] > 90:
         raise Exception("Wrong Parameter For age_range argument")
 
     # Set path to dataset
@@ -85,7 +90,7 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
     for i, fn in enumerate(os.listdir(path_to_dataset)):
 
         # Extract label
-        image_name_split = fn.split('_') 
+        image_name_split = fn.split('_')
         age = int(image_name_split[0])
 
         # Skip if outside of range
@@ -97,7 +102,7 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
 
         # Add Label
         if label == "gender":
-            gender = "male" if image_name_split[1] == "0" else "female" 
+            gender = "male" if image_name_split[1] == "0" else "female"
             labels.append(gender)
         elif label == "age":
             labels.append(age)
@@ -107,12 +112,13 @@ def load_UTK_AgeGender_dataset(label="gender", age_range=(1,90)):
         image_paths.append(path)
 
         # Extract Image features
-        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-        features.append(FeaturesExtraction.extract_features(img, feature="LPQ"))
+        if selected_feature != None:
+            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            features.append(
+                FeaturesExtraction.extract_features(img, feature=selected_feature))
 
         # Show progress for debugging purposes
         if count % 500 == 0:
-            # Utils.show_image(img, gender)
             print(F"UTK Gender_Age Dataset: Finished Reading {count}")
 
     return features, labels, image_paths

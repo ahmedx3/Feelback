@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 
 def show_image(image, title="Image"):
     """Shows an Image with a title
@@ -57,3 +58,32 @@ def get_random_incorrect_labeled(labels, predictions, image_paths, number_of_ima
 
     return random_images
     
+
+def plot_dataset_histogram(labels):
+    """Plots a Histogram of the Dataset
+    """
+
+    # plot piechart
+    plt.hist(labels, bins=len(np.unique(labels)), rwidth=0.9)
+    plt.show(block=True) 
+
+def plot_dataset_piechart(labels):
+    """Plots a Pie Chart of the Dataset
+    """
+
+    # Extract Unique values and count
+    labels = np.asarray(labels)
+    values, counts = np.unique(labels, return_counts=True)
+
+    # Change labels
+    modified_labels = []
+    for index in range(len(counts)):
+        modified_labels.append(str(str(values[index]) + " : " + str(counts[index])))
+    
+    modified_labels = values if len(values) > 2 else modified_labels
+        
+    # plot piechart
+    plt.pie(counts, labels = modified_labels,startangle=90)
+    plt.legend()
+    plt.show(block=True)
+

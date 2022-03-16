@@ -13,7 +13,7 @@ def extract_LPQ(img, winSize=5):
     """
 
     img = np.float64(img)  # Convert np.image to double
-    radius = winSize / 2 - 0.5  # Get radius from window size
+    radius = int(winSize / 2 - 0.5)  # Get radius from window size
     # Form spatial coordinates in window
     x = np.arange(-radius, radius+1)[np.newaxis]
 
@@ -46,5 +46,15 @@ def extract_LPQ(img, winSize=5):
 
 
 def extract_features(img, feature="LPQ"):
+    """Extracts Features of an image
+
+    Args:
+        img (Image): Greyscale image to extract from
+        feature (str, optional): Type of feature to extract. Defaults to "LPQ".
+
+    Returns:
+        List: feature
+    """
     if feature == 'LPQ':
         return extract_LPQ(img, winSize=5)
+    return None
