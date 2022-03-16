@@ -58,4 +58,4 @@ def add_new_face(frame: np.ndarray, face_position: BoundingBox, frame_number: in
     tracker.init(frame, img_utils.to_x_y_w_h_bounding_box(face_position))
 
     face_data = np.array([(tracker, frame_number, face_position)], dtype=dtype)
-    database = np.append(database, face_data)
+    database = np.append(database, face_data, axis=0)
