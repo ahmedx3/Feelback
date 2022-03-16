@@ -19,7 +19,7 @@ class KmeansIdentification:
     This class use a modified version of K-means Algorithm to use in online face recognition and identification
     """
 
-    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=10):
+    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=10, learning_rate=0.5):
         """
 
         Args:
@@ -30,6 +30,8 @@ class KmeansIdentification:
             threshold (float): The maximum euclidian distance at which two points are considered in the same cluster.
                                i.e. if the minimum euclidian distance between point A and centroids of all existing
                                clusters exceeds threshold, a new cluster will be created with centroid is point A.
+            learning_rate (float): A float value which controls how much the cluster centroid is updated by the
+                                   new sample data.
         """
 
         self.k = k
@@ -37,6 +39,7 @@ class KmeansIdentification:
         self.max_iterations = max(10, iterations)
         self.tolerance = tolerance
         self.threshold = threshold
+        self.learning_rate = learning_rate
 
     def kmeans_init(self, x: np.ndarray) -> npt.NDArray[int]:
         """
@@ -123,7 +126,8 @@ class KmeansIdentification:
                     clusters[i] = self.k
                     self.k += 1
 
-            new_centroids = np.array([np.append(x[clusters == c], [centroids[c]], axis=0).mean(axis=0) for c in range(self.k)])
+            new_centroids = np.array(
+                [np.vstack((x[clusters == c] * self.learning_rate, centroids[c])).mean(axis=0) for c in range(self.k)])
 
             # if centroids are same then we have converged
             if np.allclose(new_centroids, centroids, atol=self.tolerance):
