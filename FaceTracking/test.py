@@ -9,7 +9,7 @@ sys.path.append(__PARENT_DIR__)
 
 from utils import io
 from utils import verbose
-import face_track
+import kmeans
 import numpy as np
 import cv2
 
@@ -26,7 +26,7 @@ def test():
     video_fps = int(video.get(cv2.CAP_PROP_FPS))
 
     face_detector = cv2.CascadeClassifier(os.path.join(__CURRENT_DIR__, 'haarcascade_frontalface_default.xml'))
-
+    face_track = None
     frame_number = 0
     # Read frame by frame until video is completed
     while video.isOpened():
@@ -42,7 +42,11 @@ def test():
         # Convert Bounding Boxes from (x, y, w, h) to (x1, y1, x2, y2)
         faces[:, 2] += faces[:, 0]
         faces[:, 3] += faces[:, 1]
-        ids = face_track.get_ids(frame_grey, faces, frame_number)
+
+        if face_track is None:
+            face_track = kmeans.KmeansIdentification(k=faces.shape[0])
+
+        ids = face_track.get_ids(frame_grey, faces)
 
         if __VERBOSE__:
             # Draw a rectangle around each face with its person id

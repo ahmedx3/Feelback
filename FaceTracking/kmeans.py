@@ -10,6 +10,7 @@ sys.path.append(__PARENT_DIR__)
 from utils.img_utils import BoundingBox
 from utils import verbose
 
+from FaceTracking.feature_extracton import eigen_faces_features
 import numpy as np
 import numpy.typing as npt
 
@@ -19,7 +20,7 @@ class KmeansIdentification:
     This class use a modified version of K-means Algorithm to use in online face recognition and identification
     """
 
-    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=10, learning_rate=0.5):
+    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=2000, learning_rate=1):
         """
 
         Args:
@@ -145,5 +146,5 @@ class KmeansIdentification:
 
     def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[int]:
         # TODO: Feature Extraction from faces (Eigen-faces + position)
-        x = np.array([])
-        return self.kmeans_init(x) if self.centroids is None else self.kmeans_dynamic_update(x)
+        eigen_faces = eigen_faces_features(frame, faces_positions)
+        return self.kmeans_init(eigen_faces) if self.centroids is None else self.kmeans_dynamic_update(eigen_faces)
