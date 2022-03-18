@@ -1,6 +1,4 @@
-from matplotlib import pyplot as plt
 import cv2
-from numpy import imag
 
 def convert_to_gray_scale(image):
     """Convert to Gray Scale
@@ -27,3 +25,31 @@ def resize_image(image, size= (120,120)):
     """
     resized = cv2.resize(image,size)
     return resized
+
+def hist_equalize(image):
+    """Histogram equalization for image
+
+    Args:
+        image (_type_): Image to do the hostogram equalization
+
+    Returns:
+        image: Equalized Image
+    """
+    equalized = cv2.equalizeHist(image) 
+    return equalized
+
+
+def preprocess_image(img):
+    """Preprocess image
+
+    Args:
+        img (Image): Image to preprocess
+
+    Returns:
+        Image: Preprocessed Image
+    """
+    
+    preprocessed = resize_image(img, (80,80))
+    # preprocessed = hist_equalize(img)
+
+    return preprocessed

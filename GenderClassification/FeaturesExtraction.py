@@ -1,5 +1,6 @@
 from scipy.signal import convolve2d
 import numpy as np
+from skimage.feature import local_binary_pattern
 
 def extract_LPQ(img, winSize=5):
     """Extract LPQ 
@@ -44,6 +45,25 @@ def extract_LPQ(img, winSize=5):
 
     return LPQdesc
 
+def extract_LBP(img, radius=3, eps=1e-7):
+    """Extract LBP
+
+    Args:
+        img (Image): Image to extract feature
+        radius (int, optional): radius around pixel. Defaults to 3.
+        eps (_type_, optional): Divide by zero tolerance. Defaults to 1e-7.
+
+    Returns:
+        np.array: Numpy Array of histogram values of LBP
+    """
+
+    n_points = 8 * radius
+    lbp = local_binary_pattern(img, n_points, radius, 'default')
+    (hist, _) = np.histogram(lbp.ravel(), bins=256)
+    hist = hist.astype("float")
+    hist /= (hist.sum() + eps)
+    return hist
+
 
 def extract_features(img, feature="LPQ"):
     """Extracts Features of an image
@@ -57,4 +77,6 @@ def extract_features(img, feature="LPQ"):
     """
     if feature == 'LPQ':
         return extract_LPQ(img, winSize=5)
+    elif feature == 'LBP':
+        return extract_LBP(img, radius=3, eps=1e-7)
     return None

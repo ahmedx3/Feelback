@@ -11,9 +11,6 @@ The labels of each face image is embedded in the file name, formated like [age]_
 - [race] is an integer from 0 to 4, denoting White, Black, Asian, Indian, and Others (like Hispanic, Latino, Middle Eastern).
 - [date&time] is in the format of yyyymmddHHMMSSFFF, showing the date and time an image was collected to UTKFace 
 
-## AgeGender Kaggle: Dataset for Age & gender
-https://www.kaggle.com/shahraizanwar/age-gender-ethnicity-prediction/data
-
 ## FacialAge Kaggle: Dataset for Age
 https://www.kaggle.com/frabbisw/facial-age
 

@@ -1,7 +1,7 @@
 import os
 import cv2
 import FeaturesExtraction
-
+import Preprocessing
 
 def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation"):
     """Loads the Kaggle Gender Dataset
@@ -44,6 +44,7 @@ def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation"):
             # Extract Image features
             if selected_feature != None:
                 img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+                img = Preprocessing.preprocess_image(img)
                 features.append(FeaturesExtraction.extract_features(
                     img, feature=selected_feature))
 
@@ -114,6 +115,7 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
         # Extract Image features
         if selected_feature != None:
             img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            img = Preprocessing.preprocess_image(img)
             features.append(
                 FeaturesExtraction.extract_features(img, feature=selected_feature))
 
