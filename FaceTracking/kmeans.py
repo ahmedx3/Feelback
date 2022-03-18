@@ -37,6 +37,7 @@ class KmeansIdentification:
 
         self.k = k
         self.centroids = None
+        self.cluster_count = None
         self.max_iterations = max(10, iterations)
         self.tolerance = tolerance
         self.threshold = threshold
@@ -83,6 +84,7 @@ class KmeansIdentification:
             iterations -= 1
 
         self.centroids = centroids
+        self.cluster_count = np.ones(centroids.shape[0], dtype=np.int)
 
         verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
         verbose.print(f"kmeans centroids: {self.centroids}")
@@ -111,6 +113,7 @@ class KmeansIdentification:
 
         clusters = np.zeros(x.shape[0], dtype=int)
         centroids = self.centroids
+        cluster_count = np.zeros(centroids.shape[0], dtype=int)
 
         iterations = self.max_iterations
 
@@ -118,12 +121,15 @@ class KmeansIdentification:
             for i, row in enumerate(x):
                 # The cluster of the ith sample point is the closest one to this sample point
                 distances = np.linalg.norm(centroids - row, axis=1)
-                clusters[i] = np.argmin(distances)
+                cluster_id = np.argmin(distances)
+                clusters[i] = cluster_id
+                cluster_count[cluster_id] += 1
                 min_distance = distances[clusters[i]]
 
                 # Create a new cluster if the current row is too far from existing clusters
                 if min_distance > self.threshold:
                     centroids = np.append(centroids, [row], axis=0)
+                    cluster_count = np.pad(cluster_count, (0, 1), constant_values=1)
                     clusters[i] = self.k
                     self.k += 1
 
@@ -138,6 +144,12 @@ class KmeansIdentification:
             iterations -= 1
 
         self.centroids = centroids
+
+        new_clusters_count = cluster_count.shape[0] - self.cluster_count.shape[0]
+        # Extend self.cluster_count according to added clusters
+        self.cluster_count = np.append(self.cluster_count, np.zeros(new_clusters_count, np.int), axis=0)
+        # increase count for clusters that appeared in this frame
+        self.cluster_count[cluster_count != 0] += 1
 
         verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
         verbose.print(f"kmeans centroids: {self.centroids}")
