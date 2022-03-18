@@ -28,6 +28,8 @@ def test():
     face_detector = cv2.CascadeClassifier(os.path.join(__CURRENT_DIR__, 'haarcascade_frontalface_default.xml'))
     face_track = None
     frame_number = 0
+    # assign some unique colors for each face id for visualization purposes
+    colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
     # Read frame by frame until video is completed
     while video.isOpened():
 
@@ -40,20 +42,21 @@ def test():
         faces: np.ndarray = face_detector.detectMultiScale(frame_grey, scaleFactor=1.3, minNeighbors=5)
 
         # Convert Bounding Boxes from (x, y, w, h) to (x1, y1, x2, y2)
-        faces[:, 2] += faces[:, 0]
-        faces[:, 3] += faces[:, 1]
+        if faces is not None and len(faces):
+            faces[:, 2] += faces[:, 0]
+            faces[:, 3] += faces[:, 1]
 
-        if face_track is None:
-            face_track = kmeans.KmeansIdentification(k=faces.shape[0])
+            if face_track is None:
+                face_track = kmeans.KmeansIdentification(k=faces.shape[0])
 
-        ids = face_track.get_ids(frame_grey, faces)
+            ids = face_track.get_ids(frame_grey, faces)
 
-        if __VERBOSE__:
-            # Draw a rectangle around each face with its person id
-            for i in range(len(ids)):
-                x1, y1, x2, y2 = faces[i]
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            if __VERBOSE__:
+                # Draw a rectangle around each face with its person id
+                for i in range(len(ids)):
+                    x1, y1, x2, y2 = faces[i]
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), colors[ids[i]], 2)
+                    cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
         verbose.print(f"Processing Frame #{frame_number}")
