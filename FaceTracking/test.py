@@ -9,7 +9,7 @@ sys.path.append(__PARENT_DIR__)
 
 from utils import io
 from utils import verbose
-import kmeans
+import knn
 import numpy as np
 import cv2
 
@@ -26,7 +26,7 @@ def test():
     video_fps = int(video.get(cv2.CAP_PROP_FPS))
 
     face_detector = cv2.CascadeClassifier(os.path.join(__CURRENT_DIR__, 'haarcascade_frontalface_default.xml'))
-    face_track = None
+    face_track = knn.KNNIdentification()
     frame_number = 0
     # assign some unique colors for each face id for visualization purposes
     colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
@@ -45,9 +45,6 @@ def test():
         if faces is not None and len(faces):
             faces[:, 2] += faces[:, 0]
             faces[:, 3] += faces[:, 1]
-
-            if face_track is None:
-                face_track = kmeans.KmeansIdentification(k=faces.shape[0])
 
             ids = face_track.get_ids(frame_grey, faces)
 
