@@ -20,11 +20,12 @@ class KmeansIdentification:
     This class use a modified version of K-means Algorithm to use in online face recognition and identification
     """
 
-    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=2000, learning_rate=1):
+    def __init__(self, k: int = -1, iterations=2000, tolerance=1e-4, threshold=2000, learning_rate=1):
         """
 
         Args:
             k (int): The initial number of clusters to partition data into.
+                     Defaults to -1, which means it will be inferred from data in `kmeans_init`.
             iterations (int): Max number of iterations to run the k-means algorithm.
             tolerance (float): Absolute tolerance, used to compare difference in the cluster centers
                                of two consecutive iterations to detect convergence.
@@ -58,6 +59,9 @@ class KmeansIdentification:
             This function should be called once to initialize the centroid of each cluster, for updating existing
             clusters `kmeans_dynamic_update` should be used instead.
         """
+
+        if self.k == -1:
+            self.k = x.shape[0]
 
         clusters = np.zeros(x.shape[0], dtype=np.uint16)
 
