@@ -15,6 +15,17 @@ import numpy as np
 import numpy.typing as npt
 
 
+# TODO:
+#  Try multiple approaches for adding a new class:
+#    1. Avg distance for classified class
+#    2. Min distance for classified class
+#    3. Avg distance for nearest class
+#    4. Min distance for nearest class
+#    5. Prefer newly added class
+#    6. Use nearest neighbour instead of K-nearest neighbour when adding a new class
+#    7. Use KNN with Kmeans: Use kmeans to cluster new samples, when they are large enough add them to KNN
+
+
 class KNNIdentification:
     """
     This class use a modified version of K Nearest Neighbours (KNN) Classification Algorithm to use in online
@@ -28,14 +39,21 @@ class KNNIdentification:
         `k = minimum(k, 1 + n_data//k)`
     """
 
-    def __init__(self, k=5):
+    def __init__(self, n_classes: int = -1, k=5, threshold=2000):
         """
 
         Args:
+            n_classes (int): The initial number of classes to classify data into.
+                             Defaults to -1, which means it will be inferred from data in `knn_init`.
             k (int): Number of neighbours to use when classifying. Defaults to 5.
+            threshold (float): The maximum euclidian distance at which two points are considered in the same cluster.
+                               i.e. if the minimum euclidian distance between point A and average of distances of all
+                               near neighbours clusters exceeds threshold, a new class will be created with point A.
         """
 
+        self.n_classes = n_classes
         self.k = k
+        self.threshold = threshold
         self.features = None
         self.classes = None
 
@@ -54,6 +72,9 @@ class KNNIdentification:
             This function should be called once to initialize the dimensionality of features and labels, for updating
             existing classes use `knn` instead.
         """
+
+        if self.n_classes == -1:
+            self.n_classes = x.shape[0]
 
         self.features = x
         self.classes = np.arange(x.shape[0])
@@ -83,9 +104,18 @@ class KNNIdentification:
         for i, row in enumerate(x):
             distances = np.linalg.norm(self.features - row, axis=1)
             k = min(self.k, 1 + int(self.features.shape[0] // self.k))
-            nearest_k_classes = self.classes[np.argsort(distances)][:k]
+            min_k_distances_classes = np.argsort(distances)[:k]
+            nearest_k_classes = self.classes[min_k_distances_classes]
             label = np.bincount(nearest_k_classes).argmax()  # get the most frequent class
             classes[i] = label
+
+            min_k_distances = distances[min_k_distances_classes]
+            avg_distance_to_classified_class = np.mean(min_k_distances[nearest_k_classes == label])
+
+            # Create a new class if the current row is too far from existing classes
+            if avg_distance_to_classified_class > self.threshold:
+                classes[i] = self.n_classes
+                self.n_classes += 1
 
         self.features = np.append(self.features, x, axis=0)
         self.classes = np.append(self.classes, classes, axis=0)
