@@ -3,22 +3,22 @@ import cv2
 import numpy as np
 import time
 from FeaturesExtraction import *
-from Preprocessing import *
+from Utils import *
 from SlidingWindow import *
 import pickle as pickle
 import time
 import threading
 
 ################################## Hyperparameters ##################################
-maxwidth, maxheight = 72*7, 72*7 # max width and height of the image after resizing
+maxwidth, maxheight = 72*13, 72*13 # max width and height of the image after resizing
 (winW, winH) = (19, 19) # window width and height
-pyramidScale = 2 # Scale factor for the pyramid
+pyramidScale = 18 # Scale factor for the pyramid
 stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 skinThreshold = 0.4 # threshold for skin color in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test5.jpg")
+originalImg = cv2.imread("../HOG-SVM/Examples/Test4.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
@@ -30,7 +30,7 @@ dim = (int(originalImg.shape[1] * f), int(originalImg.shape[0] * f))
 originalImg = cv2.resize(originalImg, dim)
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-modelName = "./Models/ModelCBCL-Small-PCA.sav"
+modelName = "./Models/ModelCBCL-HOG-MPL.sav"
 model = pickle.load(open(modelName, 'rb'))
 faces = []
 
@@ -62,7 +62,7 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
     mask = DetectSkinColor(image)
-    windows = sliding_window(image, stepSize,(winW, winH),mask,skinThreshold)
+    windows = slidingWindow(image, stepSize,(winW, winH),mask,skinThreshold)
     if(len(windows)) == 0:
         break
     # print("[INFO] Num of windows in the current image pyramid ",len(windows))
@@ -74,7 +74,6 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     #     t.start()
     # for t in threads:
     #     t.join()
-
 
     indices, patches = zip(*windows)
     patches_hog = np.array([ApplyPCA(ExtractHOGFeatures(patch),pca) for patch in patches])
@@ -116,9 +115,8 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     #     if predicted_label == "Faces":
     #         faces.append((x, y, x+w,y+h))
         
-
 # Remove overlapping rectangles by using non-maximum suppression
-def non_max_suppression(faces, overlapThresh=0.3):
+def nonMaxSuppression(faces, overlapThresh=0.3):
     """ Perform non-maximum suppression on the overlapping rectangles
 
     Args:
@@ -166,7 +164,7 @@ def non_max_suppression(faces, overlapThresh=0.3):
     
     return pickedBoundries
 
-faces = non_max_suppression(faces,overlappingThreshold)
+faces = nonMaxSuppression(faces,overlappingThreshold)
 
 # Calculate time after processing in seconds
 end_time = time.time()

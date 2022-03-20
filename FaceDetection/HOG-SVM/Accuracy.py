@@ -1,6 +1,6 @@
 from operator import mod
 from FeaturesExtraction import ExtractHOGFeatures
-from Preprocessing import ConvertToGrayScale, HistogramEqualization
+from Utils import ConvertToGrayScale, HistogramEqualization
 import pickle as pickle
 import numpy as np
 import cv2
