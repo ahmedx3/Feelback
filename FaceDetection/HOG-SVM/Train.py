@@ -15,7 +15,7 @@ random_seed = 1
 random.seed(random_seed)
 np.random.seed(random_seed)
 
-used_classifier = "MPL"
+used_classifier = "SVM"
 
 classifiers = {
     # SVM with gaussian kernel
@@ -50,9 +50,9 @@ def train_classifier(path_to_dataset):
     print('Loading dataset. This will take time ...')
     features, labels = load_dataset(path_to_dataset)
     print('Finished loading dataset.')
-    # PCA
+    # # PCA
     D_before = len(features[0])
-    pca = PCA(n_components=10)
+    pca = PCA(n_components=50)
     pca.fit(features)
     filename = './Models/PCAModel.sav'
     pickle.dump(pca, open(filename, 'wb'))
@@ -81,7 +81,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/ModelCBCL-HOG-MPL.sav'
+    filename = './Models/ModelCBCL-CV-DataEnhanced7.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":
