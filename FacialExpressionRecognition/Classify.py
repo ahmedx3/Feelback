@@ -17,9 +17,10 @@ model: SVC = pickle.load(open('Model.sav', 'rb'))
 start_time = time.time()
 
 # Load data with extracted features
-print('Loading data and extract features. This will take time ...')
+print('Loading data and extract features')
 features, labels = DatasetLoading.load_test_data("../Test/TFEID")
 print('Finished loading data.')
+print("Number of actual used samples: ", len(labels))
 
 # Calculate time before processing
 # img_features = featureExtractor.ExtractHOGFeatures(img)
@@ -40,7 +41,7 @@ print("[INFO] Time taken is {:.5f} seconds".format(end_time - start_time))
 print("Classification accuracy: ",accuracy*100, "%")
 # Utils.show_image(img, predicted)
 
-f = open("out.txt", "w")
-for i in range(len(labels)):
-    f.write(f"{predicted[i]}  {labels[i]}\n")
-f.close()
+# f = open("D:\out.txt", "w")
+# for i in range(len(labels)):
+#     f.write(f"{predicted[i]}  {labels[i]}\n")
+# f.close()
