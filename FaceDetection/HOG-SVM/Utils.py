@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import cv2
 import numpy as np
 import math
+np.seterr(divide='ignore', invalid='ignore')
 
 def Normalize(Array):
     """Normalize an array by dividing it by its square root sum

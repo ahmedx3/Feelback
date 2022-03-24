@@ -12,6 +12,7 @@ from utils import verbose
 import knn
 import numpy as np
 import cv2
+import dlib
 
 __VERBOSE__ = verbose.__VERBOSE__
 
@@ -25,11 +26,12 @@ def test():
 
     video_fps = int(video.get(cv2.CAP_PROP_FPS))
 
-    face_detector = cv2.CascadeClassifier(os.path.join(__CURRENT_DIR__, 'haarcascade_frontalface_default.xml'))
+    face_detector = dlib.get_frontal_face_detector()
     face_track = knn.KNNIdentification()
     frame_number = 0
     # assign some unique colors for each face id for visualization purposes
     colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
+
     # Read frame by frame until video is completed
     while video.isOpened():
 
@@ -39,12 +41,10 @@ def test():
 
         frame_grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        faces: np.ndarray = face_detector.detectMultiScale(frame_grey, scaleFactor=1.3, minNeighbors=5)
+        faces_rectangles = face_detector(frame_grey, 0)
+        faces = np.array([[face.left(), face.top(), face.right(), face.bottom()] for face in faces_rectangles])
 
-        # Convert Bounding Boxes from (x, y, w, h) to (x1, y1, x2, y2)
         if faces is not None and len(faces):
-            faces[:, 2] += faces[:, 0]
-            faces[:, 3] += faces[:, 1]
 
             ids = face_track.get_ids(frame_grey, faces)
 

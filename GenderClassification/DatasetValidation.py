@@ -7,12 +7,12 @@ import Utils
 
 # Load Saved model
 model: SVC = pickle.load(open(os.path.join(os.path.dirname(
-    __file__), "Models/Kaggle_Tra_SVM_LPQ_85_83.model"), 'rb'))
+    __file__), "Models/Kaggle_Tra_SVM_LPQ_87_86.model"), 'rb'))
 
 # Load dataset with extracted features
 print('Loading dataset and extract features. This will take time ...')
-features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature="LPQ",label="gender", age_range=(20,20))
-# features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(selected_feature="LBP", type="Validation")
+features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature="LPQ",label="gender", age_range=(20,50))
+# features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation")
 print('Finished loading dataset.')
 
 # Get Model Predictions
