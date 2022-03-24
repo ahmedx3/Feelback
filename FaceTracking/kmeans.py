@@ -10,6 +10,7 @@ sys.path.append(__PARENT_DIR__)
 from utils.img_utils import BoundingBox
 from utils import verbose
 
+from FaceTracking.feature_extracton import eigen_faces_features
 import numpy as np
 import numpy.typing as npt
 
@@ -19,11 +20,12 @@ class KmeansIdentification:
     This class use a modified version of K-means Algorithm to use in online face recognition and identification
     """
 
-    def __init__(self, k: int, iterations=2000, tolerance=1e-4, threshold=10, learning_rate=0.5):
+    def __init__(self, k: int = -1, iterations=2000, tolerance=1e-4, threshold=2000, learning_rate=1):
         """
 
         Args:
             k (int): The initial number of clusters to partition data into.
+                     Defaults to -1, which means it will be inferred from data in `kmeans_init`.
             iterations (int): Max number of iterations to run the k-means algorithm.
             tolerance (float): Absolute tolerance, used to compare difference in the cluster centers
                                of two consecutive iterations to detect convergence.
@@ -36,12 +38,13 @@ class KmeansIdentification:
 
         self.k = k
         self.centroids = None
+        self.cluster_count = None
         self.max_iterations = max(10, iterations)
         self.tolerance = tolerance
         self.threshold = threshold
         self.learning_rate = learning_rate
 
-    def kmeans_init(self, x: np.ndarray) -> npt.NDArray[int]:
+    def kmeans_init(self, x: np.ndarray) -> npt.NDArray[np.uint16]:
         """
         This is the standard K-means clustering algorithm
 
@@ -57,7 +60,10 @@ class KmeansIdentification:
             clusters `kmeans_dynamic_update` should be used instead.
         """
 
-        clusters = np.zeros(x.shape[0], dtype=int)
+        if self.k == -1:
+            self.k = x.shape[0]
+
+        clusters = np.zeros(x.shape[0], dtype=np.uint16)
 
         # select k random centroids
         np.random.seed(123)
@@ -82,13 +88,14 @@ class KmeansIdentification:
             iterations -= 1
 
         self.centroids = centroids
+        self.cluster_count = np.ones(centroids.shape[0], dtype=np.uint16)
 
         verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
         verbose.print(f"kmeans centroids: {self.centroids}")
 
         return clusters
 
-    def kmeans_dynamic_update(self, x: np.ndarray) -> npt.NDArray[int]:
+    def kmeans_dynamic_update(self, x: np.ndarray) -> npt.NDArray[np.uint16]:
         """
         This is a modified version of K-means clustering algorithm.
         It does not use a fixed number of clusters k, instead it creates new clusters if the minimum euclidian distance
@@ -108,8 +115,9 @@ class KmeansIdentification:
             `kmeans_init`.
         """
 
-        clusters = np.zeros(x.shape[0], dtype=int)
+        clusters = np.zeros(x.shape[0], dtype=np.uint16)
         centroids = self.centroids
+        cluster_count = np.zeros(centroids.shape[0], dtype=np.uint16)
 
         iterations = self.max_iterations
 
@@ -117,12 +125,15 @@ class KmeansIdentification:
             for i, row in enumerate(x):
                 # The cluster of the ith sample point is the closest one to this sample point
                 distances = np.linalg.norm(centroids - row, axis=1)
-                clusters[i] = np.argmin(distances)
+                cluster_id = np.argmin(distances)
+                clusters[i] = cluster_id
+                cluster_count[cluster_id] += 1
                 min_distance = distances[clusters[i]]
 
                 # Create a new cluster if the current row is too far from existing clusters
                 if min_distance > self.threshold:
                     centroids = np.append(centroids, [row], axis=0)
+                    cluster_count = np.pad(cluster_count, (0, 1), constant_values=1)
                     clusters[i] = self.k
                     self.k += 1
 
@@ -138,12 +149,18 @@ class KmeansIdentification:
 
         self.centroids = centroids
 
+        new_clusters_count = cluster_count.shape[0] - self.cluster_count.shape[0]
+        # Extend self.cluster_count according to added clusters
+        self.cluster_count = np.append(self.cluster_count, np.zeros(new_clusters_count, np.uint16), axis=0)
+        # increase count for clusters that appeared in this frame
+        self.cluster_count[cluster_count != 0] += 1
+
         verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
         verbose.print(f"kmeans centroids: {self.centroids}")
 
         return clusters
 
-    def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[int]:
+    def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[np.uint16]:
         # TODO: Feature Extraction from faces (Eigen-faces + position)
-        x = np.array([])
-        return self.kmeans_init(x) if self.centroids is None else self.kmeans_dynamic_update(x)
+        eigen_faces = eigen_faces_features(frame, faces_positions)
+        return self.kmeans_init(eigen_faces) if self.centroids is None else self.kmeans_dynamic_update(eigen_faces)
