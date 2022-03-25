@@ -1,9 +1,11 @@
 """
 Imports
 """
+from operator import le
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import svm
+from sklearn.neural_network import MLPClassifier
 import random
 import pickle
 import DatasetLoading
@@ -21,6 +23,7 @@ used_classifier = "SVM"
 classifiers = {
     # SVM with gaussian kernel
     'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
+    'MLP': MLPClassifier(random_state=random_seed, hidden_layer_sizes=(100,), max_iter=20000),
 }
 
 """
@@ -31,8 +34,9 @@ def train_classifier():
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
     features, labels = DatasetLoading.load_CK_dataset()
+    # features, labels = DatasetLoading.load_AffectNet_dataset()
     print('Finished loading dataset.')
-
+    print("Number of actual used samples: ", len(labels))
     # Since we don't want to know the performance of our classifier on images it has seen before
     # we are going to withhold some images that we will test the classifier on after training
     train_features, test_features, train_labels, test_labels = train_test_split(
