@@ -4,22 +4,6 @@ import numpy as np
 import math
 np.seterr(divide='ignore', invalid='ignore')
 
-def Normalize(Array):
-    """Normalize an array by dividing it by its square root sum
-
-    Args:
-        Array (_type_): array to be normalized
-
-    Returns:
-        _type_: normalized array with any dimension
-    """
-    Array = np.copy(Array)
-    Sum = (Array**2).sum()
-    Divisor = math.sqrt(Sum.sum())
-    if Divisor != 0:
-        Array /= Divisor
-    return Array
-
 def HistogramEqualization(grayScaleImage):
     """equalize histogram of grayscale image
 
@@ -111,20 +95,21 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     contributionRatio = np.array(contributionRatio).astype(float)
 
     # Calculate for every pixel all bins by multiplying the Gradient and the contribution Ratio
-    HOGPX = np.zeros((image.shape[0],image.shape[1],numOfBins))
+    hogPerPixel = np.zeros((image.shape[0],image.shape[1],numOfBins))
     for bin in range(numOfBins):
-        HOGPX[:,:,bin] += np.where(np.array(Bin[0]) == bin,np.array(contributionRatio[0]),0)
-        HOGPX[:,:,bin] += np.where(np.array(Bin[1]) == bin,np.array(contributionRatio[1]),0)
+        hogPerPixel[:,:,bin] += np.where(np.array(Bin[0]) == bin,np.array(contributionRatio[0]),0)
+        hogPerPixel[:,:,bin] += np.where(np.array(Bin[1]) == bin,np.array(contributionRatio[1]),0)
     Gradient = np.repeat(Gradient[:,:],numOfBins).reshape((image.shape[0],image.shape[1],numOfBins))
-    HOGPX = HOGPX * Gradient
+    hogPerPixel = hogPerPixel * Gradient
     
     # Calculate HOG For all Cells
+    # TODO : Try to vectorize this
     NumCellsX = int( (image.shape[0] / cellSize[0]) )
     NumCellsY = int( (image.shape[1] / cellSize[1]) )
     HOGCells = np.zeros((NumCellsX, NumCellsY,numOfBins))
     for x in range(NumCellsX):
         for y in range(NumCellsY):
-            HOGCells[x,y] = np.sum(np.sum(HOGPX[x*cellSize[0]:(x+1)*cellSize[0], y*cellSize[1]:(y+1)*cellSize[1]], axis=0),axis=0)
+            HOGCells[x,y] = np.sum(np.sum(hogPerPixel[x*cellSize[0]:(x+1)*cellSize[0], y*cellSize[1]:(y+1)*cellSize[1]], axis=0),axis=0)
             
     # Normalize for blocks
     HOGVector = []
@@ -136,6 +121,7 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):
             HOGVector.extend(list(np.concatenate( 
-                Normalize( HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY] )).ravel()))
+                HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]/(np.abs(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]).sum()+1e-5)
+                ).ravel()))
             
     return HOGVector
