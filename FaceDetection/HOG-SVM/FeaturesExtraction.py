@@ -29,11 +29,14 @@ def ExtractHOGFeatures(img,target_img_size=(19,19)):
     return hog
 
 def ApplyPCA(features,pca):
-    """
-    Applies PCA to a feature vector
-    :param feature: feature vector
-    :param pca: PCA object
-    :return: PCA transformed feature vector
+    """Applies PCA to a feature vector
+
+    Args:
+        features (_type_): feature vector
+        pca (_type_): PCA object
+
+    Returns:
+        _type_: PCA transformed feature vector
     """
     features = np.array(features)
     return pca.transform(features.reshape(1,-1))[0]

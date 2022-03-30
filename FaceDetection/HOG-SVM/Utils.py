@@ -1,4 +1,3 @@
-from matplotlib import pyplot as plt
 import cv2
 import numpy as np
 import math
@@ -84,6 +83,7 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     # Calculate the Direction (in degrees)
     GradientOrientation = ( ( ( np.arctan2(Gy, Gx) ) / math.pi ) * 180 ) % 180
     
+    # TODO : Divide bin
     # Calculate Bins For Every Pixel
     Bin = [ np.floor(( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) - 1) % numOfBins,
                       np.floor( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) % numOfBins]
@@ -118,6 +118,7 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     numOfCellsInBlockX = int( blockSize[0] / cellSize[0] )
     numOfCellsInBlockY = int( blockSize[1] / cellSize[1] )
 
+    # TODO : Remove extend
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):
             HOGVector.extend(list(np.concatenate( 
@@ -125,3 +126,20 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
                 ).ravel()))
             
     return HOGVector
+
+def EdgeDetection(img, sigma=0.33):
+    """Returns the edges in the image
+
+    Args:
+        img (_type_): image to extract features from
+        sigma (float, optional): threshold of ranges of values to consider as edges. Defaults to 0.33.
+
+    Returns:
+        _type_: Edges in the image
+    """
+    # Detect edges in the image
+    median = np.median(img)
+    lower = int(max(0, (1.0 - sigma) * median))
+    upper = int(min(255, (1.0 + sigma) * median))
+    edges = cv2.Canny(img, lower, upper) # 50,100 also works well
+    return edges

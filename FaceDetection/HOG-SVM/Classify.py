@@ -7,15 +7,14 @@ from Utils import *
 from SlidingWindow import *
 import pickle as pickle
 import time
-import threading
 
 ################################## Hyperparameters ##################################
-maxwidth, maxheight = 640/2, 360/2 # max width and height of the image after resizing
 (winW, winH) = (19, 19) # window width and height
 pyramidScale = 2 # Scale factor for the pyramid
 stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 skinThreshold = 0.4 # threshold for skin color in the window
+edgeThreshold = 0.25 # threshold for edge percentage in the window
 #####################################################################################
 
 originalImg = cv2.imread("../HOG-SVM/Examples/Test9.jpg")
@@ -39,7 +38,7 @@ faces = []
 
 pca = pickle.load(open("./Models/PCAModel.sav", 'rb'))
 
-print("[INFO] (maxwidth,maxheight) ",maxwidth,maxheight, " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
+print("[INFO]", " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
 start_time = time.time()
 
@@ -64,7 +63,8 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
     mask = DetectSkinColor(image)
-    windows = slidingWindow(image, stepSize,(winW, winH),mask,skinThreshold)
+    edges = EdgeDetection(image)
+    windows = slidingWindow(image, stepSize,(winW, winH),mask,edges,skinThreshold,edgeThreshold)
     if(len(windows)) == 0:
         break
     print("[INFO] Num of windows in the current image pyramid ",len(windows))
@@ -89,15 +89,15 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     #     if window.shape[0] != winH or window.shape[1] != winW:
     #         continue
 
-    #     indices = mask.astype(np.uint8)  #convert to an unsigned byte
-    #     indices *= 255
-    #     cv2.imshow("mask", indices[y:y+winH,x:x+winW])
-    #     cv2.waitKey(1)
-    #     time.sleep(0.025)
-    #     print(window.size)
-    #     skinRatio = np.sum(mask[y:y+winH,x:x+winW])/ (winW * winH)
-    #     if skinRatio < 0.2:
-    #         continue
+    #     # indices = mask.astype(np.uint8)  #convert to an unsigned byte
+    #     # indices *= 255
+    #     # cv2.imshow("mask", indices[y:y+winH,x:x+winW])
+    #     # cv2.waitKey(1)
+    #     # time.sleep(0.025)
+    #     # print(window.size)
+    #     # skinRatio = np.sum(mask[y:y+winH,x:x+winW])/ (winW * winH)
+    #     # if skinRatio < 0.2:
+    #     #     continue
 
     #     # Debugging
     #     clone = image.copy()
