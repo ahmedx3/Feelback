@@ -30,20 +30,20 @@ copyOriginalImage = originalImg.copy()
 # originalImg = cv2.resize(originalImg, dim)
 # print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/4), int(originalImg.shape[0]/4)))
+originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/2), int(originalImg.shape[0]/2)))
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-modelName = "./Models/ModelCBCL-CV-DataEnhanced6.sav"
+modelName = "./Models/ModelCBCL-HOG-Test.sav"
 model = pickle.load(open(modelName, 'rb'))
 faces = []
 
-pca = pickle.load(open("./Models/PCAModel-E6.sav", 'rb'))
+pca = pickle.load(open("./Models/PCAModel.sav", 'rb'))
 
 print("[INFO] (maxwidth,maxheight) ",maxwidth,maxheight, " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
 start_time = time.time()
 
-def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model):
+def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model,pca):
     (x,y),window = windowList
     if window.shape[0] != winH or window.shape[1] != winW:
         return
@@ -54,12 +54,11 @@ def getFacesBoundryBoxes(windowList,scaleFactor,winH,winW,model):
     h = int(winH * scaleFactor)
 
     # resize window
-    image_features = ExtractHOGFeatures(window)
+    image_features = ApplyPCA(ExtractHOGFeatures(window),pca)
     predicted_label = model.predict([image_features])
 
     if predicted_label == "Faces":
         faces.append((x, y, x+w,y+h))
-
 
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     
@@ -72,7 +71,7 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
 
     # threads = []
     # for i,window in enumerate(windows):
-    #     t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model))
+    #     t = threading.Thread(target=getFacesBoundryBoxes, args=(windows[i],scaleFactor,winH,winW,model,pca))
     #     threads.append(t)
     #     t.start()
     # for t in threads:

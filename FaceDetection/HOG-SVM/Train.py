@@ -50,7 +50,7 @@ def train_classifier(path_to_dataset):
     print('Loading dataset. This will take time ...')
     features, labels = load_dataset(path_to_dataset)
     print('Finished loading dataset.')
-    # # PCA
+    # PCA
     D_before = len(features[0])
     pca = PCA(n_components=50)
     pca.fit(features)
@@ -81,7 +81,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/ModelCBCL-CV-DataEnhanced7.sav'
+    filename = './Models/ModelCBCL-HOG-Test.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

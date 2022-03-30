@@ -1,3 +1,4 @@
-Best till now E6 (by adding 260 hard negative mining images)
+- Best till now ModelCBCL-E6.sav (by adding 260 hard negative mining images) (with opencv hog) (faster) (50 pca)
+- ModelCBCL-HOG.sav with implemented HOG (with original dataset) (slower) (50 pca)
 # TODO : Try adding as minimimum negative mining as possible
 # TODO : Or Try to enhance E7 (1316 from mining 2304 from natural dataset) by adding more positive dataset
