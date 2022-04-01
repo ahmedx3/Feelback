@@ -128,3 +128,17 @@ class KNNIdentification:
         # TODO: Feature Extraction from faces (Eigen-faces + position)
         eigen_faces = eigen_faces_features(frame, faces_positions)
         return self.knn_init(eigen_faces) if self.classes is None else self.knn(eigen_faces)
+
+    def get_outliers_ids(self) -> npt.NDArray[np.int]:
+        """
+        Returns:
+            outliers_ids: np.ndarray which contains ids of outlier classes.
+        """
+
+        freq = np.bincount(self.classes)
+        # outliers_ids = np.argwhere(np.mean(freq) - freq > np.std(freq))
+        # outliers_ids = np.argwhere(freq < np.percentile(freq, 25))
+        max_freq = freq.max()
+        outliers_ids = np.argwhere((max_freq - freq) / max_freq > 0.75)
+        return outliers_ids.ravel()
+
