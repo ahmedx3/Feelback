@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import math
+from skimage.measure import block_reduce
 np.seterr(divide='ignore', invalid='ignore')
 
 def HistogramEqualization(grayScaleImage):
@@ -103,13 +104,9 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     hogPerPixel = hogPerPixel * Gradient
     
     # Calculate HOG For all Cells
-    # TODO : Try to vectorize this
     NumCellsX = int( (image.shape[0] / cellSize[0]) )
     NumCellsY = int( (image.shape[1] / cellSize[1]) )
-    HOGCells = np.zeros((NumCellsX, NumCellsY,numOfBins))
-    for x in range(NumCellsX):
-        for y in range(NumCellsY):
-            HOGCells[x,y] = np.sum(np.sum(hogPerPixel[x*cellSize[0]:(x+1)*cellSize[0], y*cellSize[1]:(y+1)*cellSize[1]], axis=0),axis=0)
+    HOGCells = block_reduce(hogPerPixel, block_size=(int(imageShape[0]/NumCellsX), int(imageShape[1]/NumCellsY), 1), func=np.sum)
             
     # Normalize for blocks
     HOGVector = []
@@ -118,10 +115,9 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     numOfCellsInBlockX = int( blockSize[0] / cellSize[0] )
     numOfCellsInBlockY = int( blockSize[1] / cellSize[1] )
 
-    # TODO : Remove extend
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):
-            HOGVector.extend(list(np.concatenate( 
+            HOGVector.append(list(np.concatenate( 
                 HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]/(np.abs(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]).sum()+1e-5)
                 ).ravel()))
             
