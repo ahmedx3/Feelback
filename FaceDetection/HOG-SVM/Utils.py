@@ -117,7 +117,7 @@ def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
 
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):
-            HOGVector.append(list(np.concatenate( 
+            HOGVector.extend(list(np.concatenate( 
                 HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]/(np.abs(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]).sum()+1e-5)
                 ).ravel()))
             
@@ -139,3 +139,67 @@ def EdgeDetection(img, sigma=0.33):
     upper = int(min(255, (1.0 + sigma) * median))
     edges = cv2.Canny(img, lower, upper) # 50,100 also works well
     return edges
+
+def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), numOfBins=7):
+    stackedWindows = np.stack(slidingWindows,axis=-1)
+    
+    blockSize = ( int(blockSize[0]) , int(blockSize[1]) )
+    cellSize = ( int(cellSize[0]) , int(cellSize[1]) )
+    numOfBins = int( numOfBins )
+
+    OrientationStep = 180 / numOfBins
+
+    imageShape = stackedWindows.shape
+    Gradient = np.ones(imageShape)
+    GradientOrientation = np.ones(imageShape)
+    
+    stackedWindows = np.int64(stackedWindows)
+    Gx = np.zeros(imageShape)
+    Gy = np.zeros(imageShape)
+    Gx[:, 1:-1] = stackedWindows[:, 2:] - stackedWindows[:, :-2]
+    Gy[1:-1, :] = stackedWindows[2:, :] - stackedWindows[:-2, :]
+
+    Gradient = np.sqrt(Gx**2 + Gy**2)
+
+    GradientOrientation = ( ( ( np.arctan2(Gy, Gx) ) / math.pi ) * 180 ) % 180
+
+    Bin = [ np.floor(( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) - 1) % numOfBins,
+                      np.floor( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) % numOfBins]
+    Bin = np.int16(Bin)
+    
+    contributionRatio = [ ( 1 - ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) ) ),
+             ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) )]
+    contributionRatio = np.array(contributionRatio).astype(float)
+
+    hogPerPixel = np.zeros((stackedWindows.shape[0],stackedWindows.shape[1],numOfBins,stackedWindows.shape[-1]))
+    for bin in range(numOfBins):
+        hogPerPixel[:,:,bin] += np.where(np.array(Bin[0]) == bin,np.array(contributionRatio[0]),0)
+        hogPerPixel[:,:,bin] += np.where(np.array(Bin[1]) == bin,np.array(contributionRatio[1]),0)
+    Gradient = np.repeat(Gradient[:,:],numOfBins,axis=1).reshape((stackedWindows.shape[0],stackedWindows.shape[1],numOfBins,stackedWindows.shape[-1]))
+    hogPerPixel = hogPerPixel * Gradient
+
+
+    NumCellsX = int( (stackedWindows.shape[0] / cellSize[0]) )
+    NumCellsY = int( (stackedWindows.shape[1] / cellSize[1]) )
+    HOGCells = block_reduce(hogPerPixel, block_size=(int(imageShape[0]/NumCellsX), int(imageShape[1]/NumCellsY), 1,1 ), func=np.sum)
+        
+    numOfBlocksInX = int( (stackedWindows.shape[0] - blockSize[0] + cellSize[0]) / cellSize[0] )
+    numOfBlocksInY = int( (stackedWindows.shape[1] - blockSize[1] + cellSize[1]) / cellSize[1] )
+    numOfCellsInBlockX = int( blockSize[0] / cellSize[0] )
+    numOfCellsInBlockY = int( blockSize[1] / cellSize[1] )
+
+    DivisionVector = np.zeros((numOfBlocksInX,numOfBlocksInY,1,stackedWindows.shape[-1]))
+
+    for x in range(numOfBlocksInX):
+        for y in range(numOfBlocksInY):
+            DivisionVector[x,y] = block_reduce(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY], block_size=(numOfBlocksInX, numOfBlocksInY, numOfBins,1), func=np.sum)
+
+    FinalVector = np.zeros((numOfBlocksInX,numOfBlocksInY,numOfCellsInBlockX,numOfCellsInBlockY,numOfBins,stackedWindows.shape[-1]))
+
+    for x in range(numOfBlocksInX):
+        for y in range(numOfBlocksInY):          
+            FinalVector[x,y] = HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY] / (DivisionVector[x,y]+ 1e-5)
+
+    FinalVector = FinalVector.flatten()
+
+    return FinalVector
