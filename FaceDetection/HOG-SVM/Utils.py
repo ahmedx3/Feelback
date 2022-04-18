@@ -200,6 +200,6 @@ def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), 
         for y in range(numOfBlocksInY):          
             FinalVector[x,y] = HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY] / (DivisionVector[x,y]+ 1e-5)
 
-    FinalVector = FinalVector.flatten()
+    # FinalVector = FinalVector.flatten()
 
     return FinalVector

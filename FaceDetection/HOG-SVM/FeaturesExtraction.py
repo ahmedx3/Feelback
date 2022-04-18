@@ -13,7 +13,8 @@ def ExtractHOGFeatures(img,target_img_size=(19,19)):
     img = cv2.resize(img, target_img_size)
     img = HistogramEqualization(img)
     
-    hog = getHOG(img)
+    # hog = getHOG(img)
+    hog = vectorizedHogSlidingWindows([np.array(img)])
 
     # cellSize = (3,3)
     # blockSize = (6,6)

@@ -14,10 +14,10 @@ pyramidScale = 2 # Scale factor for the pyramid
 stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 skinThreshold = 0.4 # threshold for skin color in the window
-edgeThreshold = 0.25 # threshold for edge percentage in the window
+edgeThreshold = 0.2 # threshold for edge percentage in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test9.jpg")
+originalImg = cv2.imread("../HOG-SVM/Examples/Test4.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
@@ -32,11 +32,11 @@ copyOriginalImage = originalImg.copy()
 originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/2), int(originalImg.shape[0]/2)))
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-modelName = "./Models/ModelCBCL-HOG-Test.sav"
+modelName = "./Models/ModelCBCL-HOG-TestSliding.sav"
 model = pickle.load(open(modelName, 'rb'))
 faces = []
 
-pca = pickle.load(open("./Models/PCAModel.sav", 'rb'))
+pca = pickle.load(open("./Models/PCAModelSliding.sav", 'rb'))
 
 print("[INFO]", " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
@@ -78,7 +78,17 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     #     t.join()
 
     indices, patches = zip(*windows)
-    patches_hog = np.array([ApplyPCA(ExtractHOGFeatures(patch),pca) for patch in patches])
+    st1 = time.time() 
+    grayScaledPatches = [HistogramEqualization(patch) for patch in patches]
+    hogFeatures = vectorizedHogSlidingWindows(grayScaledPatches)
+    patches_hog = []
+    for i in range(len(windows)):
+        patches_hog.append(ApplyPCA(hogFeatures[:,:,:,:,:,i].flatten(),pca))
+
+    # patches_hog = np.array([ApplyPCA(ExtractHOGFeatures(patch),pca) for patch in patches])
+    st2 = time.time()
+    print("[INFO] HOG a7a taken is {:.5f} seconds".format(st2 - st1))
+
     predicted_label = model.predict(patches_hog)
     indices = np.array(indices)
     for i, j in indices[predicted_label == "Faces"]:

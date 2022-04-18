@@ -54,7 +54,7 @@ def train_classifier(path_to_dataset):
     D_before = len(features[0])
     pca = PCA(n_components=50)
     pca.fit(features)
-    filename = './Models/PCAModel.sav'
+    filename = './Models/PCAModelSliding.sav'
     pickle.dump(pca, open(filename, 'wb'))
     features = pca.transform(features)
     D_after = len(features[0])
@@ -81,7 +81,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/ModelCBCL-HOG-Test.sav'
+    filename = './Models/ModelCBCL-HOG-TestSliding.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

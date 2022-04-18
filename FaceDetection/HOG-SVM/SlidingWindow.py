@@ -37,8 +37,7 @@ def slidingWindow(img, stepSize, windowSize,mask,edges,skinThreshold=0.4,edgeThr
     for y in range(0, img.shape[0] - windowSize[0] + 1, stepSize):
         for x in range(0, img.shape[1] - windowSize[1] + 1, stepSize):
             skinRatio = np.sum(mask[y:y+windowSize[1],x:x+windowSize[0]]) / (windowSize[0] * windowSize[1])
-            edgeRatio = np.sum(edges[y:y+windowSize[1],x:x+windowSize[0]] == 255) / (windowSize[0] * windowSize[1])
-            # print("Edge Ratio: ",edgeRatio)
+            edgeRatio = np.sum(edges[y:y+windowSize[1],x:x+windowSize[0]] == 255) / (windowSize[0] * windowSize[1]) 
             if skinRatio < skinThreshold or edgeRatio < edgeThreshold:
                 continue
             windowsArr.append(((x, y), img[y:y + windowSize[1], x:x + windowSize[0]]))
