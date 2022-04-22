@@ -2,7 +2,7 @@ import cv2
 from utils import verbose
 from utils import io
 from utils import video_utils
-
+from FaceDetection.HOG_SVM.main import FaceDetector
 
 def main():
     args = io.get_command_line_args()
@@ -22,6 +22,11 @@ def main():
     verbose.print(f"[INFO] Video has total of {video_frames_count} frames")
     verbose.print(f"[INFO] Video duration is {video_duration} sec")
 
+    ########################### Initialize FaceDetection ###########################
+    modelPath = './FaceDetection/HOG_SVM/Models/ModelCBCL-HOG-TestSliding.sav'
+    pcaPath = './FaceDetection/HOG_SVM/Models/PCAModelSliding.sav'
+    faceDetector = FaceDetector(modelPath,pcaPath)
+
     frame_number = 0
     # Read frame by frame until video is completed
     while video.isOpened():
@@ -29,15 +34,15 @@ def main():
         if not ok:
             break
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        verbose.imshow(frame, delay=1)
         verbose.print(f"[INFO] Processing Frame #{frame_number}")
 
         # ============================================= Preprocessing =============================================
 
         # ============================================= Face Detection ============================================
-
+        faces = faceDetector.detect(frame)
+        verbose.print(f"[INFO] Detected {len(faces)} faces")
+        for (x, y, lenX,lenY) in faces:
+            cv2.rectangle(frame, (int(x), int(y)), (int(lenX), int(lenY)), (0, 255, 0), 2)
         # ========================================= Emotion Classification ========================================
 
         # ============================================= Face Tracking =============================================
@@ -51,6 +56,8 @@ def main():
         # =============================================== Analytics ===============================================
 
         # =========================================================================================================
+        
+        verbose.imshow(frame, delay=1)
 
         frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
 

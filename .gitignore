@@ -1,7 +1,8 @@
 Data/
 Test/
 Results/
-FaceDetection/HOG-SVM/Examples/
+Videos/
+FaceDetection/HOG_SVM/Examples/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

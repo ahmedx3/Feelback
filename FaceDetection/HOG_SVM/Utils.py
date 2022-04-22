@@ -141,6 +141,17 @@ def EdgeDetection(img, sigma=0.33):
     return edges
 
 def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), numOfBins=7):
+    """ Extract Histogram of oriented gradient (HOG) features from an image
+
+    Args:
+        slidingWindows (_type_): array of windows to extract features from
+        blockSize (tuple, optional): Size of the block. Defaults to (6,6).
+        cellSize (tuple, optional): Size of the cell. Defaults to (3,3).
+        numOfBins (int, optional): Number Of bins. Defaults to 7.
+
+    Returns:
+        _type_: array of HOG features
+    """
     stackedWindows = np.stack(slidingWindows,axis=-1)
     
     blockSize = ( int(blockSize[0]) , int(blockSize[1]) )
@@ -203,3 +214,51 @@ def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), 
     # FinalVector = FinalVector.flatten()
 
     return FinalVector
+
+def nonMaxSuppression(faces, overlapThresh=0.3):
+    """ Perform non-maximum suppression on the overlapping rectangles
+
+    Args:
+        faces (_type_): array of overlapping boxes (faces)
+        overlapThresh (float, optional): threshold of areas of intesecting boxes. Defaults to 0.3.
+
+    Returns:
+        _type_: array of non-overlapping boxes
+    """
+    faces = np.asarray(faces)
+
+    if len(faces) == 0:
+        return []
+
+    pickedBoundries = []
+
+    if faces.dtype.kind == "i":
+        faces = faces.astype("float")
+    
+    x1 = faces[:, 0]
+    y1 = faces[:, 1]
+    x2 = faces[:, 2]
+    y2 = faces[:, 3]
+
+    areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+
+    idxs = np.argsort(y2)
+    
+    while len(idxs) > 0:
+        last = len(idxs) - 1
+        i = idxs[last]
+        pickedBoundries.append((x1[i], y1[i], x2[i], y2[i]))
+
+        xx1 = np.maximum(x1[i], x1[idxs[:last]])
+        yy1 = np.maximum(y1[i], y1[idxs[:last]])
+        xx2 = np.minimum(x2[i], x2[idxs[:last]])
+        yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+        overlappingWidth = np.maximum(0, xx2 - xx1 + 1)
+        overlappingHeight = np.maximum(0, yy2 - yy1 + 1)
+
+        overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[:last]]
+
+        idxs = np.delete(idxs, np.concatenate(([last], np.where(overlapRatio > overlapThresh)[0])))
+    
+    return pickedBoundries

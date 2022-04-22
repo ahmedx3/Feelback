@@ -1,5 +1,5 @@
 import cv2
-from Utils import *
+from FaceDetection.HOG_SVM.Utils import *
 
 def ExtractHOGFeatures(img,target_img_size=(19,19)):
     """
