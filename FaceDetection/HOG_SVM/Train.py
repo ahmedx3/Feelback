@@ -19,7 +19,7 @@ used_classifier = "SVM"
 
 classifiers = {
     # SVM with gaussian kernel
-    'SVM': svm.SVC(random_state=random_seed, kernel="rbf",cache_size=1000),
+    'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
     'LinearSVM': LinearSVC(random_state=random_seed),
     'MPL': MLPClassifier(random_state=random_seed, max_iter=500)
 }
@@ -54,7 +54,7 @@ def train_classifier(path_to_dataset):
     D_before = len(features[0])
     pca = PCA(n_components=50)
     pca.fit(features)
-    filename = './Models/PCAModelSliding.sav'
+    filename = './Models/PCA_v3.sav'
     pickle.dump(pca, open(filename, 'wb'))
     features = pca.transform(features)
     D_after = len(features[0])
@@ -81,7 +81,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/ModelCBCL-HOG-TestSliding.sav'
+    filename = './Models/Model_v3.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

@@ -23,8 +23,8 @@ def main():
     verbose.print(f"[INFO] Video duration is {video_duration} sec")
 
     ########################### Initialize FaceDetection ###########################
-    modelPath = './FaceDetection/HOG_SVM/Models/ModelCBCL-HOG-TestSliding.sav'
-    pcaPath = './FaceDetection/HOG_SVM/Models/PCAModelSliding.sav'
+    modelPath = './FaceDetection/HOG_SVM/Models/Model_v3.sav'
+    pcaPath = './FaceDetection/HOG_SVM/Models/PCA_v3.sav'
     faceDetector = FaceDetector(modelPath,pcaPath)
 
     frame_number = 0

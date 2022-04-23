@@ -17,13 +17,13 @@ skinThreshold = 0.4 # threshold for skin color in the window
 edgeThreshold = 0.2 # threshold for edge percentage in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG-SVM/Examples/Test33.png")
+originalImg = cv2.imread("../HOG_SVM/Examples/Test1.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
 copyOriginalImage = originalImg.copy()
 
-originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/8), int(originalImg.shape[0]/8)))
+originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/6), int(originalImg.shape[0]/6)))
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
 modelName = "./Models/ModelCBCL-HOG-TestSliding.sav"
