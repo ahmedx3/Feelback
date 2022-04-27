@@ -117,17 +117,19 @@ class GazeTracking(object):
             blinking_ratio = (self.eye_left.blinking + self.eye_right.blinking) / 2
             return blinking_ratio > 3.8
 
-    def annotated_frame(self):
-        """Returns the main frame with pupils highlighted"""
-        frame = self.frame.copy()
+    def get_current_state_text(self):
+        """
+        Returns the text description of the eyes current state
+        """
 
-        if self.pupils_located:
-            color = (0, 255, 0)
-            x_left, y_left = self.pupil_left_coords()
-            x_right, y_right = self.pupil_right_coords()
-            cv2.line(frame, (x_left - 5, y_left), (x_left + 5, y_left), color)
-            cv2.line(frame, (x_left, y_left - 5), (x_left, y_left + 5), color)
-            cv2.line(frame, (x_right - 5, y_right), (x_right + 5, y_right), color)
-            cv2.line(frame, (x_right, y_right - 5), (x_right, y_right + 5), color)
+        text = ""
+        if self.is_blinking():
+            text = "Blinking"
+        elif self.is_right():
+            text = "Looking right"
+        elif self.is_left():
+            text = "Looking left"
+        elif self.is_center():
+            text = "Looking center"
+        return text
 
-        return frame
