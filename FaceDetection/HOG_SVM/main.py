@@ -43,9 +43,9 @@ class FaceDetector:
             for i, j in indices[predicted_label == "Faces"]:
                 faces.append((int(i * scaleFactor), int(j * scaleFactor), int((i + winW) * scaleFactor), int((j + winH) * scaleFactor)))
 
-            faces = nonMaxSuppression(faces,overlappingThreshold)
+        faces = nonMaxSuppression(faces,overlappingThreshold)
 
-            return faces
+        return faces
 
 # FaceDetector = FaceDetector()
 # faces = FaceDetector.detect(cv2.imread('D:/Git/Feelback/FaceDetection/HOG_SVM/Examples/Test8.jpg'))
