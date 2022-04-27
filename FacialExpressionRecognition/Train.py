@@ -58,7 +58,7 @@ def main():
     train_classifier()
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = 'Model.sav'
+    filename = 'Models/Model.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

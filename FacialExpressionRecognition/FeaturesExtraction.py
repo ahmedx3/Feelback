@@ -6,17 +6,17 @@ import dlib
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-import Utils
+# import FacialExpressionRecognition.Utils as Utils
 import pywt
 
 class FeatureExtractor:
     def __init__(self, load=False):
         self.flag = True
         self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor('Experiments/shape_predictor_68_face_landmarks.dat')
+        self.predictor = dlib.shape_predictor('FacialExpressionRecognition/Experiments/shape_predictor_68_face_landmarks.dat')
         if load:
-            self.pca = pickle.load(open('PCAModel.sav', 'rb'))
-            self.scaler = pickle.load(open('scalerModel.sav', 'rb'))
+            self.pca = pickle.load(open('FacialExpressionRecognition/Models/PCAModel.sav', 'rb'))
+            self.scaler = pickle.load(open('FacialExpressionRecognition/Models/scalerModel.sav', 'rb'))
 
     def ExtractHOGFeatures(self, img, target_img_size=(32, 32)):
         """Extracts HOG features from an image
@@ -56,7 +56,7 @@ class FeatureExtractor:
         pca = PCA(n_components=nComponents)
         pca.fit(features)
 
-        filename = 'PCAModel.sav'
+        filename = 'Models/PCAModel.sav'
         pickle.dump(pca, open(filename, 'wb'))
 
         return pca.transform(features)
@@ -157,88 +157,91 @@ class FeatureExtractor:
 
             # Crop and resize the faces
             cropped = img[max(rect.top(), 0):min(rect.bottom()+1, img.shape[0]), max(rect.left(), 0):min(rect.right()+1, img.shape[1])]
-            cropped = cv2.resize(cropped, target_img_size)
-            box = dlib.rectangle(0,0,cropped.shape[1],cropped.shape[0])
-            
-            # Get the landmark points    
-            shape = self.predictor(cropped, box)
-
-            # Just for Testing TODO:Remove later 
-            # if self.flag:
-            #     print(rect.top(),rect.bottom(), rect.left(),rect.right())
-            #     # Display the image
-            #     image = img[:,:]
-            #     cv2.rectangle(image, (rect.left(), rect.top()),(rect.right(), rect.bottom()), (0, 0, 255), 1)
-            #     Utils.show_image(cropped, 'Landmark Detection')
-            #     self.flag = False
-            
-            features = []
-            for i in [17,18,19,20,21,37]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(36).x, shape.part(i).y, shape.part(36).y))
-            
-            for i in [18,19,20,21]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(39).x, shape.part(i).y, shape.part(39).y))
-            
-            for i in [19,20,21,22,23,24,39,42]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(27).x, shape.part(i).y, shape.part(27).y))
-            
-            for i in [22,23,24,25]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(42).x, shape.part(i).y, shape.part(42).y))
-            
-            for i in [22,23,24,25,26,44]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(45).x, shape.part(i).y, shape.part(45).y))
-            
-            features.append(self.eculidianDistance(shape.part(37).x, shape.part(41).x, shape.part(37).y, shape.part(41).y))
-            
-            for i in [37,38,39]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(40).x, shape.part(i).y, shape.part(40).y))
-            
-            for i in [42,43,44]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(47).x, shape.part(i).y, shape.part(47).y))
-            
-            features.append(self.eculidianDistance(shape.part(44).x, shape.part(46).x, shape.part(44).y, shape.part(46).y))
-            features.append(self.eculidianDistance(shape.part(32).x, shape.part(40).x, shape.part(32).y, shape.part(40).y))
-            features.append(self.eculidianDistance(shape.part(34).x, shape.part(47).x, shape.part(34).y, shape.part(47).y))
-           
-            for i in [31,33]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(50).x, shape.part(i).y, shape.part(50).y))
-            for i in [33,35]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(52).x, shape.part(i).y, shape.part(52).y))
-            
-            features.append(self.eculidianDistance(shape.part(33).x, shape.part(51).x, shape.part(33).y, shape.part(51).y))
-            
-            for i in [49,51]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(61).x, shape.part(i).y, shape.part(61).y))
-            for i in [51,53]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(63).x, shape.part(i).y, shape.part(63).y))
-            
-            for i in [17,36,40,31,49]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(48).x, shape.part(i).y, shape.part(48).y))
-            
-            features.append(self.eculidianDistance(shape.part(60).x, shape.part(62).x, shape.part(60).y, shape.part(62).y))
-            features.append(self.eculidianDistance(shape.part(64).x, shape.part(62).x, shape.part(64).y, shape.part(62).y))
-            
-            for i in [53,35,47,45,26]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(54).x, shape.part(i).y, shape.part(54).y))
-            
-            for i in [48,67]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(59).x, shape.part(i).y, shape.part(59).y))
-            
-            for i in [60,50,62,52,64]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(66).x, shape.part(i).y, shape.part(66).y))
-            
-            for i in [65,54]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(55).x, shape.part(i).y, shape.part(55).y))
-            
-            features.append(self.eculidianDistance(shape.part(58).x, shape.part(62).x, shape.part(58).y, shape.part(62).y))
-            
-            for i in [67,65]:
-                features.append(self.eculidianDistance(shape.part(i).x, shape.part(57).x, shape.part(i).y, shape.part(57).y))
-            
-            features.append(self.eculidianDistance(shape.part(56).x, shape.part(62).x, shape.part(56).y, shape.part(62).y))
-            
-            return np.array(features)
+            return self.ExtractLandMarks(cropped)
         return None
+
+    def ExtractLandMarks(self, cropped, target_img_size=(128,128)):
+        cropped = cv2.resize(cropped, target_img_size)
+        box = dlib.rectangle(0,0,cropped.shape[1],cropped.shape[0])
+        
+        # Get the landmark points    
+        shape = self.predictor(cropped, box)
+
+        # Just for Testing TODO:Remove later 
+        # if self.flag:
+        #     print(rect.top(),rect.bottom(), rect.left(),rect.right())
+        #     # Display the image
+        #     image = img[:,:]
+        #     cv2.rectangle(image, (rect.left(), rect.top()),(rect.right(), rect.bottom()), (0, 0, 255), 1)
+        #     Utils.show_image(cropped, 'Landmark Detection')
+        #     self.flag = False
+        
+        features = []
+        for i in [17,18,19,20,21,37]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(36).x, shape.part(i).y, shape.part(36).y))
+        
+        for i in [18,19,20,21]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(39).x, shape.part(i).y, shape.part(39).y))
+        
+        for i in [19,20,21,22,23,24,39,42]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(27).x, shape.part(i).y, shape.part(27).y))
+        
+        for i in [22,23,24,25]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(42).x, shape.part(i).y, shape.part(42).y))
+        
+        for i in [22,23,24,25,26,44]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(45).x, shape.part(i).y, shape.part(45).y))
+        
+        features.append(self.eculidianDistance(shape.part(37).x, shape.part(41).x, shape.part(37).y, shape.part(41).y))
+        
+        for i in [37,38,39]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(40).x, shape.part(i).y, shape.part(40).y))
+        
+        for i in [42,43,44]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(47).x, shape.part(i).y, shape.part(47).y))
+        
+        features.append(self.eculidianDistance(shape.part(44).x, shape.part(46).x, shape.part(44).y, shape.part(46).y))
+        features.append(self.eculidianDistance(shape.part(32).x, shape.part(40).x, shape.part(32).y, shape.part(40).y))
+        features.append(self.eculidianDistance(shape.part(34).x, shape.part(47).x, shape.part(34).y, shape.part(47).y))
+        
+        for i in [31,33]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(50).x, shape.part(i).y, shape.part(50).y))
+        for i in [33,35]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(52).x, shape.part(i).y, shape.part(52).y))
+        
+        features.append(self.eculidianDistance(shape.part(33).x, shape.part(51).x, shape.part(33).y, shape.part(51).y))
+        
+        for i in [49,51]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(61).x, shape.part(i).y, shape.part(61).y))
+        for i in [51,53]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(63).x, shape.part(i).y, shape.part(63).y))
+        
+        for i in [17,36,40,31,49]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(48).x, shape.part(i).y, shape.part(48).y))
+        
+        features.append(self.eculidianDistance(shape.part(60).x, shape.part(62).x, shape.part(60).y, shape.part(62).y))
+        features.append(self.eculidianDistance(shape.part(64).x, shape.part(62).x, shape.part(64).y, shape.part(62).y))
+        
+        for i in [53,35,47,45,26]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(54).x, shape.part(i).y, shape.part(54).y))
+        
+        for i in [48,67]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(59).x, shape.part(i).y, shape.part(59).y))
+        
+        for i in [60,50,62,52,64]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(66).x, shape.part(i).y, shape.part(66).y))
+        
+        for i in [65,54]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(55).x, shape.part(i).y, shape.part(55).y))
+        
+        features.append(self.eculidianDistance(shape.part(58).x, shape.part(62).x, shape.part(58).y, shape.part(62).y))
+        
+        for i in [67,65]:
+            features.append(self.eculidianDistance(shape.part(i).x, shape.part(57).x, shape.part(i).y, shape.part(57).y))
+        
+        features.append(self.eculidianDistance(shape.part(56).x, shape.part(62).x, shape.part(56).y, shape.part(62).y))
+        
+        return np.array(features)
 
     def trainNormalizeFeatures(self, features):
         """ Standardize (Normalize) the feature vector then save the model to file
@@ -252,7 +255,7 @@ class FeatureExtractor:
         scaler = StandardScaler()
         scaler.fit(features)
 
-        filename = 'scalerModel.sav'
+        filename = 'Models/scalerModel.sav'
         pickle.dump(scaler, open(filename, 'wb'))
         return scaler.transform(features)
     
@@ -295,3 +298,15 @@ class FeatureExtractor:
             filtered = cv2.filter2D(filtered,-1,gabor2)
             return np.array(filtered).flatten()
         return None
+    
+    def extract_features(self, img, feature='LANDMARKS'):
+        if feature == 'LANDMARKS':
+            return self.normalizeFeatures(self.ExtractLandMarks(img).reshape(1,-1))[0]
+        if feature == 'HOG':
+            feat = self.ExtractHOGFeatures(img)
+            return self.ApplyPCAonFeatures(feat.reshape(1,-1))[0]
+        if feature == 'GABOR':
+            feat = self.GaborFilter(img)
+            return self.ApplyPCAonFeatures(feat)
+
+

@@ -5,6 +5,7 @@ from utils import video_utils
 from FaceDetection.HOG_SVM.main import FaceDetector
 from FaceTracking.knn import KNNIdentification
 from AgeGenderClassification.main import GenderAgeClassification
+from FacialExpressionRecognition.main import EmotionExtraction
 
 import numpy as np
 
@@ -31,6 +32,10 @@ def main():
     pcaPath = './FaceDetection/HOG_SVM/Models/PCA_v3.sav'
     faceDetector = FaceDetector(modelPath, pcaPath)
 
+    ########################### Initialize FaceTracking ###########################
+    modelPath = "./FacialExpressionRecognition/Models/Model.sav"
+    emotionPredictor = EmotionExtraction(modelPath)
+    
     ########################### Initialize FaceTracking ###########################
     faceTracker = KNNIdentification()
 
@@ -69,7 +74,7 @@ def main():
             continue
 
         # ========================================= Emotion Classification ========================================
-
+        emotions = emotionPredictor.getEmotion(frame_grey, faces)
         # ============================================= Face Tracking =============================================
         ids = faceTracker.get_ids(frame_grey, faces)
 
@@ -93,6 +98,7 @@ def main():
                 cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
                 cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
                 cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, f"{emotions[i]}", (x1+120, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
 
