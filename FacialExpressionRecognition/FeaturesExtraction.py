@@ -56,7 +56,7 @@ class FeatureExtractor:
         pca = PCA(n_components=nComponents)
         pca.fit(features)
 
-        filename = 'Models/PCAModel.sav'
+        filename = 'FacialExpressionRecognition/Models/PCAModel.sav'
         pickle.dump(pca, open(filename, 'wb'))
 
         return pca.transform(features)
@@ -255,7 +255,7 @@ class FeatureExtractor:
         scaler = StandardScaler()
         scaler.fit(features)
 
-        filename = 'Models/scalerModel.sav'
+        filename = 'FacialExpressionRecognition/Models/scalerModel.sav'
         pickle.dump(scaler, open(filename, 'wb'))
         return scaler.transform(features)
     

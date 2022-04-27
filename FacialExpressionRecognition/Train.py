@@ -33,7 +33,7 @@ def train_classifier():
 
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
-    features, labels = DatasetLoading.load_CK_dataset()
+    features, labels = DatasetLoading.load_Multiple_datasets()
     # features, labels = DatasetLoading.load_AffectNet_dataset()
     print('Finished loading dataset.')
     print("Number of actual used samples: ", len(labels))
@@ -58,7 +58,7 @@ def main():
     train_classifier()
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = 'Models/Model.sav'
+    filename = 'FacialExpressionRecognition/Models/Model.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 if __name__ == "__main__":

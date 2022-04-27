@@ -57,6 +57,62 @@ def load_CK_dataset():
     features = featureExtractor.trainNormalizeFeatures(features)
     return features, labels
 
+def load_Multiple_datasets():
+    """Loads Multiple Datasets
+
+    Returns:
+        Tuple(Features, Labels): Features and Labels of the dataset
+    """
+    # Initialize Variables
+    features = []
+    labels = []
+    featureExtractor = FeaturesExtraction.FeatureExtractor()
+    
+    # Loop over directories and get Images
+    count = 0
+    for dataset in ['../Data/MUG', '../Data/CK+_Complete']:
+        path_to_dataset = os.path.join(os.path.dirname(
+            __file__), dataset)
+        directoriesNames = os.listdir(path_to_dataset)
+        for directory in directoriesNames:
+            if directory in ['fear', 'anger']: continue
+            for i, fn in enumerate(os.listdir(os.path.join(path_to_dataset, directory))):
+                # Increase count
+                count += 1
+
+                # Extract Image features
+                path = os.path.join(path_to_dataset, directory, fn)
+                img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+
+                # feat = featureExtractor.ExtractHOGFeatures(img,(16,16))
+                # feat = featureExtractor.ExtractLandMarks_method1(img)
+                feat = featureExtractor.ExtractLandMarks_method2(img)
+                # feat = featureExtractor.DWT(img)
+                # feat = featureExtractor.GaborFilter(img)
+
+                if feat is None:
+                    continue
+
+                # Add features and label
+                features.append(feat)
+                labels.append(directory)
+
+                # Show progress for debugging purposes
+                if count % 500 == 0:
+                    print(F"Finished Reading {count}")
+
+    print(F"Finished Reading {count}")
+    
+    print("Features Shape: ", len(features[0]))
+    # print("Apply Principal component analysis (PCA) on Features")
+    # D_before = len(features[0])
+    # features = featureExtractor.TrainPCAonFeatures(features, 200)
+    # print(F"Finished dimensionality reduction Before: {D_before} => After: {len(features[0])}")
+    
+    # Standardize Features
+    features = featureExtractor.trainNormalizeFeatures(features)
+    return features, labels
+
 def load_AffectNet_dataset():
     """Loads AffectNet Dataset
 
@@ -137,6 +193,7 @@ def load_test_data(path: str):
     # Loop over directories and get Images
     count = 0
     for directory in directoriesNames:
+        if directory in ['fear', 'anger']: continue
         for i, fn in enumerate(os.listdir(os.path.join(path_to_dataset, directory))):
             # Increase count
             count += 1

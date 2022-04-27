@@ -12,7 +12,7 @@ import DatasetLoading
 # img = cv2.imread(path_to_file, cv2.IMREAD_GRAYSCALE)
 
 # featureExtractor = FeaturesExtraction.FeatureExtractor(True)
-model: SVC = pickle.load(open('Model.sav', 'rb'))
+model: SVC = pickle.load(open('FacialExpressionRecognition/Models/Model.sav', 'rb'))
 
 start_time = time.time()
 
