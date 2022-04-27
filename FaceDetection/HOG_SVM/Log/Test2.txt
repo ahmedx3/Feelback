@@ -1,0 +1,32 @@
+[INFO] Shape of the original image  (830, 1248)
+[INFO] Shape of the image after reshaping (287, 432)
+[INFO] (maxwidth,maxheight)  432 432  (winW,winH)  19 19  pyramidScale  1.5  stepSize  4  overlappingThreshold  0.3 Model  ./Models/ModelCBCL.sav       
+[INFO] Num of windows in the current image pyramid  7776
+[INFO] Num of windows in the current image pyramid  3456
+[INFO] Num of windows in the current image pyramid  1536
+[INFO] Num of windows in the current image pyramid  672
+[INFO] Num of windows in the current image pyramid  308
+[INFO] Num of windows in the current image pyramid  140
+[INFO] Time taken is 44.18992 seconds
+Note: detected 7afez (problem in classifier)
+************************************************************************************
+[INFO] (maxwidth,maxheight)  504 504  (winW,winH)  19 19  pyramidScale  1.5  stepSize  4  overlappingThreshold  0.3 Model  ./Models/ModelCBCL.sav       
+[INFO] Num of windows in the current image pyramid  10584
+[INFO] Num of windows in the current image pyramid  4704
+[INFO] Num of windows in the current image pyramid  2072
+[INFO] Num of windows in the current image pyramid  950
+[INFO] Num of windows in the current image pyramid  425
+[INFO] Num of windows in the current image pyramid  187
+[INFO] Time taken is 66.47327 seconds --> 15.9 seconds after skin color detection --> 12.45 after both skin and threading
+Note: detected all except ahmed
+********************************************************
+[INFO] Shape of the original image  (830, 1248, 3)
+[INFO] Shape of the image after reshaping (335, 504, 3)
+[INFO] (maxwidth,maxheight)  504 504  (winW,winH)  19 19  pyramidScale  1.5  stepSize  4  overlappingThreshold  0.3  SkinThreshold  0.4 Model  ./Models/ModelCBCL-Small.sav
+[INFO] Num of windows in the current image pyramid  2004
+[INFO] Num of windows in the current image pyramid  869
+[INFO] Num of windows in the current image pyramid  353
+[INFO] Num of windows in the current image pyramid  153
+[INFO] Num of windows in the current image pyramid  48
+[INFO] Num of windows in the current image pyramid  14
+[INFO] Time taken is 3.47870 seconds (with np)

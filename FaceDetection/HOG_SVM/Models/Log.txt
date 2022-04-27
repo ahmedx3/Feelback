@@ -1,0 +1,9 @@
+- Best till now ModelCBCL-E6.sav (by adding 260 hard negative mining images) (with opencv hog) (faster) (50 pca)
+- ModelCBCL-HOG.sav with implemented HOG (with original dataset) (slower) (50 pca)
+# TODO : Try adding as minimimum negative mining as possible
+# TODO : Or Try to enhance E7 (1316 from mining 2304 from natural dataset) by adding more positive dataset
+
+- v0 -> normal CBCL dataset
+- v1 -> added the 25k non faces
+- v2 -> added flipped faces
+- v3 -> added 200 minned image from Non-Natural dataset

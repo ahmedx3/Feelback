@@ -33,10 +33,10 @@ class KNNIdentification:
     This class does not need labels, instead it labels the data automatically.
 
     Notes:
-        At the very beginning, the number of available data may be smaller than k, therefore all points are considered
-        we will probably have a tie.
-        Instead, we choose, a number smaller than k according the current amount of data, given by this formula
-        `k = minimum(k, 1 + n_data//k)`
+        At the very beginning, the number of available data may be smaller than k, therefore all points are considered,
+        and we will probably have a tie.
+        Instead, repeat the points of new classes to make them probable to be chosen.
+        Each class will have at least these number of points: `1 + k//2`.
     """
 
     def __init__(self, n_classes: int = -1, k=5, threshold=2000):
@@ -76,10 +76,10 @@ class KNNIdentification:
         if self.n_classes == -1:
             self.n_classes = x.shape[0]
 
-        self.features = x
-        self.classes = np.arange(x.shape[0])
+        self.features = np.tile(x, (1 + self.k // 2, 1))
+        self.classes = np.tile(np.arange(x.shape[0]), 1 + self.k // 2)
 
-        return self.classes
+        return self.classes[:x.shape[0]]
 
     def knn(self, x: np.ndarray) -> npt.NDArray[np.uint16]:
         """
@@ -93,18 +93,18 @@ class KNNIdentification:
                 The `classes[i]` is the class index where `x[i]` belongs to.
 
         Notes:
-            At the very beginning, the number of available data may be smaller than k, therefore all points are considered
-            we will probably have a tie.
-            Instead, we choose, a number smaller than k according the current amount of data, given by this formula
-            `k = minimum(k, 1 + n_data//k)`
+            At the very beginning, the number of available data may be smaller than k, therefore all points are
+            considered, and we will probably have a tie.
+            Instead, repeat the points of new classes to make them probable to be chosen.
+            Each class will have at least these number of points: `1 + k//2`.
         """
 
-        classes = np.zeros(x.shape[0], dtype=np.uint16)
+        num_of_test_faces = x.shape[0]
+        classes = np.zeros(num_of_test_faces, dtype=np.uint16)
 
         for i, row in enumerate(x):
             distances = np.linalg.norm(self.features - row, axis=1)
-            k = min(self.k, 1 + int(self.features.shape[0] // self.k))
-            min_k_distances_classes = np.argsort(distances)[:k]
+            min_k_distances_classes = np.argsort(distances)[:self.k]
             nearest_k_classes = self.classes[min_k_distances_classes]
             label = np.bincount(nearest_k_classes).argmax()  # get the most frequent class
             classes[i] = label
@@ -115,14 +115,30 @@ class KNNIdentification:
             # Create a new class if the current row is too far from existing classes
             if avg_distance_to_classified_class > self.threshold:
                 classes[i] = self.n_classes
+                classes = np.append(classes, np.repeat(self.n_classes, self.k // 2), axis=0)
+                x = np.append(x, np.tile(row, (self.k // 2, 1)), axis=0)
                 self.n_classes += 1
 
         self.features = np.append(self.features, x, axis=0)
         self.classes = np.append(self.classes, classes, axis=0)
 
-        return classes
+        return classes[:num_of_test_faces]
 
     def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[np.uint16]:
         # TODO: Feature Extraction from faces (Eigen-faces + position)
         eigen_faces = eigen_faces_features(frame, faces_positions)
         return self.knn_init(eigen_faces) if self.classes is None else self.knn(eigen_faces)
+
+    def get_outliers_ids(self) -> npt.NDArray[np.int]:
+        """
+        Returns:
+            outliers_ids: np.ndarray which contains ids of outlier classes.
+        """
+
+        freq = np.bincount(self.classes)
+        # outliers_ids = np.argwhere(np.mean(freq) - freq > np.std(freq))
+        # outliers_ids = np.argwhere(freq < np.percentile(freq, 25))
+        max_freq = freq.max()
+        outliers_ids = np.argwhere((max_freq - freq) / max_freq > 0.75)
+        return outliers_ids.ravel()
+
