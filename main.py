@@ -4,9 +4,9 @@ from utils import io
 from utils import video_utils
 from FaceDetection.HOG_SVM.main import FaceDetector
 from FaceTracking.knn import KNNIdentification
+from AgeGenderClassification.main import GenderAgeClassification
 
 import numpy as np
-
 
 def main():
     args = io.get_command_line_args()
@@ -33,6 +33,11 @@ def main():
 
     ########################### Initialize FaceTracking ###########################
     faceTracker = KNNIdentification()
+
+    ########################### Initialize Gender And Age ###########################
+    modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVM_LPQ_47_44.model"
+    modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"
+    genderPredictor = GenderAgeClassification(modelAgePath,modelGenderPath)
 
     # assign some unique colors for each face id for visualization purposes
     colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
@@ -71,6 +76,8 @@ def main():
         # ============================================ Gaze Estimation ============================================
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
+        genders = genderPredictor.getGender(frame_grey,faces)
+        ages = genderPredictor.getAge(frame_grey,faces)
 
         # =========================================== Integrate Modules ===========================================
 
@@ -84,6 +91,8 @@ def main():
                 x1, y1, x2, y2 = faces[i]
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color=colors[ids[i]], thickness=2)
                 cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
 
@@ -93,6 +102,8 @@ def main():
 
     # When everything done, release the video capture object
     video.release()
+
+    print(faceTracker.get_outliers_ids())
 
 
 if __name__ == '__main__':

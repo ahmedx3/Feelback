@@ -10,27 +10,27 @@ import time
 
 ################################## Hyperparameters ##################################
 (winW, winH) = (19, 19) # window width and height
-pyramidScale = 1.5 # Scale factor for the pyramid
+pyramidScale = 2 # Scale factor for the pyramid
 stepSize = 2 # Step size for the sliding window
 overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
 skinThreshold = 0.4 # threshold for skin color in the window
 edgeThreshold = 0.2 # threshold for edge percentage in the window
 #####################################################################################
 
-originalImg = cv2.imread("../HOG_SVM/Examples/Test1.jpg")
+originalImg = cv2.imread("../HOG_SVM/Examples/Test18.jpg")
 
 print("[INFO] Shape of the original image ", originalImg.shape)
 shapeBefore = originalImg.shape
 copyOriginalImage = originalImg.copy()
 
-originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/6), int(originalImg.shape[0]/6)))
+originalImg = cv2.resize(originalImg, (int(originalImg.shape[1]/2), int(originalImg.shape[0]/2)))
 print("[INFO] Shape of the image after reshaping", originalImg.shape)
 
-modelName = "./Models/ModelCBCL-HOG-TestSliding.sav"
+modelName = "./Models/Model_v3.sav"
 model = pickle.load(open(modelName, 'rb'))
 faces = []
 
-pca = pickle.load(open("./Models/PCAModelSliding.sav", 'rb'))
+pca = pickle.load(open("./Models/PCA_v3.sav", 'rb'))
 
 print("[INFO]", " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " stepSize ",stepSize, " overlappingThreshold ",overlappingThreshold, " SkinThreshold ",skinThreshold ,"Model ",modelName)
 # Calculate time before processing
