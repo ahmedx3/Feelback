@@ -19,9 +19,6 @@ class GazeTracking(object):
         self.eye_right = None
         self.calibration = Calibration()
 
-        # _face_detector is used to detect faces
-        self._face_detector = dlib.get_frontal_face_detector()
-
         # _predictor is used to get facial landmarks of a given face
         cwd = os.path.abspath(os.path.dirname(__file__))
         model_path = os.path.abspath(os.path.join(cwd, "trained_models/shape_predictor_68_face_landmarks.dat"))
@@ -39,42 +36,45 @@ class GazeTracking(object):
         except Exception:
             return False
 
-    def _analyze(self):
-        """Detects the face and initialize Eye objects"""
-        frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-        faces = self._face_detector(frame)
+    def _analyze(self, face):
+        """Initialize Eye objects
+
+        Arguments:
+            face (tuple): Face bounding box (x1, y1, x2, y2)
+        """
 
         try:
-            landmarks = self._predictor(frame, faces[0])
-            self.eye_left = Eye(frame, landmarks, 0, self.calibration)
-            self.eye_right = Eye(frame, landmarks, 1, self.calibration)
+            landmarks = self._predictor(self.frame, dlib.rectangle(*face))
+            self.eye_left = Eye(self.frame, landmarks, 0, self.calibration)
+            self.eye_right = Eye(self.frame, landmarks, 1, self.calibration)
 
         except IndexError:
             self.eye_left = None
             self.eye_right = None
 
-    def refresh(self, frame):
+    def refresh(self, frame, face):
         """Refreshes the frame and analyzes it.
 
         Arguments:
+            face (tuple): Face bounding box (x1, y1, x2, y2)
             frame (numpy.ndarray): The frame to analyze
         """
         self.frame = frame
-        self._analyze()
+        self._analyze(face)
 
     def pupil_left_coords(self):
         """Returns the coordinates of the left pupil"""
         if self.pupils_located:
             x = self.eye_left.origin[0] + self.eye_left.pupil.x
             y = self.eye_left.origin[1] + self.eye_left.pupil.y
-            return (x, y)
+            return x, y
 
     def pupil_right_coords(self):
         """Returns the coordinates of the right pupil"""
         if self.pupils_located:
             x = self.eye_right.origin[0] + self.eye_right.pupil.x
             y = self.eye_right.origin[1] + self.eye_right.pupil.y
-            return (x, y)
+            return x, y
 
     def horizontal_ratio(self):
         """Returns a number between 0.0 and 1.0 that indicates the
