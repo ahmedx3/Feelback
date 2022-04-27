@@ -16,11 +16,13 @@ img = Preprocessing.preprocess_image(img)
 
 model: SVC = pickle.load(open(os.path.join(os.path.dirname(
     __file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"), 'rb'))
+# model: SVC = pickle.load(open(os.path.join(os.path.dirname(
+#     __file__), "Models_Age/UTK_SVM_LPQ_47_44.model"), 'rb'))
 
 # Calculate time before processing
 start_time = time.time()
 
-img_features = FeaturesExtraction.extract_features(img, feature="LBP")
+img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
 predicted = model.predict([img_features])[0]
 
 # Calculate time after processing in seconds
