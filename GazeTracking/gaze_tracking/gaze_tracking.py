@@ -13,7 +13,24 @@ class GazeTracking(object):
     and pupils and allows to know if the eyes are open or closed
     """
 
-    def __init__(self):
+    def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75):
+        """
+        Create Gaze Tracking Object
+
+        Initializes Hyper-Parameters for considering looking left, right, and center.
+        Horizontal looking ratio is a number between 0.0 and 1.0 that indicates the direction of the gaze.
+        The extreme right is 0.0, the center is 0.5 and the extreme left is 1.0
+
+        Values less than right_threshold are considered right, values greater than left_threshold are considered left,
+        Values in-between are considered center.
+
+        Arguments:
+            right_threshold (float): Hyper-Parameter to consider person is looking towards right.
+            left_threshold (float):  Hyper-Parameter to consider person is looking towards left.
+        """
+
+        self.left_threshold = left_threshold
+        self.right_threshold = right_threshold
         self.frame = None
         self.eye_left = None
         self.eye_right = None
@@ -99,12 +116,12 @@ class GazeTracking(object):
     def is_right(self):
         """Returns true if the user is looking to the right"""
         if self.pupils_located:
-            return self.horizontal_ratio() <= 0.35
+            return self.horizontal_ratio() <= self.right_threshold
 
     def is_left(self):
         """Returns true if the user is looking to the left"""
         if self.pupils_located:
-            return self.horizontal_ratio() >= 0.65
+            return self.horizontal_ratio() >= self.left_threshold
 
     def is_center(self):
         """Returns true if the user is looking to the center"""
