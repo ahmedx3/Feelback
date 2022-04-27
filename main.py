@@ -6,7 +6,7 @@ from FaceDetection.HOG_SVM.main import FaceDetector
 from FaceTracking.knn import KNNIdentification
 from AgeGenderClassification.main import GenderAgeClassification
 from FacialExpressionRecognition.main import EmotionExtraction
-
+from GazeTracking.gaze_tracking import GazeEstimation
 import numpy as np
 
 
@@ -45,6 +45,9 @@ def main():
     modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"
     genderPredictor = GenderAgeClassification(modelAgePath, modelGenderPath)
 
+    ########################### Initialize Gaze Estimation ###########################
+    gazeEstimator = GazeEstimation()
+
     # assign some unique colors for each face id for visualization purposes
     colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
 
@@ -81,6 +84,7 @@ def main():
         ids = faceTracker.get_ids(frame_grey, faces)
 
         # ============================================ Gaze Estimation ============================================
+        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces)
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
         genders = genderPredictor.getGender(frame_grey, faces)
