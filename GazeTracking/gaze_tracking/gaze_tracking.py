@@ -167,26 +167,44 @@ class GazeEstimation:
         Values less than right_threshold are considered right, values greater than left_threshold are considered left,
         Values in-between are considered center.
 
+        Notes:
+            This class uses a separate GazeTracking object for each user, because each user may have different type of
+            eyes, where combining all of them in single object can mess the calibration.
+
         Arguments:
             right_threshold (float): Hyper-Parameter to consider person is looking towards right.
             left_threshold (float):  Hyper-Parameter to consider person is looking towards left.
         """
 
-        self.gaze = GazeTracking(right_threshold, left_threshold)
+        self.right_threshold = right_threshold
+        self.left_threshold = left_threshold
+        self.gazes = []
 
-    def get_gaze_attention(self, frame: np.ndarray, faces: np.ndarray):
-        gaze_attention = np.zeros(faces.shape[0], dtype=bool)
-        for i in range(faces.shape[0]):
-            self.gaze.refresh(frame, faces[i])
-            gaze_attention[i] = self.gaze.is_center()
+    def get_gaze_attention(self, frame: np.ndarray, faces_positions: np.ndarray, ids: np.ndarray) -> np.ndarray:
+        """
+        Check for each user whether he is paying attention or not, using where he is looking.
+
+        Arguments:
+            frame (np.ndarray): The frame to process.
+            faces_positions (np.ndarray): Array of face bounding boxs (x1, y1, x2, y2)
+            ids (np.ndarray): Array of ids of the corresponding faces (used to identify the eyes of each user)
+
+        Returns: Array of booleans which indicates for each user whether he is paying attention or not.
+
+        """
+        gaze_attention = np.zeros(faces_positions.shape[0], dtype=bool)
+        while ids.max(initial=0) + 1 != len(self.gazes):
+            self.gazes.append(GazeTracking(self.right_threshold, self.left_threshold))
+
+        for i in range(ids.shape[0]):
+            self.gazes[ids[i]].refresh(frame, faces_positions[i])
+            gaze_attention[i] = self.gazes[ids[i]].is_center()
 
         return gaze_attention
 
-    def get_gaze_state_text(self, frame: np.ndarray, faces: np.ndarray):
+    def get_gaze_state_text(self, ids: np.ndarray):
         gaze_text_descriptions = []
 
-        for face in faces:
-            self.gaze.refresh(frame, face)
-            gaze_text_descriptions.append(self.gaze.get_current_state_text())
-
+        for id in ids:
+            gaze_text_descriptions.append(self.gazes[id].get_current_state_text())
         return gaze_text_descriptions

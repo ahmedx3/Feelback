@@ -88,7 +88,7 @@ def main():
         ids = faceTracker.get_ids(faces)
 
         # ============================================ Gaze Estimation ============================================
-        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions)
+        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions, ids)
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
         genders = genderPredictor.getGender(frame_grey, faces_positions)
