@@ -42,16 +42,17 @@ def test():
         frame_grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         faces_rectangles = face_detector(frame_grey, 0)
-        faces = np.array([[face.left(), face.top(), face.right(), face.bottom()] for face in faces_rectangles])
+        faces_positions = [[face.left(), face.top(), face.right(), face.bottom()] for face in faces_rectangles]
+        faces = [frame_grey[y1:y2, x1:x2] for x1, y1, x2, y2 in faces_positions]
 
         if faces is not None and len(faces):
 
-            ids = face_track.get_ids(frame_grey, faces)
+            ids = face_track.get_ids(faces)
 
             if __VERBOSE__:
                 # Draw a rectangle around each face with its person id
                 for i in range(len(ids)):
-                    x1, y1, x2, y2 = faces[i]
+                    x1, y1, x2, y2 = faces_positions[i]
                     cv2.rectangle(frame, (x1, y1), (x2, y2), colors[ids[i]], 2)
                     cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 

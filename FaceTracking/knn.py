@@ -1,15 +1,3 @@
-import os
-import sys
-
-# Allow importing modules from parent directory
-# TODO: Use a more clean approach as modules
-__CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
-__PARENT_DIR__ = os.path.dirname(__CURRENT_DIR__)
-sys.path.append(__PARENT_DIR__)
-
-from utils.img_utils import BoundingBox
-from utils import verbose
-
 from FaceTracking.feature_extracton import eigen_faces_features
 import numpy as np
 import numpy.typing as npt
