@@ -13,6 +13,7 @@ from utils import verbose
 from FaceTracking.feature_extracton import eigen_faces_features
 import numpy as np
 import numpy.typing as npt
+from typing import List
 
 
 class KmeansIdentification:
@@ -160,7 +161,6 @@ class KmeansIdentification:
 
         return clusters
 
-    def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[np.uint16]:
-        # TODO: Feature Extraction from faces (Eigen-faces + position)
-        eigen_faces = eigen_faces_features(frame, faces_positions)
+    def get_ids(self, faces: List[np.ndarray]) -> npt.NDArray[np.uint16]:
+        eigen_faces = eigen_faces_features(faces)
         return self.kmeans_init(eigen_faces) if self.centroids is None else self.kmeans_dynamic_update(eigen_faces)

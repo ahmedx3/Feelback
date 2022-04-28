@@ -6,8 +6,9 @@ from FaceDetection.HOG_SVM.main import FaceDetector
 from FaceTracking.knn import KNNIdentification
 from AgeGenderClassification.main import GenderAgeClassification
 from FacialExpressionRecognition.main import EmotionExtraction
-
+from GazeTracking.gaze_tracking import GazeEstimation
 import numpy as np
+
 
 def main():
     args = io.get_command_line_args()
@@ -32,17 +33,20 @@ def main():
     pcaPath = './FaceDetection/HOG_SVM/Models/PCA_v3.sav'
     faceDetector = FaceDetector(modelPath, pcaPath)
 
-    ########################### Initialize FaceTracking ###########################
+    ########################### Initialize Emotion Extraction ###########################
     modelPath = "./FacialExpressionRecognition/Models/Model.sav"
     emotionPredictor = EmotionExtraction(modelPath)
-    
+
     ########################### Initialize FaceTracking ###########################
     faceTracker = KNNIdentification()
 
     ########################### Initialize Gender And Age ###########################
     modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVM_LPQ_47_44.model"
     modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"
-    genderPredictor = GenderAgeClassification(modelAgePath,modelGenderPath)
+    genderPredictor = GenderAgeClassification(modelAgePath, modelGenderPath)
+
+    ########################### Initialize Gaze Estimation ###########################
+    gazeEstimator = GazeEstimation()
 
     # assign some unique colors for each face id for visualization purposes
     colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
@@ -65,23 +69,29 @@ def main():
         frame_grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # ============================================= Face Detection ============================================
-        faces = faceDetector.detect(frame)
-        faces = np.array(faces, dtype=int)
-        verbose.print(f"[INFO] Detected {faces.shape[0]} faces")
+        faces_positions = faceDetector.detect(frame)
+        faces_positions = np.array(faces_positions, dtype=int)
+        verbose.print(f"[INFO] Detected {faces_positions.shape[0]} faces")
 
-        if faces is None or len(faces) == 0:
-            verbose.print("No Faces Detected, Skipping this frame")
+        if faces_positions is None or len(faces_positions) == 0:
+            verbose.print("[WARNING] No Faces Detected, Skipping this frame")
             continue
 
+        faces = []
+        for x1, y1, x2, y2 in faces_positions:
+            faces.append(frame_grey[y1:y2, x1:x2])
+
         # ========================================= Emotion Classification ========================================
-        emotions = emotionPredictor.getEmotion(frame_grey, faces)
+        emotions = emotionPredictor.getEmotion(faces)
+
         # ============================================= Face Tracking =============================================
-        ids = faceTracker.get_ids(frame_grey, faces)
+        ids = faceTracker.get_ids(faces)
 
         # ============================================ Gaze Estimation ============================================
+        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions)
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
-        genders = genderPredictor.getGender(frame_grey,faces)
+        genders = genderPredictor.getGender(frame_grey, faces_positions)
         # ages = genderPredictor.getAge(frame_grey,faces)
 
         # =========================================== Integrate Modules ===========================================
@@ -93,12 +103,13 @@ def main():
         if verbose.__VERBOSE__:
             # Draw a rectangle around each face with its person id
             for i in range(len(ids)):
-                x1, y1, x2, y2 = faces[i]
+                x1, y1, x2, y2 = faces_positions[i]
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color=colors[ids[i]], thickness=2)
-                cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
-                cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
+                cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                 # cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
-                cv2.putText(frame, f"{emotions[i]}", (x1+200, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, emotions[i], (x1 + 100, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
+                cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
 

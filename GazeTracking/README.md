@@ -1,7 +1,7 @@
 # Gaze Tracking
 
 # This is a Pretrained Gaze Tracking module based on the work of *Antoine Lamé*
-### [Original Github Repoisotory](https://github.com/antoinelame/GazeTracking)
+### [Original GitHub Repository](https://github.com/antoinelame/GazeTracking)
 
 ---
 

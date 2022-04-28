@@ -26,11 +26,7 @@ class GenderAgeClassification:
 
         return predictedGender
     
-    def getAge(self, frame, facesLocations):
-        faces = []
-        for x1,y1,x2,y2 in facesLocations:
-            faces.append(frame[y1:y2,x1:x2])
-
+    def getAge(self, faces):
         predictedAge = []
         for face in faces:
             img = Preprocessing.preprocess_image(face)
