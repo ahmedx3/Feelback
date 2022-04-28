@@ -105,6 +105,7 @@ def main():
                 cv2.putText(frame, genders[i], (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                 cv2.putText(frame, emotions[i], (x1 + 100, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                 cv2.putText(frame, f"{ages[i]} years", (x1, y1 - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
+                cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
 
