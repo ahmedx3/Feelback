@@ -41,7 +41,7 @@ def main():
 
     ########################### Initialize Gender And Age ###########################
     modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVM_LPQ_47_44.model"
-    modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"
+    modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"
     genderPredictor = GenderAgeClassification(modelAgePath,modelGenderPath)
 
     # assign some unique colors for each face id for visualization purposes
@@ -82,7 +82,7 @@ def main():
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
         genders = genderPredictor.getGender(frame_grey,faces)
-        ages = genderPredictor.getAge(frame_grey,faces)
+        # ages = genderPredictor.getAge(frame_grey,faces)
 
         # =========================================== Integrate Modules ===========================================
 
@@ -97,8 +97,8 @@ def main():
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color=colors[ids[i]], thickness=2)
                 cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
                 cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
-                cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
-                cv2.putText(frame, f"{emotions[i]}", (x1+120, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                # cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                cv2.putText(frame, f"{emotions[i]}", (x1+200, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 
         verbose.imshow(frame, delay=1)
 

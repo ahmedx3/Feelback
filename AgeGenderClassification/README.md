@@ -1,15 +1,18 @@
 ## TODO
+- Change the predicted label to be the highest predicted prob
+
+- Mix the datasets
+
 - Create the loader for the datasets of Age
 
 - Create a model for Age
 
-- Check new classifiers
+- Check new classifiers and grid search for them to find best parameters
 
 - Check more feature extraction methods (FPLBP)
 
 - Check more preprocessing and resize images (Frontalization & facial landmark localization)
 
-- Check lighting effect and preprocessing to unify the images
 ## Done
 - Implement loading Datasets to have the same interface
 - Create the training pipeline with svm as base
@@ -23,3 +26,6 @@
 - Change the training and testing datasets (Train with mixture of datasets or change order)
 - K fold Validation
 - Create video capture that shows label
+- Train on Data that was extracted from the face detection model
+- Check lighting effect and preprocessing to unify the images
+- Try the LBP on regions of the image divided to 16 20x20

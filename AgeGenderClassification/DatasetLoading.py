@@ -3,12 +3,13 @@ import cv2
 import FeaturesExtraction
 import Preprocessing
 
-def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation"):
+def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation", cleaned=True):
     """Loads the Kaggle Gender Dataset
 
     Args:
         selected_feature (str, optional): selected feature for extraction if None feature List is returned empty. Defaults to "LPQ".
         type (str, optional): Load Either Training or Validation Datasets. Defaults to "Validation".
+        cleaned (bool, optional): Load clean version instead of regular. Defaults to "True".
 
     Returns:
         Tuple(features, labels, image_paths): Features, Labels, and Image Paths of the dataset
@@ -20,6 +21,15 @@ def load_Gender_Kaggle_dataset(selected_feature="LPQ", type="Validation"):
     if type == "Training":
         path_to_dataset = os.path.join(os.path.dirname(
             __file__), "../Data/Gender_Kaggle/Training")
+    
+    # If cleaned
+    if cleaned:
+        path_to_dataset = os.path.join(os.path.dirname(
+            __file__), "../Data/new_Gender_Kaggle/Validation")
+        if type == "Training":
+            path_to_dataset = os.path.join(os.path.dirname(
+                __file__), "../Data/new_Gender_Kaggle/Training")
+
 
     # Initialize Variables
     features = []

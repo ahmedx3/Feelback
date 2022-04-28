@@ -21,7 +21,7 @@ np.random.seed(random_seed)
 
 classifiers = {
     # SVM with gaussian kernel
-    'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
+    'SVM': svm.SVC(random_state=random_seed, kernel="rbf", probability=True),
 }
 
 """
@@ -105,9 +105,9 @@ def train_classifier(used_classifier, selected_feature="LPQ"):
 
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
-    # features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(
-    #     selected_feature=selected_feature, type="Training")
-    features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature=selected_feature,label="gender", age_range=(20,50))
+    features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(
+        selected_feature=selected_feature, type="Training", cleaned=False)
+    # features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature=selected_feature,label="gender", age_range=(20,50))
     print('Finished loading dataset.')
 
     # Split Dataset to train and test for model fitting
@@ -149,7 +149,7 @@ def main():
     selected_feature="LPQ"
     classifier, train_accuracy, accuracy = train_classifier(used_classifier, selected_feature=selected_feature)
     # save the model to disk
-    name = "UTK"
+    name = "Kaggle_Tra"
     filename = "Models_Gender/" + name + "_" + used_classifier + "_" + selected_feature + "_" + \
         str(int(train_accuracy * 100)) + "_" + str(int(accuracy * 100)) + ".model"
     pickle.dump(classifier, open(filename, 'wb'))
@@ -161,5 +161,5 @@ def validate():
     k_fold_validation(used_classifier, selected_feature=selected_feature, k_folds=5)
 
 if __name__ == "__main__":
-    # main()
-    validate()
+    main()
+    # validate()

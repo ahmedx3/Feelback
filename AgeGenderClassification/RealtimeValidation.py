@@ -10,7 +10,7 @@ import Utils
 
 # Read the model
 face_detector = cv2.CascadeClassifier(os.path.join(os.path.dirname(__file__), 'Experiments/haarcascade_frontalface_alt2.xml'))
-model = pickle.load(open(os.path.join(os.path.dirname(__file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"), 'rb'))
+model = pickle.load(open(os.path.join(os.path.dirname(__file__), "Models_Gender/new_Kaggle_Tra_SVM_localLBP_84_83.model"), 'rb'))
 
 # Capture the video from webcam
 video = cv2.VideoCapture(0)
@@ -32,8 +32,9 @@ while(True):
         # Calculate time before processing
         start_time = time.time()
 
-        img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
+        img_features = FeaturesExtraction.extract_features(img, feature="localLBP")
         predicted = model.predict([img_features])[0]
+        predicted_prob = model.predict_proba([img_features])[0]
 
         # Calculate time after processing in seconds
         end_time = time.time()
@@ -42,7 +43,7 @@ while(True):
         # Utils.show_image(img, predicted)
 
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 200, 150), 2)
-        cv2.putText(frame, f"{predicted}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (40, 200, 0), 2)
+        cv2.putText(frame, f"{predicted} {predicted_prob}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (40, 200, 0), 2)
   
     # Display the resulting frame
     cv2.imshow('Webcam', frame)

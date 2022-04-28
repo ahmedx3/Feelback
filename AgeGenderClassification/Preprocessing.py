@@ -1,4 +1,5 @@
 import cv2
+from skimage import exposure
 
 def convert_to_gray_scale(image):
     """Convert to Gray Scale
@@ -35,7 +36,8 @@ def hist_equalize(image):
     Returns:
         image: Equalized Image
     """
-    equalized = cv2.equalizeHist(image) 
+    # equalized = cv2.equalizeHist(image) 
+    equalized = exposure.equalize_adapthist(image)
     return equalized
 
 
@@ -49,7 +51,7 @@ def preprocess_image(img):
         Image: Preprocessed Image
     """
     
-    preprocessed = resize_image(img, (80,80))
-    # preprocessed = hist_equalize(img)
+    preprocessed = hist_equalize(img)
+    preprocessed = resize_image(preprocessed, (80,80))
 
     return preprocessed
