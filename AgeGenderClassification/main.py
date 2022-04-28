@@ -9,11 +9,7 @@ class GenderAgeClassification:
         self.modelAge = pickle.load(open(model_path_age, 'rb'))
         self.modelGender = pickle.load(open(model_path_gender, 'rb'))
 
-    def getGender(self, frame, facesLocations):
-        faces = []
-        for x1,y1,x2,y2 in facesLocations:
-            faces.append(frame[y1:y2,x1:x2])
-
+    def getGender(self, faces):
         predictedGender = []
         for face in faces:
             img = Preprocessing.preprocess_image(face)
@@ -22,11 +18,7 @@ class GenderAgeClassification:
 
         return predictedGender
     
-    def getAge(self, frame, facesLocations):
-        faces = []
-        for x1,y1,x2,y2 in facesLocations:
-            faces.append(frame[y1:y2,x1:x2])
-
+    def getAge(self, faces):
         predictedAge = []
         for face in faces:
             img = Preprocessing.preprocess_image(face)

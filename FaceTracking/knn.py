@@ -13,6 +13,7 @@ from utils import verbose
 from FaceTracking.feature_extracton import eigen_faces_features
 import numpy as np
 import numpy.typing as npt
+from typing import List
 
 
 # TODO:
@@ -124,9 +125,8 @@ class KNNIdentification:
 
         return classes[:num_of_test_faces]
 
-    def get_ids(self, frame: np.ndarray, faces_positions: npt.NDArray[BoundingBox]) -> npt.NDArray[np.uint16]:
-        # TODO: Feature Extraction from faces (Eigen-faces + position)
-        eigen_faces = eigen_faces_features(frame, faces_positions)
+    def get_ids(self, faces: List[np.ndarray]) -> npt.NDArray[np.uint16]:
+        eigen_faces = eigen_faces_features(faces)
         return self.knn_init(eigen_faces) if self.classes is None else self.knn(eigen_faces)
 
     def get_outliers_ids(self) -> npt.NDArray[np.int]:

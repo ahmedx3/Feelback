@@ -69,26 +69,30 @@ def main():
         frame_grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # ============================================= Face Detection ============================================
-        faces = faceDetector.detect(frame)
-        faces = np.array(faces, dtype=int)
-        verbose.print(f"[INFO] Detected {faces.shape[0]} faces")
+        faces_positions = faceDetector.detect(frame)
+        faces_positions = np.array(faces_positions, dtype=int)
+        verbose.print(f"[INFO] Detected {faces_positions.shape[0]} faces")
 
-        if faces is None or len(faces) == 0:
+        if faces_positions is None or len(faces_positions) == 0:
             verbose.print("[WARNING] No Faces Detected, Skipping this frame")
             continue
 
+        faces = []
+        for x1, y1, x2, y2 in faces_positions:
+            faces.append(frame_grey[y1:y2, x1:x2])
+
         # ========================================= Emotion Classification ========================================
-        emotions = emotionPredictor.getEmotion(frame_grey, faces)
+        emotions = emotionPredictor.getEmotion(faces)
 
         # ============================================= Face Tracking =============================================
-        ids = faceTracker.get_ids(frame_grey, faces)
+        ids = faceTracker.get_ids(faces)
 
         # ============================================ Gaze Estimation ============================================
-        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces)
+        gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions)
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
-        genders = genderPredictor.getGender(frame_grey, faces)
-        ages = genderPredictor.getAge(frame_grey, faces)
+        genders = genderPredictor.getGender(faces)
+        ages = genderPredictor.getAge(faces)
 
         # =========================================== Integrate Modules ===========================================
 
@@ -99,7 +103,7 @@ def main():
         if verbose.__VERBOSE__:
             # Draw a rectangle around each face with its person id
             for i in range(len(ids)):
-                x1, y1, x2, y2 = faces[i]
+                x1, y1, x2, y2 = faces_positions[i]
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color=colors[ids[i]], thickness=2)
                 cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                 cv2.putText(frame, genders[i], (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
