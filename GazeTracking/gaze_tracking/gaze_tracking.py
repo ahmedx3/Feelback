@@ -192,8 +192,9 @@ class GazeEstimation:
         Returns: Array of booleans which indicates for each user whether he is paying attention or not.
 
         """
+
         gaze_attention = np.zeros(faces_positions.shape[0], dtype=bool)
-        while ids.max(initial=0) + 1 != len(self.gazes):
+        while ids.max(initial=0) >= len(self.gazes):
             self.gazes.append(GazeTracking(self.right_threshold, self.left_threshold))
 
         for i in range(ids.shape[0]):
