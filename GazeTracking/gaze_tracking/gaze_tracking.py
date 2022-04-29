@@ -5,6 +5,8 @@ import numpy as np
 from .eye import Eye
 from .calibration import Calibration
 
+__CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
+
 
 class GazeTracking(object):
     """
@@ -12,6 +14,10 @@ class GazeTracking(object):
     It provides useful information like the position of the eyes
     and pupils and allows to know if the eyes are open or closed
     """
+
+    # _predictor is used to get facial landmarks of a given face
+    # Use as static class variable to share the model between all objects to save memory and time during initialization
+    _predictor = dlib.shape_predictor(os.path.join(__CURRENT_DIR__, "trained_models/shape_predictor_68_face_landmarks.dat"))
 
     def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75):
         """
@@ -35,11 +41,6 @@ class GazeTracking(object):
         self.eye_left = None
         self.eye_right = None
         self.calibration = Calibration()
-
-        # _predictor is used to get facial landmarks of a given face
-        cwd = os.path.abspath(os.path.dirname(__file__))
-        model_path = os.path.abspath(os.path.join(cwd, "trained_models/shape_predictor_68_face_landmarks.dat"))
-        self._predictor = dlib.shape_predictor(model_path)
 
     @property
     def pupils_located(self):
