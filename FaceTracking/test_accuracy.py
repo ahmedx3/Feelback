@@ -14,9 +14,11 @@ import numpy as np
 import itertools
 from datetime import datetime
 import argparse
+import math
 
 
 face_detector = dlib.get_frontal_face_detector()
+__VERBOSE__ = False
 test_dir = ""
 faces_db = {}
 
@@ -25,12 +27,17 @@ def test(number_of_faces):
     count = 0
     count_errors = 0
 
-    dir_combinations = itertools.combinations(sorted(os.listdir(test_dir)), r=number_of_faces)
+    min_accuracy = 100
+
+    test_dir_contents = sorted(os.listdir(test_dir))
+    dir_combinations = itertools.combinations(test_dir_contents, r=number_of_faces)
+    print(f"TestSet Size: {math.comb(len(test_dir_contents), number_of_faces)} - Number of Faces: {number_of_faces}")
+
     for dirs in dir_combinations:
         local_count = 0
         local_count_errors = 0
 
-        print(*dirs, sep=" vs ")
+        print(*dirs, sep=" vs ") if __VERBOSE__ else None
 
         all_files = []
         for d in dirs:
@@ -51,8 +58,13 @@ def test(number_of_faces):
         count += local_count
         count_errors += local_count_errors
 
-        print(f"Local Accuracy: {100 - 100 * (local_count_errors / local_count)}%")
-        print(f"Total Accuracy: {100 - 100 * (count_errors / count)}%")
+        local_accuracy = 100 - 100 * (local_count_errors / local_count)
+        min_accuracy = min(min_accuracy, local_accuracy)
+
+        print(f"Local Accuracy: {local_accuracy}%") if __VERBOSE__ else None
+
+    print(f"Accuracy: {100 - 100 * (count_errors / count)}%")
+    print(f"Min Accuracy: {min_accuracy}%")
 
 
 def get_face(file):
@@ -75,6 +87,7 @@ def get_command_line_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('test_dir', help="Test Set Directory")
     args_parser.add_argument("-n", "--number-of-faces", help="Number of faces", default=2, type=int, metavar='N')
+    args_parser.add_argument("-v", "--verbose", help="Show more verbose output", action="store_true")
     return args_parser.parse_args()
 
 
@@ -82,6 +95,8 @@ if __name__ == '__main__':
     start = datetime.now()
     args = get_command_line_args()
     test_dir = args.test_dir
+    __VERBOSE__ = args.verbose
     test(args.number_of_faces)
     end = datetime.now()
     print(f"Total Time: {end - start}")
+    print("=" * 50)
