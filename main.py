@@ -38,7 +38,7 @@ def main():
     emotionPredictor = EmotionExtraction(modelPath)
 
     ########################### Initialize FaceTracking ###########################
-    faceTracker = KNNIdentification()
+    faceTracker = KNNIdentification(conflict_solving_strategy="position")
 
     ########################### Initialize Gender And Age ###########################
     modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVM_LPQ_47_44.model"
@@ -85,7 +85,7 @@ def main():
         emotions = emotionPredictor.getEmotion(faces)
 
         # ============================================= Face Tracking =============================================
-        ids = faceTracker.get_ids(faces)
+        ids = faceTracker.get_ids(faces, faces_positions)
 
         # ============================================ Gaze Estimation ============================================
         gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions, ids)
