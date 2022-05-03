@@ -141,12 +141,15 @@ class KNNIdentification:
         taken_classes = []
         for i in range(num_of_test_faces):
             if i >= self.n_classes:
+                # Create a new class for the first unclassified face (its class is still -1)
                 index = np.where(new_classes == -1)[0][0]
                 new_classes, label, x = self.create_new_class(index, x[index], new_classes, x)
 
             distances_to_class_i = np.linalg.norm(self.classes_centers[i] - x, axis=1)
             sorted_indices = np.argsort(distances_to_class_i)
+            # Remove already taken classes form the candidate classes
             sorted_indices = sorted_indices[np.isin(sorted_indices, taken_classes, invert=True, assume_unique=True)]
+
             new_classes[sorted_indices[0]] = i
             taken_classes.append(sorted_indices[0])
 
@@ -156,6 +159,7 @@ class KNNIdentification:
                 self.incremental_update_class_centers(classes[c], x[c], remove=True)
                 self.incremental_update_class_centers(new_classes[c], x[c])
 
+            # Update the duplicate elements (which are repeated 1+k/2 times due to newly created classes)
             new_classes[np.where(classes[num_of_test_faces:] == classes[c])[0] + num_of_test_faces] = new_classes[c]
 
         return new_classes, x
