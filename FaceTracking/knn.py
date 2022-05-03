@@ -137,20 +137,26 @@ class KNNIdentification:
                             The new data after solving the conflicts.
         """
 
-        new_classes = np.full(num_of_test_faces, fill_value=-1, dtype=np.int16)
+        new_classes = np.full_like(classes, fill_value=-1, dtype=np.int16)
         taken_classes = []
         for i in range(num_of_test_faces):
             if i >= self.n_classes:
                 index = np.where(new_classes == -1)[0][0]
                 new_classes, label, x = self.create_new_class(index, x[index], new_classes, x)
-                # Rollback the effect of this misclassified point in the center its original class
-                self.incremental_update_class_centers(classes[index], x[index], remove=True)
 
             distances_to_class_i = np.linalg.norm(self.classes_centers[i] - x, axis=1)
             sorted_indices = np.argsort(distances_to_class_i)
             sorted_indices = sorted_indices[np.isin(sorted_indices, taken_classes, invert=True, assume_unique=True)]
             new_classes[sorted_indices[0]] = i
             taken_classes.append(sorted_indices[0])
+
+        # Rollback the effect of misclassified points in the center its original class
+        for c in range(num_of_test_faces):
+            if new_classes[c] != classes[c]:
+                self.incremental_update_class_centers(classes[c], x[c], remove=True)
+                self.incremental_update_class_centers(new_classes[c], x[c])
+
+            new_classes[np.where(classes[num_of_test_faces:] == classes[c])[0] + num_of_test_faces] = new_classes[c]
 
         return new_classes, x
 
