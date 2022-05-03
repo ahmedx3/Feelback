@@ -283,7 +283,7 @@ class FeatureExtractor:
             return np.array(cD).flatten()
         return None
 
-    def GaborFilter(self, img, target_img_size=(128,128)):
+    def gaborFilter_method1(self, img, target_img_size=(128,128)):
          # Detect the face
         rects = self.detector(img, 1)
 
@@ -299,6 +299,45 @@ class FeatureExtractor:
             return np.array(filtered).flatten()
         return None
     
+    def get_gabor_filters(self):
+        num_theta = 4
+        scales = [x for x in range(3,12,2)]
+        filters = []
+        sigma = 3
+        psi = np.pi/2.0
+        lamda = 5
+        gamma = 0.3
+        for i in range(num_theta):
+            theta = ((i+1)*1.0 / num_theta) * np.pi
+            for scale in scales:
+                kernel = cv2.getGaborKernel((scale, scale), sigma, theta, lamda, gamma, psi, ktype=cv2.CV_32F)
+                filters.append(kernel)
+        return filters
+
+    def apply_gabor_filters(self, img, filters, target_img_size=(80,60)):
+        cropped = cv2.resize(img, target_img_size)
+        features = []
+        # fft_filters = [np.fft.fft2(i) for i in filters]
+        # img_fft = np.fft.fft2(img)
+        # a =  img_fft * fft_filters
+        # s = [np.fft.ifft2(i).flatten().real for i in a]
+        # for a in s: features.extend(a) 
+        for filter in filters:
+            filtered_img = cv2.filter2D(cropped,-1, filter)
+            features.extend(filtered_img.flatten())
+        return np.array(features)
+        
+    def gaborFilter_method2(self, img, filters):
+        # Detect the face
+        rects = self.detector(img, 1)
+
+        # Detect landmarks for each face
+        for rect in rects:
+            # Crop and resize the faces
+            cropped = img[max(rect.top(), 0):min(rect.bottom()+1, img.shape[0]), max(rect.left(), 0):min(rect.right()+1, img.shape[1])]
+            return self.apply_gabor_filters(cropped, filters)
+        return None
+    
     def extract_features(self, img, feature='LANDMARKS'):
         if feature == 'LANDMARKS':
             return self.normalizeFeatures(self.ExtractLandMarks(img).reshape(1,-1))[0]
@@ -306,7 +345,9 @@ class FeatureExtractor:
             feat = self.ExtractHOGFeatures(img)
             return self.ApplyPCAonFeatures(feat.reshape(1,-1))[0]
         if feature == 'GABOR':
-            feat = self.GaborFilter(img)
-            return self.ApplyPCAonFeatures(feat)
+            filters = self.get_gabor_filters()
+            feat = self.apply_gabor_filters(img, filters)
+            # return feat
+            return self.ApplyPCAonFeatures(feat.reshape(1,-1))[0]
 
 
