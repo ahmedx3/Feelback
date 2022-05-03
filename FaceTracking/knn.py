@@ -45,6 +45,8 @@ class KNNIdentification:
         self.threshold = threshold
         self.features = None
         self.classes = None
+        self.classes_centers = None
+        self.classes_count = None
 
     def knn_init(self, x: np.ndarray) -> npt.NDArray[np.uint16]:
         """
@@ -67,6 +69,8 @@ class KNNIdentification:
 
         self.features = np.tile(x, (1 + self.k // 2, 1))
         self.classes = np.tile(np.arange(x.shape[0]), 1 + self.k // 2)
+        self.classes_centers = x.copy()
+        self.classes_count = np.ones(x.shape[0], dtype=np.uint16)
 
         return self.classes[:x.shape[0]]
 
@@ -92,26 +96,67 @@ class KNNIdentification:
         classes = np.zeros(num_of_test_faces, dtype=np.uint16)
 
         for i, row in enumerate(x):
-            distances = np.linalg.norm(self.features - row, axis=1)
-            min_k_distances_classes = np.argsort(distances)[:self.k]
+            distances_to_class_i = np.linalg.norm(self.features - row, axis=1)
+            min_k_distances_classes = np.argsort(distances_to_class_i)[:self.k]
             nearest_k_classes = self.classes[min_k_distances_classes]
             label = np.bincount(nearest_k_classes).argmax()  # get the most frequent class
             classes[i] = label
 
-            min_k_distances = distances[min_k_distances_classes]
-            avg_distance_to_classified_class = np.mean(min_k_distances[nearest_k_classes == label])
-
             # Create a new class if the current row is too far from existing classes
-            if avg_distance_to_classified_class > self.threshold:
-                classes[i] = self.n_classes
-                classes = np.append(classes, np.repeat(self.n_classes, self.k // 2), axis=0)
-                x = np.append(x, np.tile(row, (self.k // 2, 1)), axis=0)
-                self.n_classes += 1
+            if np.linalg.norm(self.classes_centers[label] - row) > self.threshold:
+                classes, label, x = self.create_new_class(i, row, classes, x)
+            else:
+                self.incremental_update_class_centers(label, row)
+                self.classes_count[label] += 1
 
         self.features = np.append(self.features, x, axis=0)
         self.classes = np.append(self.classes, classes, axis=0)
 
         return classes[:num_of_test_faces]
+
+    def create_new_class(self, i, row, classes, x):
+        """
+        Create a new class for the current row (feature vector).
+
+        Args:
+            i (int): index of the current row in the data set.
+            row (np.ndarray): feature vector of shape (n_features).
+            classes (np.ndarray): labels array of shape (n_samples)
+            x (np.ndarray): array of shape (n_samples, n_features).
+                            the data set.
+
+        Returns:
+            classes (np.ndarray): updated labels array of shape (n_samples)
+            label (int): the created label of the new class.
+            x (np.ndarray): updated data set of shape (n_samples, n_features).
+
+        Notes:
+            The new class will be created by not only adding the current row to it,
+            instead, repeat the row `1 + k//2` times to make the class probable to be chosen.
+        """
+
+        label = self.n_classes
+        classes[i] = label
+        classes = np.append(classes, np.repeat(label, self.k // 2), axis=0)
+        x = np.append(x, np.tile(row, (self.k // 2, 1)), axis=0)
+        self.classes_count = np.append(self.classes_count, [1], axis=0)
+        self.classes_centers = np.append(self.classes_centers, [row], axis=0)
+        self.n_classes += 1
+        return classes, label, x
+
+    def incremental_update_class_centers(self, label, row):
+        """
+        Update the class centers, which is the mean of all points belonging to the class.
+        We do this incrementally, so we don't need to recalculate the class centers for each new point.
+
+        Args:
+            label (int): the class label.
+            row (np.ndarray): array of shape (n_features).
+                              the new point to add to the class.
+        """
+
+        n = self.classes_count[label]
+        self.classes_centers[label] = (self.classes_centers[label] * n + row) / (n + 1)
 
     def get_ids(self, faces: List[np.ndarray]) -> npt.NDArray[np.uint16]:
         eigen_faces = eigen_faces_features(faces)
@@ -123,7 +168,7 @@ class KNNIdentification:
             outliers_ids: np.ndarray which contains ids of outlier classes.
         """
 
-        freq = np.bincount(self.classes)
+        freq = self.classes_count
         # outliers_ids = np.argwhere(np.mean(freq) - freq > np.std(freq))
         # outliers_ids = np.argwhere(freq < np.percentile(freq, 25))
         max_freq = freq.max()
