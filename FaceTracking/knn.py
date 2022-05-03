@@ -107,12 +107,52 @@ class KNNIdentification:
                 classes, label, x = self.create_new_class(i, row, classes, x)
             else:
                 self.incremental_update_class_centers(label, row)
-                self.classes_count[label] += 1
+
+        if np.unique(classes).shape[0] != num_of_test_faces:
+            print("[WARNING] There are some conflicts in the classes")
+            print(f"[WARNING] Original Classes: {classes}")
+
+            classes, x = self.solve_conflicts(num_of_test_faces, classes, x)
 
         self.features = np.append(self.features, x, axis=0)
         self.classes = np.append(self.classes, classes, axis=0)
 
         return classes[:num_of_test_faces]
+
+    def solve_conflicts(self, num_of_test_faces, classes, x):
+        """
+        Solve conflicts between classes (i.e. when we have two points classified to the same class)
+
+        Args:
+            num_of_test_faces (int): number of faces to classify
+            classes (np.ndarray): array of shape (n_samples)
+                                  the original classes of the test faces.
+            x (np.ndarray): array of shape (n_samples, n_features).
+                            The original data to classify.
+
+        Returns:
+            classes (np.ndarray): array of shape (n_samples)
+                                  the new classes of the faces after solving the conflicts.
+            x (np.ndarray): array of shape (n_samples, n_features).
+                            The new data after solving the conflicts.
+        """
+
+        new_classes = np.full(num_of_test_faces, fill_value=-1, dtype=np.int16)
+        taken_classes = []
+        for i in range(num_of_test_faces):
+            if i >= self.n_classes:
+                index = np.where(new_classes == -1)[0][0]
+                new_classes, label, x = self.create_new_class(index, x[index], new_classes, x)
+                # Rollback the effect of this misclassified point in the center its original class
+                self.incremental_update_class_centers(classes[index], x[index], remove=True)
+
+            distances_to_class_i = np.linalg.norm(self.classes_centers[i] - x, axis=1)
+            sorted_indices = np.argsort(distances_to_class_i)
+            sorted_indices = sorted_indices[np.isin(sorted_indices, taken_classes, invert=True, assume_unique=True)]
+            new_classes[sorted_indices[0]] = i
+            taken_classes.append(sorted_indices[0])
+
+        return new_classes, x
 
     def create_new_class(self, i, row, classes, x):
         """
@@ -144,7 +184,7 @@ class KNNIdentification:
         self.n_classes += 1
         return classes, label, x
 
-    def incremental_update_class_centers(self, label, row):
+    def incremental_update_class_centers(self, label, row, remove=False):
         """
         Update the class centers, which is the mean of all points belonging to the class.
         We do this incrementally, so we don't need to recalculate the class centers for each new point.
@@ -153,10 +193,17 @@ class KNNIdentification:
             label (int): the class label.
             row (np.ndarray): array of shape (n_features).
                               the new point to add to the class.
+            remove (bool): if True, remove the point from the class.
+                           else, add the point to the class, which is the default.
         """
 
         n = self.classes_count[label]
-        self.classes_centers[label] = (self.classes_centers[label] * n + row) / (n + 1)
+        if remove:
+            self.classes_centers[label] = (self.classes_centers[label] * n - row) / (n - 1)
+            self.classes_count[label] -= 1
+        else:
+            self.classes_centers[label] = (self.classes_centers[label] * n + row) / (n + 1)
+            self.classes_count[label] += 1
 
     def get_ids(self, faces: List[np.ndarray]) -> npt.NDArray[np.uint16]:
         eigen_faces = eigen_faces_features(faces)
