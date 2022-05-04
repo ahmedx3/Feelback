@@ -19,7 +19,7 @@ class GazeTracking(object):
     # Use as static class variable to share the model between all objects to save memory and time during initialization
     _predictor = dlib.shape_predictor(os.path.join(__CURRENT_DIR__, "trained_models/shape_predictor_68_face_landmarks.dat"))
 
-    def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75):
+    def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75, blinking_threshold: float = 3.8):
         """
         Create Gaze Tracking Object
 
@@ -33,10 +33,12 @@ class GazeTracking(object):
         Arguments:
             right_threshold (float): Hyper-Parameter to consider person is looking towards right.
             left_threshold (float):  Hyper-Parameter to consider person is looking towards left.
+            blinking_threshold (float):  Hyper-Parameter to consider person is blinking.
         """
 
         self.left_threshold = left_threshold
         self.right_threshold = right_threshold
+        self.blinking_threshold = blinking_threshold
         self.frame = None
         self.eye_left = None
         self.eye_right = None
@@ -133,7 +135,7 @@ class GazeTracking(object):
         """Returns true if the user closes his eyes"""
         if self.pupils_located:
             blinking_ratio = (self.eye_left.blinking + self.eye_right.blinking) / 2
-            return blinking_ratio > 3.8
+            return blinking_ratio > self.blinking_threshold
 
     def get_current_state_text(self):
         """
@@ -157,7 +159,7 @@ class GazeEstimation:
     Wrapper Class around GazeTracking to support multiple faces
     """
 
-    def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75):
+    def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75, blinking_threshold: float = 3.8):
         """
         Create Gaze Tracking Object
 
@@ -175,10 +177,12 @@ class GazeEstimation:
         Arguments:
             right_threshold (float): Hyper-Parameter to consider person is looking towards right.
             left_threshold (float):  Hyper-Parameter to consider person is looking towards left.
+            blinking_threshold (float): Hyper-Parameter to consider person is blinking.
         """
 
         self.right_threshold = right_threshold
         self.left_threshold = left_threshold
+        self.blinking_threshold = blinking_threshold
         self.gazes = []
 
     def get_gaze_attention(self, frame: np.ndarray, faces_positions: np.ndarray, ids: np.ndarray) -> np.ndarray:
@@ -196,7 +200,7 @@ class GazeEstimation:
 
         gaze_attention = np.zeros(faces_positions.shape[0], dtype=bool)
         while ids.max(initial=0) >= len(self.gazes):
-            self.gazes.append(GazeTracking(self.right_threshold, self.left_threshold))
+            self.gazes.append(GazeTracking(self.right_threshold, self.left_threshold, self.blinking_threshold))
 
         for i in range(ids.shape[0]):
             self.gazes[ids[i]].refresh(frame, faces_positions[i])
