@@ -59,7 +59,7 @@ def test():
         verbose.imshow(frame, delay=1)
         verbose.print(f"Processing Frame #{frame_number}")
 
-        frame_number += int(video_fps / frames_to_process_each_second)  # Process N every second
+        frame_number += round(video_fps / frames_to_process_each_second)  # Process N every second
 
         # Seek the video to the required frame
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
