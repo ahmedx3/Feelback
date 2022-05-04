@@ -113,12 +113,13 @@ def main():
 
         verbose.imshow(frame, delay=1)
 
-        verbose.print(f"[INFO] Video Current Time is {round(video.get(cv2.CAP_PROP_POS_MSEC), 3)} sec")
+        verbose.print(f"[INFO] Video Current Time is {round(video_utils.get_current_time(video), 3)} sec")
 
         # =========================================================================================================
 
     # When everything done, release the video capture object
     video.release()
+    cv2.destroyAllWindows()
 
     print(faceTracker.get_outliers_ids())
 

@@ -7,7 +7,7 @@ __CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
 __PARENT_DIR__ = os.path.dirname(__CURRENT_DIR__)
 sys.path.append(__PARENT_DIR__)
 
-from utils import io
+from utils import io, video_utils
 from utils import verbose
 import knn
 import numpy as np
@@ -64,10 +64,11 @@ def test():
         # Seek the video to the required frame
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
 
-        verbose.print(f"[INFO] Video Current Time is {round(video.get(cv2.CAP_PROP_POS_MSEC), 3)} sec")
+        verbose.print(f"[INFO] Video Current Time is {round(video_utils.get_current_time(video), 3)} sec")
 
     # When everything done, release the video capture object
     video.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

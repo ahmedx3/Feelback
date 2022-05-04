@@ -16,3 +16,19 @@ def get_duration(video: cv2.VideoCapture) -> float:
     duration_seconds = frame_count / frames_per_second
 
     return duration_seconds
+
+
+def get_current_time(video: cv2.VideoCapture) -> float:
+    """
+    Get Current Video Time in Seconds
+
+    Args:
+        video: OpenCV VideoCapture
+
+    Returns:
+        Current Video Time in seconds
+    """
+    frames_per_second = video.get(cv2.CAP_PROP_FPS)
+    current_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
+    current_time = current_frame / frames_per_second
+    return current_time
