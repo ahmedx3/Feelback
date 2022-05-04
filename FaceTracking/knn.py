@@ -28,7 +28,7 @@ class KNNIdentification:
         Each class will have at least these number of points: `1 + k//2`.
     """
 
-    def __init__(self, n_classes: int = -1, k=5, threshold=2000, conflict_solving_strategy="position"):
+    def __init__(self, n_classes: int = -1, k=5, threshold=2000, conflict_solving_strategy="min_distance"):
         """
 
         Args:
@@ -40,7 +40,7 @@ class KNNIdentification:
                                near neighbours clusters exceeds threshold, a new class will be created with point A.
             conflict_solving_strategy: The strategy to use when there is a conflict between two classes
                                        (i.e. two points have the same label).
-                                       Defaults to "position".
+                                       Defaults to "min_distance".
                                        Possible values:
                                        - "position": The class with near spatial position will be chosen.
                                        - "min_distance": The class with the minimum distance to the new point is chosen.
