@@ -1,5 +1,5 @@
 ## TODO
-- Change the predicted label to be the highest predicted prob
+- Experiment with the cropping size in the main
 
 - Mix the datasets
 
@@ -29,3 +29,4 @@
 - Train on Data that was extracted from the face detection model
 - Check lighting effect and preprocessing to unify the images
 - Try the LBP on regions of the image divided to 16 20x20
+- Change the predicted label to be an aggregation of the prediction over the video with more than one method

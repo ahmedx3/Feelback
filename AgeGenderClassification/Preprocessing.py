@@ -50,8 +50,10 @@ def preprocess_image(img):
     Returns:
         Image: Preprocessed Image
     """
-    
-    preprocessed = hist_equalize(img)
-    preprocessed = resize_image(preprocessed, (80,80))
+    try:
+        preprocessed = hist_equalize(img)
+        preprocessed = resize_image(preprocessed, (80,80))
+    except:
+        preprocessed = img
 
     return preprocessed

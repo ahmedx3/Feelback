@@ -6,6 +6,7 @@ import AgeGenderClassification.Preprocessing as Preprocessing
 from collections import defaultdict
 
 import AgeGenderClassification.Utils  as Utils
+import numpy as np
 
 class GenderAgeClassification:
     def __init__(self, model_path_age, model_path_gender):
@@ -76,30 +77,53 @@ class GenderAgeClassification:
             max_class = 'male' if male_votes > female_votes else 'female'
             max_prob = round(male_prob / male_votes, 2) if male_votes > female_votes else round(female_prob / female_votes, 2)
             max_pred = (max_class, max_prob)
+
+            # TODO: REMOVE AFTER TESTING
+            # if id == 1:
+            #     print(self.previous_gender_values[id])
             
         return max_pred
 
     def getGender(self, frame, facesLocations, ids):
         faces = []
+        # count = 0
         for x1,y1,x2,y2 in facesLocations:
+            # TODO: REMOVE AFTER TESTING
+            # if count == 1:
+            #     choicesx = np.arange(10, 100, 10)
+            #     choicesy = [10,20]
+            #     r1 = np.random.choice(choicesy)
+            #     r2 = np.random.choice(choicesy)
+            #     r3 = np.random.choice(choicesx)
+            #     r4 = np.random.choice(choicesx)
+            #     faces.append(frame[y1-r1:y2+r2,x1-r3:x2+r4])
+            # else:
+            #     faces.append(frame[y1-70:y2+40,x1-10:x2+10])
+            
+            # count += 1
             faces.append(frame[y1-70:y2+40,x1-10:x2+10])
+            
 
         predictedGender = []
         for index, face in enumerate(faces):
-            # Preprocess and extract features
-            img = Preprocessing.preprocess_image(face)
-            img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
-            
-            # Predict the probability
-            predicted_prob = self.modelGender.predict_proba([img_features])[0]
-            
-            # Compute the prediction based on the criteria chosen
-            prediction = str(self.modelGender.predict([img_features])[0]) + '-' + str(round(max(predicted_prob), 2))
-            prediction = self.get_max_prob_gender(ids[index], prediction, method="top_votes")
-            
-            # Add the prediction to the list of predioctions
-            prediction = str(prediction[0]) + ' ' + str(prediction[1])
-            predictedGender.append(prediction)
+            # If exception is raised return error label
+            try:
+                # Preprocess and extract features
+                img = Preprocessing.preprocess_image(face)
+                img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
+                # Predict the probability
+                predicted_prob = self.modelGender.predict_proba([img_features])[0]
+                
+                # Compute the prediction based on the criteria chosen
+                prediction = str(self.modelGender.predict([img_features])[0]) + '-' + str(round(max(predicted_prob), 2))
+                prediction = self.get_max_prob_gender(ids[index], prediction, method="top_votes")
+                
+                # Add the prediction to the list of predioctions
+                prediction = str(prediction[0]) + ' ' + str(prediction[1])
+                predictedGender.append(prediction)
+
+            except:
+                predictedGender.append("ERROR")
 
         return predictedGender
     
