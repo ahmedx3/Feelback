@@ -91,7 +91,7 @@ def main():
         gaze_attention = gazeEstimator.get_gaze_attention(frame_grey, faces_positions, ids)
 
         # ==================================== Profiling (Age/Gender Detection) ===================================
-        genders = genderPredictor.getGender(frame_grey, faces_positions)
+        genders = genderPredictor.getGender(frame_grey, faces_positions, ids)
         # ages = genderPredictor.getAge(frame_grey,faces)
 
         # =========================================== Integrate Modules ===========================================
