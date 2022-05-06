@@ -26,7 +26,7 @@ class GenderAgeClassification:
             # Compare with the previous values
             for pred in self.previous_gender_values[id]:
                 pred = self.split_prob(pred)
-                if max_pred[1] < pred[1]:
+                if float(max_pred[1]) < float(pred[1]):
                     max_pred = pred
 
             # Add previous value to array
@@ -41,12 +41,22 @@ class GenderAgeClassification:
                 # Add previous value to array
                 self.previous_gender_values[id].append(prediction)
                 
-            # Else we loop and replace if the value is bigger
+            # Else we loop and replace the least probability
             else:
-                for pred in self.previous_gender_values[id]:
+                least_prob_index = None
+                least_prob_value = 1
+                # Compute least probability in the list
+                for index, pred in enumerate(self.previous_gender_values[id]):
                     pred = self.split_prob(pred)
-                    if max_pred[1] < pred[1]:
-                        max_pred = pred
+                    if float(pred[1]) < least_prob_value:
+                        least_prob_index = index
+                        least_prob_value = float(pred[1])
+                
+                # Check if the least probability is less than the current and replace
+                curr_pred = self.split_prob(prediction)
+                if float(curr_pred[1]) > least_prob_value:
+                    self.previous_gender_values[id][least_prob_index] = prediction
+                    
             
             # get the average over the max_kept
             male_votes, female_votes = 0, 0
