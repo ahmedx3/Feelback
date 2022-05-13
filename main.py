@@ -117,6 +117,9 @@ def main():
             verbose.print(f"[INFO] Video Current Time is {round(video_utils.get_current_time(video), 3)} sec")
 
             # =========================================================================================================
+        except KeyboardInterrupt:
+            print ('KeyboardInterrupt exception. EXITING')
+            break
         except:
             verbose.print("[ERROR] Exception Occurred, Skipping this frame")
 
