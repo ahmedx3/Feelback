@@ -20,7 +20,7 @@ def pyramid(img,scale=1.5, minSize=(30, 30)):
             break
         yield img
 
-def slidingWindow(img, stepSize, windowSize,mask,edges,skinThreshold=0.4,edgeThreshold=0.1):
+def slidingWindow(img, stepSize, windowSize,mask,edges,commonMask,skinThreshold=0.4,edgeThreshold=0.1):
     """Loop over image with window by stride of stepsize
 
     Args:
@@ -36,9 +36,13 @@ def slidingWindow(img, stepSize, windowSize,mask,edges,skinThreshold=0.4,edgeThr
     windowsArr = []
     for y in range(0, img.shape[0] - windowSize[0] + 1, stepSize):
         for x in range(0, img.shape[1] - windowSize[1] + 1, stepSize):
-            skinRatio = np.sum(mask[y:y+windowSize[1],x:x+windowSize[0]]) / (windowSize[0] * windowSize[1])
-            edgeRatio = np.sum(edges[y:y+windowSize[1],x:x+windowSize[0]] == 255) / (windowSize[0] * windowSize[1]) 
-            if skinRatio < skinThreshold or edgeRatio < edgeThreshold:
+            # skinRatio = np.sum(mask[y:y+windowSize[1],x:x+windowSize[0]]) / (windowSize[0] * windowSize[1])
+            # edgeRatio = np.sum(edges[y:y+windowSize[1],x:x+windowSize[0]] == 255) / (windowSize[0] * windowSize[1]) 
+            # if skinRatio < skinThreshold or edgeRatio < edgeThreshold:
+            #     continue
+
+            commonMaskRatio = np.sum(commonMask[y:y+windowSize[1],x:x+windowSize[0]]) / (windowSize[0] * windowSize[1])
+            if commonMaskRatio < 0.15:
                 continue
             windowsArr.append(((x, y), img[y:y + windowSize[1], x:x + windowSize[0]]))
     return windowsArr

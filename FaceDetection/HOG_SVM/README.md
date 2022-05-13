@@ -13,3 +13,13 @@ imageDivision = /8
 pyramidScale = 2
 stepSize = 2
 imageDivision = /2
+
+## Best hyper parameters for fron camera
+
+(winW, winH) = (19, 19) # window width and height
+pyramidScale = 1.5 # Scale factor for the pyramid
+stepSize = 2 # Step size for the sliding window
+overlappingThreshold = 0.3 # Overlap threshold for non-maximum suppression
+skinThreshold = 0.4 # threshold for skin color in the window
+edgeThreshold = 0.2 # threshold for edge percentage in the window
+resizeFactor = 4

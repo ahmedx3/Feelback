@@ -27,9 +27,10 @@ class FaceDetector:
         for image in pyramid(frame, pyramidScale, minSize=(30, 30)):
             
             scaleFactor = frameOriginal.shape[0] / float(image.shape[0])
-            mask = DetectSkinColor(image)
+            skinMask = DetectSkinColor(image)
             edges = EdgeDetection(image)
-            windows = slidingWindow(image, stepSize,(winW, winH),mask,edges,skinThreshold,edgeThreshold)
+            commonMask = detectCommonMask(edges,skinMask)
+            windows = slidingWindow(image, stepSize,(winW, winH),skinMask,edges,commonMask,skinThreshold,edgeThreshold)
             if(len(windows)) == 0:
                 break
             indices, patches = zip(*windows)
@@ -44,6 +45,13 @@ class FaceDetector:
                 faces.append((int(i * scaleFactor), int(j * scaleFactor), int((i + winW) * scaleFactor), int((j + winH) * scaleFactor)))
 
         faces = nonMaxSuppression(faces,overlappingThreshold)
+
+        # Increase the size of the bounding boxes
+        # biggerFaces = []
+        # resizeRatio = 5 # the smaller the number, the bigger the bounding box
+        # for (x1, y1, x2, y2) in faces:
+        #     squareLen = x2 - x1
+        #     biggerFaces.append((x1 - squareLen/resizeRatio, y1 - squareLen/resizeRatio, x2 + squareLen/resizeRatio, y2 + squareLen/resizeRatio))
 
         return faces
 
