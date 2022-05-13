@@ -46,7 +46,13 @@ def DetectSkinColor(img):
     calc2 = cv2.log(b/g)
 
     # mask if test1 between [0.15;1.1] and test2 between [-4;0.3]
-    mask = (calc1 > 0.15) & (calc1 < 1.1) & (calc2 > -4) & (calc2 < 0.3)
+    mask = (calc1 >= 0.15) & (calc1 <= 1.1) & (calc2 >= -4) & (calc2 <= 0.3)
+
+    # show image where mask is true
+    # indices = mask.astype(np.uint8)  #convert to an unsigned byte
+    # indices *= 255
+    # cv2.imshow("indices", indices)
+    # cv2.waitKey(0)
     
     return mask
 
@@ -139,6 +145,23 @@ def EdgeDetection(img, sigma=0.33):
     upper = int(min(255, (1.0 + sigma) * median))
     edges = cv2.Canny(img, lower, upper) # 50,100 also works well
     return edges
+
+def detectCommonMask(edgeMask, skinMask):
+    """Returns the common mask of edge and sking
+
+    Args:
+        img1 (_type_): edges of the image
+        img2 (_type_): skin mask of the image
+
+    Returns:
+        _type_: common mask of two images
+    """
+    # convert 0 to true and 1 to false of edges
+    edges = np.where(edgeMask == 0, False, True)
+    # and edges with skin mask
+    andedMask = np.logical_and(edges, skinMask)
+    return andedMask
+    
 
 def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), numOfBins=7):
     """ Extract Histogram of oriented gradient (HOG) features from an image
