@@ -18,21 +18,27 @@ class GenderAgeClassification:
         split_pred = prediction.split('-')
         return split_pred[0], split_pred[1]
         
-    def get_max_prob_gender(self, id, prediction, method="top_votes"):
+    def get_max_prob_gender(self, id, prediction, method="same_frame"):
         # Split probability and prediction
         # initialize the max to be the current
         max_pred = self.split_prob(prediction)
 
-        if method == "single_max":
-            # Compare with the previous values
-            for pred in self.previous_gender_values[id]:
-                pred = self.split_prob(pred)
-                if float(max_pred[1]) < float(pred[1]):
-                    max_pred = pred
-
-            # Add previous value to array
-            self.previous_gender_values[id].append(prediction)
+        if method == "same_frame":
+            # return the same value that we got
+            return max_pred
         
+        elif method == "single_max":
+            # Compare with the previous value
+            if len(self.previous_gender_values[id]) == 1:
+                current_max = self.split_prob(self.previous_gender_values[id][0])
+                if float(max_pred[1]) > float(current_max[1]):
+                    self.previous_gender_values[id][0] = prediction
+                else:
+                    max_pred = self.split_prob(self.previous_gender_values[id][0])
+            else:
+                # Add previous value to array
+                self.previous_gender_values[id].append(prediction)
+            
         elif method == "top_votes":
             # Max number of frames to take average
             max_kept = 5
@@ -116,7 +122,7 @@ class GenderAgeClassification:
                 
                 # Compute the prediction based on the criteria chosen
                 prediction = str(self.modelGender.predict([img_features])[0]) + '-' + str(round(max(predicted_prob), 2))
-                prediction = self.get_max_prob_gender(ids[index], prediction, method="top_votes")
+                prediction = self.get_max_prob_gender(ids[index], prediction, method="single_max")
                 
                 # Add the prediction to the list of predioctions
                 prediction = str(prediction[0]) + ' ' + str(prediction[1])
