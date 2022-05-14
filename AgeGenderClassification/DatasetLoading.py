@@ -89,7 +89,7 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
 
     # Set path to dataset
     path_to_dataset = os.path.join(os.path.dirname(
-        __file__), "../Data/UTK_AgeGender")
+        __file__), "../Data/new_UTK_AgeGender")
 
     # Initialize Variables
     features = []
@@ -136,6 +136,48 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
 
     return features, labels, image_paths
 
+def load_FGNET_Age_dataset(selected_feature="LPQ"):
+    
+    # Set path to dataset
+    path_to_dataset = os.path.join(os.path.dirname(
+        __file__), "../Data/FGNET_Age")
+
+    # Initialize Variables
+    features = []
+    labels = []
+    image_paths = []
+
+    # Loop over directories and get Images
+    count = 0
+    for i, fn in enumerate(os.listdir(path_to_dataset)):
+
+        # Extract label
+        age = int(fn[4:6])
+
+        # Increase count
+        count += 1
+
+        # Add Label
+        age_label = get_age_label(age)
+        labels.append(age_label)
+
+        # Get Image path
+        path = os.path.join(path_to_dataset, fn)
+        image_paths.append(path)
+
+        # Extract Image features
+        if selected_feature != None:
+            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            img = Preprocessing.preprocess_image(img)
+            features.append(
+                FeaturesExtraction.extract_features(img, feature=selected_feature))
+
+        # Show progress for debugging purposes
+        if count % 500 == 0:
+            print(F"FGNET Age Dataset: Finished Reading {count}")
+
+    return features, labels, image_paths
+
 def get_age_label(age):
     """takes exact age and returns a label for the age class
 
@@ -147,19 +189,13 @@ def get_age_label(age):
     """
     age = int(age)
 
-    if age <= 9:
-        return "0-9"
-    elif age <= 19:
-        return "10-19"
-    elif age <= 29:
-        return "20-29"
-    elif age <= 39:
-        return "30-39"
-    elif age <= 49:
-        return "40-49"
-    elif age <= 59:
-        return "50-59"
-    elif age <= 69:
-        return "60-69"
+    if age <= 14:
+        return "child"
+    elif age <= 25:
+        return "youth"
+    elif age <= 40:
+        return "adult"
+    elif age <= 60:
+        return "middle-age"
     else: 
-        return "70+"
+        return "elderly"

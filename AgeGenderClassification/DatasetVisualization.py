@@ -34,6 +34,18 @@ def visualise_UTK_AgeGender(label="gender", age_range=(1, 90)):
     Utils.plot_dataset_piechart(labels)
 
 
+def visualise_FGNET_Age():
+
+    _, labels, _ = DatasetLoading.load_FGNET_Age_dataset(selected_feature=None)
+
+    # Draw the dataset histogram
+    Utils.plot_dataset_histogram(labels)
+    
+    # Draw the dataset piechart
+    Utils.plot_dataset_piechart(labels)
+
+
 if __name__ == "__main__":
-    visualise_UTK_AgeGender(label="age", age_range=(1,90))
+    visualise_FGNET_Age()
+    # visualise_UTK_AgeGender(label="age", age_range=(1,90))
     # visualise_Gender_Kaggle(type="Validation")

@@ -38,9 +38,7 @@ def k_fold_validation(used_classifier, selected_feature="LPQ", k_folds=5):
     """
     # Load dataset with extracted features
     print('Loading dataset and extract features. This will take time ...')
-    features, labels, image_paths = DatasetLoading.load_Gender_Kaggle_dataset(
-        selected_feature=selected_feature, type="Training")
-    # features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature=selected_feature,label="gender", age_range=(20,50))
+    features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature=selected_feature,label="age", age_range=(20,50))
     print('Finished loading dataset.')
 
 
@@ -135,8 +133,10 @@ def train_classifier(used_classifier, selected_feature="LPQ"):
           100, '%', ' Test accuracy:', accuracy*100, '%')
     print('Train F1 Score:', train_f1)
     print('Test F1 Score:', f1)
-    print('Train Confusion Matrix:', train_conf_matrix)
-    print('Train Confusion Matrix:', conf_matrix)
+    print('Train Confusion Matrix:')
+    print(train_conf_matrix)
+    print('Test Confusion Matrix:')
+    print(conf_matrix)
 
 
     return model, train_accuracy, accuracy
@@ -144,7 +144,7 @@ def train_classifier(used_classifier, selected_feature="LPQ"):
 
 def main():
     used_classifier = "SVM"
-    selected_feature="LPQ"
+    selected_feature="localLBP"
     classifier, train_accuracy, accuracy = train_classifier(used_classifier, selected_feature=selected_feature)
     # save the model to disk
     name = "UTK"

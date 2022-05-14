@@ -131,7 +131,7 @@ def extract_features(img, feature="LPQ"):
     if feature == 'LPQ':
         return extract_LPQ(img, winSize=5)
     elif feature == 'LBP':
-        return extract_LBP(img, radius=3, eps=1e-7)
+        return extract_LBP(img)
     elif feature == 'localLBP':
         return localLBP(img)
     elif feature == 'localLPQ':
