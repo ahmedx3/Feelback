@@ -1,0 +1,21 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "extends": ["plugin:vue/essential", "airbnb-base"],
+  "parserOptions": {
+    "ecmaVersion": 11,
+    "sourceType": "module"
+  },
+  "plugins": ["vue"],
+  "rules": {
+    "import/no-unresolved": "off",
+    "import/extensions": "off",
+    "no-param-reassign": "off",
+    "operator-linebreak": "off",
+    "no-underscore-dangle": "off",
+    "linebreak-style": "off",
+    "arrow-body-style": "off"
+  }
+}
