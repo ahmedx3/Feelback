@@ -20,13 +20,18 @@
         </v-col>
       </v-col>
     </v-row>
+    <v-row justify="center" align="center">
+      <main-analytics></main-analytics>
+    </v-row>
   </v-container>
 </template>
 
 <script>
+import MainAnalytics from '../components/MainAnalytics.vue';
+
 export default {
-  data() {
-    return {};
+  components: {
+    MainAnalytics,
   },
 };
 </script>
