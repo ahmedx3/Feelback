@@ -87,3 +87,33 @@ def plot_dataset_piechart(labels):
     plt.legend()
     plt.show(block=True)
 
+
+def plot_regression_accuracies(labels, predictions):
+    
+    # Cast to numpy arrays
+    labels = np.array(labels)
+    predictions = np.array(predictions)
+
+    # Calculate the differences between the labels and predictions
+    differences = np.abs(labels - predictions)
+
+    # Calculate the accuracies
+    x_values = range(0, 21, 2)
+    y_values = []
+    for x in x_values:
+        y_values.append((differences <= x).sum())
+    
+
+    # Plot the graph between the error and accuracy
+    y_values = (np.array(y_values) / len(labels)) * 100
+    print(y_values)
+    plt.scatter(x_values, y_values)
+    plt.show(block=True)
+
+
+
+# if __name__ == '__main__':
+#     labels = [1,2,3,4,5,6,7,8,9,10]
+#     predic = [1,2,5,6,8,9,11,12,15,20]
+#     plot_regression_accuracies(labels, predic)
+

@@ -4,11 +4,14 @@ Imports
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+from sklearn.model_selection import GridSearchCV
 from sklearn import svm
 import random
 import pickle
 import DatasetLoading
 from datetime import datetime
+from sklearn.metrics import mean_absolute_error
+import Utils
 
 
 """
@@ -22,6 +25,8 @@ np.random.seed(random_seed)
 classifiers = {
     # SVM with gaussian kernel
     'SVM': svm.SVC(random_state=random_seed, kernel="rbf"),
+    # SVM for regression with gaussian kernel
+    'SVR': svm.SVR(kernel="rbf", C=100),
 }
 
 """
@@ -138,18 +143,68 @@ def train_classifier(used_classifier, selected_feature="LPQ"):
     print('Test Confusion Matrix:')
     print(conf_matrix)
 
-
     return model, train_accuracy, accuracy
+
+
+def train_classifier_regression(used_classifier, selected_feature="LPQ"):
+
+    # Load dataset with extracted features
+    print('Loading dataset and extract features. This will take time ...')
+    features, labels, image_paths = DatasetLoading.load_UTK_AgeGender_dataset(selected_feature=selected_feature,label="age_number", age_range=(5,75))
+    # features, labels, image_paths = DatasetLoading.load_FGNET_Age_dataset(selected_feature=selected_feature,label="age_number")
+    print('Finished loading dataset.')
+
+    # Split Dataset to train and test for model fitting
+    train_features, test_features, train_labels, test_labels = train_test_split(
+        features, labels, test_size=0.2, random_state=random_seed, shuffle=True)
+
+    # Training the model
+    print('############## Training ', used_classifier, "##############")
+    model = classifiers[used_classifier]
+    model.fit(train_features, train_labels)
+
+    # parameters = {'kernel':('linear', 'rbf'), 'C':[0.001, 0.1, 1, 10, 100, 1000]}
+    # model = GridSearchCV(svm.SVR(), parameters, scoring='neg_mean_absolute_error', verbose=4)
+    # model.fit(train_features, train_labels)
+    # print(model.best_params_)
+    # print(model.best_score_)
+
+
+    # Test the model
+    train_predictions = model.predict(train_features)
+    test_predictions = model.predict(test_features)
+    mae_train = round(mean_absolute_error(train_labels, train_predictions), 2)
+    mae_test = round(mean_absolute_error(test_labels, test_predictions), 2)
+
+    # Print MAE of train and test
+    print(used_classifier, ': Train Mean Absolute Error:', mae_train , ' Test Mean Absolute Error:', mae_test)
+ 
+    # Plot accuracies of different errors
+    Utils.plot_regression_accuracies(train_labels, train_predictions)
+    Utils.plot_regression_accuracies(test_labels, test_predictions)
+
+    return model, mae_train, mae_test
 
 
 def main():
     used_classifier = "SVM"
-    selected_feature="localLBP"
-    classifier, train_accuracy, accuracy = train_classifier(used_classifier, selected_feature=selected_feature)
+    selected_feature="LPQ"
+    classifier, train_accuracy, accuracy = train_classifier_regression(used_classifier, selected_feature=selected_feature)
     # save the model to disk
     name = "UTK"
     filename = "Models_Age/" + name + "_" + used_classifier + "_" + selected_feature + "_" + \
         str(int(train_accuracy * 100)) + "_" + str(int(accuracy * 100)) + ".model"
+    pickle.dump(classifier, open(filename, 'wb'))
+
+
+def main_regression():
+    used_classifier = "SVR"
+    selected_feature="localLBP"
+    classifier, mae_train, mae_test = train_classifier_regression(used_classifier, selected_feature=selected_feature)
+    # save the model to disk
+    name = "FGNET"
+    filename = "Models_Age/" + name + "_" + used_classifier + "_" + selected_feature + "_" + \
+        str(mae_train) + "_" + str(mae_test) + ".model"
     pickle.dump(classifier, open(filename, 'wb'))
 
 
@@ -159,5 +214,6 @@ def validate():
     k_fold_validation(used_classifier, selected_feature=selected_feature, k_folds=5)
 
 if __name__ == "__main__":
-    main()
+    main_regression()
+    # main()
     # validate()

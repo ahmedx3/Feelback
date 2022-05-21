@@ -82,7 +82,7 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
         Tuple(features, labels, image_paths): Features, Labels, and Image Paths of the dataset
     """
     # Args checking
-    if label != "gender" and label != "age":
+    if label != "gender" and label != "age" and label != 'age_number':
         raise Exception("Wrong Parameter For label argument")
     if type(age_range) != tuple or age_range[0] < 1 or age_range[1] > 90:
         raise Exception("Wrong Parameter For age_range argument")
@@ -118,6 +118,8 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
         elif label == "age":
             age_label = get_age_label(age)
             labels.append(age_label)
+        elif label == "age_number":
+            labels.append(age)
 
         # Get Image path
         path = os.path.join(path_to_dataset, fn)
@@ -136,7 +138,7 @@ def load_UTK_AgeGender_dataset(selected_feature="LPQ", label="gender", age_range
 
     return features, labels, image_paths
 
-def load_FGNET_Age_dataset(selected_feature="LPQ"):
+def load_FGNET_Age_dataset(selected_feature="LPQ", label="age"):
     
     # Set path to dataset
     path_to_dataset = os.path.join(os.path.dirname(
@@ -158,8 +160,11 @@ def load_FGNET_Age_dataset(selected_feature="LPQ"):
         count += 1
 
         # Add Label
-        age_label = get_age_label(age)
-        labels.append(age_label)
+        if label == "age":
+            age_label = get_age_label(age)
+            labels.append(age_label)
+        elif label == "age_number":
+            labels.append(age)
 
         # Get Image path
         path = os.path.join(path_to_dataset, fn)

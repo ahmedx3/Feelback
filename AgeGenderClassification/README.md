@@ -1,18 +1,19 @@
 ## TODO
-- Experiment with the cropping size in the main
+- Try EBIF for age
 
-- Mix the datasets
+- Integrate the Age in the main pipeline
 
-- Create the loader for the datasets of Age
+- Create the loader for the AGFW dataset
+
+- Find out how AGFW cropped the faces
 
 - Create a model for Age
 
 - Check new classifiers and grid search for them to find best parameters
 
-- Check more feature extraction methods (FPLBP)
-
 - Check more preprocessing and resize images (Frontalization & facial landmark localization)
 
+- Mix the datasets
 ## Done
 - Implement loading Datasets to have the same interface
 - Create the training pipeline with svm as base
@@ -30,3 +31,5 @@
 - Check lighting effect and preprocessing to unify the images
 - Try the LBP on regions of the image divided to 16 20x20
 - Change the predicted label to be an aggregation of the prediction over the video with more than one method
+- Change the Age problem to regression
+- Age regression grid search for SVR to find best parameters
