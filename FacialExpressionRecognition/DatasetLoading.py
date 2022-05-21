@@ -72,7 +72,7 @@ def load_Multiple_datasets():
 
     # Loop over directories and get Images
     count = 0
-    for dataset in ['../Data/MUG', '../Data/CK+_Complete']:
+    for dataset in ['../Data/MUG', "../Data/CK+_Complete"]:
         path_to_dataset = os.path.join(os.path.dirname(
             __file__), dataset)
         directoriesNames = os.listdir(path_to_dataset)
@@ -88,9 +88,9 @@ def load_Multiple_datasets():
 
                 # feat = featureExtractor.ExtractHOGFeatures(img,(16,16))
                 # feat = featureExtractor.ExtractLandMarks_method1(img)
-                # feat = featureExtractor.ExtractLandMarks_method2(img)
+                feat = featureExtractor.ExtractLandMarks_method2(img)
                 # feat = featureExtractor.DWT(img)
-                feat = featureExtractor.gaborFilter_method2(img, filters)
+                # feat = featureExtractor.gaborFilter_method2(img, filters)
 
                 if feat is None:
                     continue
@@ -105,14 +105,14 @@ def load_Multiple_datasets():
 
     print(F"Finished Reading {count}")
     
-    print("Features Shape: ", len(features[0]))
-    print("Apply Principal component analysis (PCA) on Features")
-    D_before = len(features[0])
-    features = featureExtractor.TrainPCAonFeatures(features, 1000)
-    print(F"Finished dimensionality reduction Before: {D_before} => After: {len(features[0])}")
+    # print("Features Shape: ", len(features[0]))
+    # print("Apply Principal component analysis (PCA) on Features")
+    # D_before = len(features[0])
+    # features = featureExtractor.TrainPCAonFeatures(features, 1000)
+    # print(F"Finished dimensionality reduction Before: {D_before} => After: {len(features[0])}")
     
     # Standardize Features
-    # features = featureExtractor.trainNormalizeFeatures(features)
+    features = featureExtractor.trainNormalizeFeatures(features)
     return features, labels
 
 def load_AffectNet_dataset():
@@ -192,7 +192,7 @@ def load_test_data(path: str):
     directoriesNames = os.listdir(path_to_dataset)
     featureExtractor = FeaturesExtraction.FeatureExtractor(True)
 
-    filters = featureExtractor.get_gabor_filters()
+    # filters = featureExtractor.get_gabor_filters()
     # Loop over directories and get Images
     count = 0
     for directory in directoriesNames:
@@ -207,9 +207,9 @@ def load_test_data(path: str):
 
             # feat = featureExtractor.ExtractHOGFeatures(img,(16,16))
             # feat = featureExtractor.ExtractLandMarks_method1(img)
-            # feat = featureExtractor.ExtractLandMarks_method2(img)
+            feat = featureExtractor.ExtractLandMarks_method2(img)
             # feat = featureExtractor.DWT(img)
-            feat = featureExtractor.gaborFilter_method2(img, filters)
+            # feat = featureExtractor.gaborFilter_method2(img, filters)
 
             if feat is None:
                 continue
@@ -224,11 +224,11 @@ def load_test_data(path: str):
 
     print(F"Finished Reading {count}")
 
-    print("Apply Principal component analysis (PCA) on Features")
-    D_before = len(features[0])
-    features = featureExtractor.ApplyPCAonFeatures(features)
-    print(F"Finished dimensionality reduction Before: {D_before} => After: {len(features[0])}")
+    # print("Apply Principal component analysis (PCA) on Features")
+    # D_before = len(features[0])
+    # features = featureExtractor.ApplyPCAonFeatures(features)
+    # print(F"Finished dimensionality reduction Before: {D_before} => After: {len(features[0])}")
     
     # Standardize Features
-    # features = featureExtractor.normalizeFeatures(features)
+    features = featureExtractor.normalizeFeatures(features)
     return features, labels
