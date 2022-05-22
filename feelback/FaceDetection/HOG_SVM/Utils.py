@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import math
 from skimage.measure import block_reduce
-from sympy import false
+
 np.seterr(divide='ignore', invalid='ignore')
 
 def HistogramEqualization(grayScaleImage):
