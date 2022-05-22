@@ -18,13 +18,12 @@ import cv2
 import dlib
 from gaze_tracking import GazeTracking
 
-__VERBOSE__ = verbose.__VERBOSE__
-
 
 def test():
     args = io.get_command_line_args()
     input_video = args.input_video
     frames_to_process_each_second = args.fps
+    __VERBOSE__ = verbose.__VERBOSE__ = args.verbose
 
     video = io.read_video(input_video)
 

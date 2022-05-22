@@ -1,10 +1,9 @@
 from builtins import print as _print
 import cv2
 import numpy as np
-from . import io
 
-args = io.get_command_line_args()
-__VERBOSE__ = args.verbose
+
+__VERBOSE__ = False
 
 
 def imshow(image: np.ndarray, title=None, delay=0):

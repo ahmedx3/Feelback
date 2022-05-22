@@ -54,7 +54,7 @@ class Feelback:
         verbose.print(f"[INFO] Video duration is {video_duration} sec")
 
         # ==================================== Initialize FaceTracking ====================================
-        self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance")
+        self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance", verbosity=verbosity)
 
         # ================================== Initialize Gaze Estimation ===================================
         self.gazeEstimator = GazeEstimation()
