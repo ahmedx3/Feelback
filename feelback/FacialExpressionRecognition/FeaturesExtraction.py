@@ -17,16 +17,21 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 # from . import Utils
 import pywt
+import os
+
+
+__CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
 
 
 class FeatureExtractor:
     def __init__(self, load=False):
         self.flag = True
         self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor('FacialExpressionRecognition/Experiments/shape_predictor_68_face_landmarks.dat')
+        landmarks_model = os.path.join(__CURRENT_DIR__, 'Experiments/shape_predictor_68_face_landmarks.dat')
+        self.predictor = dlib.shape_predictor(landmarks_model)
         if load:
-            self.pca = pickle.load(open('FacialExpressionRecognition/Models/PCAModel.sav', 'rb'))
-            self.scaler = pickle.load(open('FacialExpressionRecognition/Models/scalerModel.sav', 'rb'))
+            self.pca = pickle.load(open(os.path.join(__CURRENT_DIR__, 'Models/PCAModel.sav'), 'rb'))
+            self.scaler = pickle.load(open(os.path.join(__CURRENT_DIR__, 'Models/scalerModel.sav'), 'rb'))
 
     def ExtractHOGFeatures(self, img, target_img_size=(32, 32)):
         """Extracts HOG features from an image

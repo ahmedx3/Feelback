@@ -9,6 +9,7 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
 
 import cv2
 import numpy as np
+import os
 
 from .utils import verbose
 from .AgeGenderClassification import AgeGenderClassification
@@ -22,18 +23,20 @@ from .utils import video_utils
 
 class Feelback:
 
+    __CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
+
     # ==================================== Initialize FaceDetection ====================================
-    modelPath = './FaceDetection/HOG_SVM/Models/Model_v3.sav'
-    pcaPath = './FaceDetection/HOG_SVM/Models/PCA_v3.sav'
+    modelPath = os.path.join(__CURRENT_DIR__, 'FaceDetection/HOG_SVM/Models/Model_v3.sav')
+    pcaPath = os.path.join(__CURRENT_DIR__, 'FaceDetection/HOG_SVM/Models/PCA_v3.sav')
     faceDetector = FaceDetector(modelPath, pcaPath)
 
     # =================================== Initialize Emotion Extraction ==================================
-    modelPath = "./FacialExpressionRecognition/Models/Model.sav"
+    modelPath = os.path.join(__CURRENT_DIR__, "FacialExpressionRecognition/Models/Model.sav")
     emotionPredictor = EmotionExtraction(modelPath)
 
     # =================================== Initialize Gender And Age =====================================
-    modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model"
-    modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"
+    modelAgePath = os.path.join(__CURRENT_DIR__, "AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model")
+    modelGenderPath = os.path.join(__CURRENT_DIR__, "AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model")
     genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
 
     def __init__(self, video_filename, fps, verbosity=False):
