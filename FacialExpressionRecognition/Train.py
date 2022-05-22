@@ -1,6 +1,15 @@
 """
 Imports
 """
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 from operator import le
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -8,7 +17,7 @@ from sklearn import svm
 from sklearn.neural_network import MLPClassifier
 import random
 import pickle
-import DatasetLoading
+from . import DatasetLoading
 
 """
 Global Variables

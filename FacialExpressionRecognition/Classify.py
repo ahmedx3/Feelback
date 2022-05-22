@@ -1,11 +1,20 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 import cv2
 import time
 import os
 from sklearn.svm import SVC
-import FeaturesExtraction
-import Utils
+from . import FeaturesExtraction
+from . import Utils
+from . import DatasetLoading
 import pickle as pickle
-import DatasetLoading
 # Read Image and Model
 # path_to_file = os.path.join(os.path.dirname(
 #     __file__), "../Test/disgust2.jpg")

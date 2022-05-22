@@ -1,5 +1,16 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
+
 import pickle as pickle
-import FacialExpressionRecognition.FeaturesExtraction as FeaturesExtraction
+from . import FeaturesExtraction
+
 
 class EmotionExtraction:
     def __init__(self, model_path):
@@ -13,5 +24,5 @@ class EmotionExtraction:
             predictedEmotion.append(self.model.predict([img_features])[0])
 
         return predictedEmotion
-    
-            
+
+

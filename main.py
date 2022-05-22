@@ -1,13 +1,23 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 import cv2
-from utils import verbose
-from utils import io
-from utils import video_utils
-from FaceDetection.HOG_SVM.main import FaceDetector
-from FaceTracking.knn import KNNIdentification
-from AgeGenderClassification.main import GenderAgeClassification
-from FacialExpressionRecognition.main import EmotionExtraction
-from GazeTracking.gaze_tracking import GazeEstimation
 import numpy as np
+
+from utils import verbose
+from .AgeGenderClassification import AgeGenderClassification
+from .FaceDetection import FaceDetector
+from .FaceTracking import KNNIdentification
+from .FacialExpressionRecognition import EmotionExtraction
+from .GazeTracking import GazeEstimation
+from .utils import io
+from .utils import video_utils
 
 
 def main():
@@ -43,7 +53,7 @@ def main():
     ########################### Initialize Gender And Age ###########################
     modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model"
     modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"
-    genderPredictor = GenderAgeClassification(modelAgePath, modelGenderPath)
+    genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
 
     ########################### Initialize Gaze Estimation ###########################
     gazeEstimator = GazeEstimation()
@@ -118,7 +128,7 @@ def main():
 
             # =========================================================================================================
         except KeyboardInterrupt:
-            print ('KeyboardInterrupt exception. EXITING')
+            print('KeyboardInterrupt exception. EXITING')
             break
         except:
             verbose.print("[ERROR] Exception Occurred, Skipping this frame")

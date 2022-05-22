@@ -1,7 +1,16 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 import os
 import numpy as np
 import cv2
-from FeaturesExtraction import ExtractHOGFeatures
+from .FeaturesExtraction import ExtractHOGFeatures
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.svm import LinearSVC
@@ -24,6 +33,7 @@ classifiers = {
     'MPL': MLPClassifier(random_state=random_seed, max_iter=500)
 }
 
+
 def load_dataset(path_to_dataset):
     features = []
     labels = []
@@ -34,18 +44,18 @@ def load_dataset(path_to_dataset):
         print(directory)
         directoryPath = os.path.join(path_to_dataset, directory)
         for root, dirs, files in os.walk(directoryPath):
-	        for file in files:
-                    #append the file name to the list
-                    fileName = os.path.join(root,file)
-                    labels.append(directory)
-                    #read the image and extract features
-                    img = cv2.imread(fileName)
-                    features.append(ExtractHOGFeatures(img))
-            
+            for file in files:
+                # append the file name to the list
+                fileName = os.path.join(root, file)
+                labels.append(directory)
+                # read the image and extract features
+                img = cv2.imread(fileName)
+                features.append(ExtractHOGFeatures(img))
+
     return features, labels
 
-def train_classifier(path_to_dataset):
 
+def train_classifier(path_to_dataset):
     # Load dataset with extracted features
     print('Loading dataset. This will take time ...')
     features, labels = load_dataset(path_to_dataset)
@@ -75,7 +85,8 @@ def train_classifier(path_to_dataset):
     train_accuracy = model.score(train_features, train_labels)
 
     print(used_classifier, ' Train accuracy:', train_accuracy *
-          100, '%', ' Test accuracy:', accuracy*100, '%')
+          100, '%', ' Test accuracy:', accuracy * 100, '%')
+
 
 def main():
     train_classifier("Data")
@@ -83,6 +94,7 @@ def main():
     # save the model to disk
     filename = './Models/Model_v3.sav'
     pickle.dump(classifier, open(filename, 'wb'))
+
 
 if __name__ == "__main__":
     # calculate training time

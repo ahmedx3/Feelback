@@ -1,3 +1,12 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 import math
 import pickle
 import cv2
@@ -6,8 +15,9 @@ import dlib
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-# import FacialExpressionRecognition.Utils as Utils
+# from . import Utils
 import pywt
+
 
 class FeatureExtractor:
     def __init__(self, load=False):

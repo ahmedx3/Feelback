@@ -1,10 +1,19 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 # For Drawing Rectangle on Faces
 import cv2
 import numpy as np
 import time
-from FeaturesExtraction import *
-from Utils import *
-from SlidingWindow import *
+from .FeaturesExtraction import *
+from .Utils import *
+from .SlidingWindow import *
 import pickle as pickle
 import time
 
@@ -37,7 +46,7 @@ print("[INFO]", " (winW,winH) ",winW,winH, " pyramidScale ",pyramidScale, " step
 start_time = time.time()
 
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
-    
+
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
     mask = DetectSkinColor(image)
     edges = EdgeDetection(image)
@@ -47,7 +56,7 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     print("[INFO] Num of windows in the current image pyramid ",len(windows))
 
     indices, patches = zip(*windows)
-    st1 = time.time() 
+    st1 = time.time()
     grayScaledPatches = [HistogramEqualization(patch) for patch in patches]
     hogFeatures = vectorizedHogSlidingWindows(grayScaledPatches)
     patches_hog = []
@@ -61,7 +70,7 @@ for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
     indices = np.array(indices)
     for i, j in indices[predicted_label == "Faces"]:
         faces.append((int(i * scaleFactor), int(j * scaleFactor), int((i + winW) * scaleFactor), int((j + winH) * scaleFactor)))
-        
+
 faces = nonMaxSuppression(faces,overlappingThreshold)
 
 # Calculate time after processing in seconds

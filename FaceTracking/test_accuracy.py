@@ -1,12 +1,13 @@
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
+
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
 import os
-import sys
-
-# Allow importing modules from parent directory
-# TODO: Use a more clean approach as modules
-__CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
-__PARENT_DIR__ = os.path.dirname(__CURRENT_DIR__)
-sys.path.append(__PARENT_DIR__)
-
 import knn
 import cv2
 import dlib

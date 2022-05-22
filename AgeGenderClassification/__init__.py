@@ -1,14 +1,21 @@
-import pickle as pickle
-# import FeaturesExtraction
-import AgeGenderClassification.FeaturesExtraction as FeaturesExtraction
-# import Preprocessing
-import AgeGenderClassification.Preprocessing as Preprocessing
-from collections import defaultdict
+# Boilerplate to Enable Relative imports when calling the file directly
+if (__name__ == '__main__' and __package__ is None) or __package__ == '':
+    import sys
+    from pathlib import Path
 
-import AgeGenderClassification.Utils  as Utils
+    file = Path(__file__).resolve()
+    sys.path.append(str(file.parents[3]))
+    __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
+
+import pickle as pickle
+from . import FeaturesExtraction
+from . import Preprocessing
+from . import Utils
+from collections import defaultdict
 import numpy as np
 
-class GenderAgeClassification:
+
+class AgeGenderClassification:
     def __init__(self, model_path_age, model_path_gender):
         self.modelAge = pickle.load(open(model_path_age, 'rb'))
         self.modelGender = pickle.load(open(model_path_gender, 'rb'))
@@ -18,7 +25,7 @@ class GenderAgeClassification:
     def split_prob(self, prediction):
         split_pred = prediction.split('-')
         return split_pred[0], split_pred[1]
-        
+
     def get_max_prob_gender(self, id, prediction, method="same_frame"):
         # Split probability and prediction
         # initialize the max to be the current
@@ -27,7 +34,7 @@ class GenderAgeClassification:
         if method == "same_frame":
             # return the same value that we got
             return max_pred
-        
+
         elif method == "single_max":
             # Compare with the previous value
             if len(self.previous_gender_values[id]) == 1:
@@ -39,7 +46,7 @@ class GenderAgeClassification:
             else:
                 # Add previous value to array
                 self.previous_gender_values[id].append(prediction)
-            
+
         elif method == "top_votes":
             # Max number of frames to take average
             max_kept = 5
@@ -48,7 +55,7 @@ class GenderAgeClassification:
             if len(self.previous_gender_values[id]) < max_kept:
                 # Add previous value to array
                 self.previous_gender_values[id].append(prediction)
-                
+
             # Else we loop and replace the least probability
             else:
                 least_prob_index = None
@@ -59,13 +66,13 @@ class GenderAgeClassification:
                     if float(pred[1]) < least_prob_value:
                         least_prob_index = index
                         least_prob_value = float(pred[1])
-                
+
                 # Check if the least probability is less than the current and replace
                 curr_pred = self.split_prob(prediction)
                 if float(curr_pred[1]) > least_prob_value:
                     self.previous_gender_values[id][least_prob_index] = prediction
-                    
-            
+
+
             # get the average over the max_kept
             male_votes, female_votes = 0, 0
             male_prob, female_prob = 0, 0
@@ -79,7 +86,7 @@ class GenderAgeClassification:
                 else:
                     female_votes += 1
                     female_prob += float(pred[1])
-            
+
             # compute the max prediction value from the votes
             max_class = 'male' if male_votes > female_votes else 'female'
             max_prob = round(male_prob / male_votes, 2) if male_votes > female_votes else round(female_prob / female_votes, 2)
@@ -88,7 +95,7 @@ class GenderAgeClassification:
             # TODO: REMOVE AFTER TESTING
             # if id == 1:
             #     print(self.previous_gender_values[id])
-            
+
         return max_pred
 
     def getGender(self, frame, facesLocations, ids):
@@ -106,10 +113,10 @@ class GenderAgeClassification:
             #     faces.append(frame[y1-r1:y2+r2,x1-r3:x2+r4])
             # else:
             #     faces.append(frame[y1-70:y2+40,x1-10:x2+10])
-            
+
             # count += 1
             faces.append(frame[y1-70:y2+40,x1-10:x2+10])
-            
+
 
         predictedGender = []
         for index, face in enumerate(faces):
@@ -120,11 +127,11 @@ class GenderAgeClassification:
                 img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
                 # Predict the probability
                 predicted_prob = self.modelGender.predict_proba([img_features])[0]
-                
+
                 # Compute the prediction based on the criteria chosen
                 prediction = str(self.modelGender.predict([img_features])[0]) + '-' + str(round(max(predicted_prob), 2))
                 prediction = self.get_max_prob_gender(ids[index], prediction, method="single_max")
-                
+
                 # Add the prediction to the list of predioctions
                 prediction = str(prediction[0]) + ' ' + str(prediction[1])
                 predictedGender.append(prediction)
