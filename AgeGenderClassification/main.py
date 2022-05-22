@@ -13,6 +13,7 @@ class GenderAgeClassification:
         self.modelAge = pickle.load(open(model_path_age, 'rb'))
         self.modelGender = pickle.load(open(model_path_gender, 'rb'))
         self.previous_gender_values = defaultdict(list)
+        self.previos_age_values = defaultdict(list)
 
     def split_prob(self, prediction):
         split_pred = prediction.split('-')
@@ -133,13 +134,53 @@ class GenderAgeClassification:
 
         return predictedGender
     
-    def getAge(self, faces):
+
+    def get_age_helper(self, id, prediction, method="same_frame"):
+
+        # Cast prediction to int
+        prediction = round(prediction)
+        
+        if method == "same_frame":
+            # return the same value that we got
+            return prediction
+
+        elif method == "average":
+            # Add the age to the list corresponding to the ID
+            self.previos_age_values[id].append(prediction)
+
+            # Calculate average
+            average_age = np.sum(np.array(self.previos_age_values[id])) / len(self.previos_age_values[id])
+
+            # Cast prediction to int
+            average_age = round(average_age)
+        
+            return average_age
+
+
+    def getAge(self, frame, facesLocations, ids):
+
+        faces = []
+        for x1,y1,x2,y2 in facesLocations:
+            faces.append(frame[y1-70:y2+40,x1-10:x2+10])
+
         predictedAge = []
-        for face in faces:
-            img = Preprocessing.preprocess_image(face)
-            img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
-            predictedAge.append(self.modelAge.predict([img_features])[0])
+        for index, face in enumerate(faces):
+            # If exception is raised return error label
+            try:
+                # Preprocess and extract features
+                img = Preprocessing.preprocess_image(face)
+                img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
+                # Predict the probability
+                prediction = self.modelAge.predict([img_features])[0]
+                
+                # Compute the prediction based on the criteria chosen
+                prediction = self.get_age_helper(ids[index], prediction, method="average")
+                
+                # Add the prediction to the list of predioctions
+                predictedAge.append(prediction)
+
+            except:
+                predictedAge.append("ERROR")
 
         return predictedAge
-
             

@@ -41,7 +41,7 @@ def main():
     faceTracker = KNNIdentification(conflict_solving_strategy="min_distance")
 
     ########################### Initialize Gender And Age ###########################
-    modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVM_LPQ_47_44.model"
+    modelAgePath = "./AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model"
     modelGenderPath = "./AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"
     genderPredictor = GenderAgeClassification(modelAgePath, modelGenderPath)
 
@@ -93,7 +93,7 @@ def main():
 
             # ==================================== Profiling (Age/Gender Detection) ===================================
             genders = genderPredictor.getGender(frame_grey, faces_positions, ids)
-            # ages = genderPredictor.getAge(frame_grey,faces)
+            ages = genderPredictor.getAge(frame_grey, faces_positions, ids)
 
             # =========================================== Integrate Modules ===========================================
 
@@ -108,7 +108,7 @@ def main():
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color=colors[ids[i]], thickness=2)
                     cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                     cv2.putText(frame, f"{genders[i]}", (x1, y1-30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
-                    # cv2.putText(frame, f"{ages[i]} years", (x1, y1-60), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
+                    cv2.putText(frame, f"{ages[i]} years", (x1 + 150, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                     cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
                     cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i]], 2)
 
