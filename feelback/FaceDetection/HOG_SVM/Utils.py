@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 from skimage.measure import block_reduce
+from sympy import false
 np.seterr(divide='ignore', invalid='ignore')
 
 def HistogramEqualization(grayScaleImage):
@@ -56,79 +57,6 @@ def DetectSkinColor(img):
     
     return mask
 
-def getHOG(image, blockSize=(6,6), cellSize=(3,3), numOfBins=7):
-    """ Extract Histogram of oriented gradient (HOG) features from an image 
-
-    Args:
-        image (_type_): image to extract features from
-        blockSize (tuple, optional): Size of block to be normalized onto. Defaults to (6,6).
-        cellSize (tuple, optional): Number of pixels in one cell. Defaults to (3,3).
-        numOfBins (int, optional): Number of bins in the histogram. Defaults to 7.
-
-    Returns:
-        _type_: HOG features
-    """
-
-    blockSize = ( int(blockSize[0]) , int(blockSize[1]) )
-    cellSize = ( int(cellSize[0]) , int(cellSize[1]) )
-    numOfBins = int( numOfBins )
-
-    OrientationStep = 180 / numOfBins
-
-    imageShape = image.shape
-    Gradient = np.ones(imageShape)
-    GradientOrientation = np.ones(imageShape)
-
-    image = np.int64(image)
-    Gx = np.zeros(imageShape)
-    Gy = np.zeros(imageShape)
-    Gx[:, 1:-1] = image[:, 2:] - image[:, :-2]
-    Gy[1:-1, :] = image[2:, :] - image[:-2, :]
-
-    # Calculate the Magnitude 
-    Gradient = np.sqrt(Gx**2 + Gy**2) 
-    # Calculate the Direction (in degrees)
-    GradientOrientation = ( ( ( np.arctan2(Gy, Gx) ) / math.pi ) * 180 ) % 180
-    
-    # TODO : Divide bin
-    # Calculate Bins For Every Pixel
-    Bin = [ np.floor(( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) - 1) % numOfBins,
-                      np.floor( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) % numOfBins]
-    Bin = np.int16(Bin)
-
-    # Calculate Contribution Ratios (for how much does the orientation contribute in the range) For Every Pixel
-    contributionRatio = [ ( 1 - ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) ) ),
-             ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) )]
-    contributionRatio = np.array(contributionRatio).astype(float)
-
-    # Calculate for every pixel all bins by multiplying the Gradient and the contribution Ratio
-    hogPerPixel = np.zeros((image.shape[0],image.shape[1],numOfBins))
-    for bin in range(numOfBins):
-        hogPerPixel[:,:,bin] += np.where(np.array(Bin[0]) == bin,np.array(contributionRatio[0]),0)
-        hogPerPixel[:,:,bin] += np.where(np.array(Bin[1]) == bin,np.array(contributionRatio[1]),0)
-    Gradient = np.repeat(Gradient[:,:],numOfBins).reshape((image.shape[0],image.shape[1],numOfBins))
-    hogPerPixel = hogPerPixel * Gradient
-    
-    # Calculate HOG For all Cells
-    NumCellsX = int( (image.shape[0] / cellSize[0]) )
-    NumCellsY = int( (image.shape[1] / cellSize[1]) )
-    HOGCells = block_reduce(hogPerPixel, block_size=(int(imageShape[0]/NumCellsX), int(imageShape[1]/NumCellsY), 1), func=np.sum)
-            
-    # Normalize for blocks
-    HOGVector = []
-    numOfBlocksInX = int( (image.shape[0] - blockSize[0] + cellSize[0]) / cellSize[0] )
-    numOfBlocksInY = int( (image.shape[1] - blockSize[1] + cellSize[1]) / cellSize[1] )
-    numOfCellsInBlockX = int( blockSize[0] / cellSize[0] )
-    numOfCellsInBlockY = int( blockSize[1] / cellSize[1] )
-
-    for x in range(numOfBlocksInX):
-        for y in range(numOfBlocksInY):
-            HOGVector.extend(list(np.concatenate( 
-                HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]/(np.abs(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY]).sum()+1e-5)
-                ).ravel()))
-            
-    return HOGVector
-
 def EdgeDetection(img, sigma=0.33):
     """Returns the edges in the image
 
@@ -162,8 +90,99 @@ def detectCommonMask(edgeMask, skinMask):
     andedMask = np.logical_and(edges, skinMask)
     return andedMask
     
+def hog_slow(img,blockSize=(6,6), cellSize=(3,3), numOfBins=7):
+    """ Compute hog features of an image
 
-def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), numOfBins=7):
+    Args:
+        img (_type_): image to compute hog features
+        blockSize (tuple, optional): Size of the block. Defaults to (6,6).
+        cellSize (tuple, optional): Size of the cell. Defaults to (3,3).
+        numOfBins (int, optional): Number Of bins. Defaults to 7.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    img = np.int16(img)
+    
+    # Calculate the Gradients
+    grad_x = cv2.Sobel(img, cv2.CV_32F, 1, 0, ksize=1)
+    grad_y = cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=1)
+
+    # Calculate the Magnitude
+    grad_mag = np.sqrt(grad_x**2 + grad_y**2)
+
+    # Calculate the Direction
+    grad_dir = np.arctan2(grad_y, grad_x)
+
+    stepAngle = 180/numOfBins
+
+    cellsInX = int(img.shape[0]/cellSize[0])
+    cellsInY = int(img.shape[1]/cellSize[1])
+
+    # Initialize histogram
+    histogram = [x[:] for x in [[0] * cellsInX] * cellsInY]
+    
+    # Calculate the histogram
+    for i in range(cellsInX):
+        for j in range(cellsInY):
+            # Initialize bin array
+            bin = [0] * numOfBins
+
+            # Calculate the bin
+            for k in range(cellSize[0]):
+                for l in range(cellSize[1]):
+                    # Calculate the angle
+                    angle = grad_dir[i*cellSize[0]+k, j*cellSize[1]+l]
+                    if angle < 0:
+                        angle += np.pi
+
+                    # Calculate the left and right bin
+                    leftBin = int(angle/stepAngle)
+                    rightBin = leftBin + 1 if leftBin < numOfBins - 1 else 0
+
+                    # Calculate the magnitude
+                    magnitude = grad_mag[i*cellSize[0]+k, j*cellSize[1]+l]
+
+                    # Calculate the weight
+                    weight = (angle - leftBin*stepAngle)/stepAngle
+
+                    # Calculate the bin
+                    bin[leftBin] += (1 - weight) * magnitude
+                    bin[rightBin] += weight * magnitude
+
+            # Add the bin to the histogram
+            histogram[i][j] = bin
+    
+    numOfBlocksX = int( (img.shape[0] - blockSize[0] + cellSize[0]) / cellSize[0] )
+    numOfBlocksY = int( (img.shape[1] - blockSize[1] + cellSize[1]) / cellSize[1] )
+    
+    numOfCellsInBlockX = int(blockSize[0] / cellSize[0])
+    numOfCellsInBlockY = int(blockSize[1] / cellSize[1])
+
+    hogVector = []
+
+    # Normalize the histogram
+    for i in range(numOfBlocksX):
+        for j in range(numOfBlocksY):
+            
+            # Calculate the block
+            histogram = np.float64(histogram)
+            block = histogram[i : i+numOfCellsInBlockX, j : j+numOfCellsInBlockY]
+            block = block.flatten()
+
+            # Normalize the block with L1 norm
+            block = block / (np.linalg.norm(block) + 0.000001)
+            
+            # Add the block to the hogVector
+            hogVector.append(block)
+
+    hogVector = np.float64(hogVector)
+    hogVector = hogVector.flatten()
+
+    return hogVector  
+
+def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), numOfBins=7, flatten = False):
     """ Extract Histogram of oriented gradient (HOG) features from an image
 
     Args:
@@ -175,44 +194,48 @@ def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), 
     Returns:
         _type_: array of HOG features
     """
+
+    # Stack the sliding windows into a single image
     stackedWindows = np.stack(slidingWindows,axis=-1)
     
     blockSize = ( int(blockSize[0]) , int(blockSize[1]) )
     cellSize = ( int(cellSize[0]) , int(cellSize[1]) )
     numOfBins = int( numOfBins )
-
-    OrientationStep = 180 / numOfBins
-
+    stepAngle = 180 / numOfBins
     imageShape = stackedWindows.shape
-    Gradient = np.ones(imageShape)
-    GradientOrientation = np.ones(imageShape)
-    
+    grad = np.ones(imageShape)
+    gradDirection = np.ones(imageShape)
     stackedWindows = np.int64(stackedWindows)
+
+    # Calculate the Gradients in X and Y
     Gx = np.zeros(imageShape)
     Gy = np.zeros(imageShape)
     Gx[:, 1:-1] = stackedWindows[:, 2:] - stackedWindows[:, :-2]
     Gy[1:-1, :] = stackedWindows[2:, :] - stackedWindows[:-2, :]
 
-    Gradient = np.sqrt(Gx**2 + Gy**2)
+    # Calculate the Magnitude
+    grad = np.sqrt(Gx**2 + Gy**2)
 
-    GradientOrientation = ( ( ( np.arctan2(Gy, Gx) ) / math.pi ) * 180 ) % 180
+    # Calculate the Direction
+    gradDirection = ( ( ( np.arctan2(Gy, Gx) ) / math.pi ) * 180 ) % 180
 
-    Bin = [ np.floor(( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) - 1) % numOfBins,
-                      np.floor( (GradientOrientation[:,:] + OrientationStep/2) / OrientationStep ) % numOfBins]
-    Bin = np.int16(Bin)
-    
-    contributionRatio = [ ( 1 - ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) ) ),
-             ( ( (GradientOrientation[:, :] + OrientationStep/2) / OrientationStep ) - ( (GradientOrientation[:, :] + OrientationStep/2) // OrientationStep ) )]
-    contributionRatio = np.array(contributionRatio).astype(float)
+    # Calculate the left and right bins
+    leftBin = np.int16(np.floor(( (gradDirection[:,:] + stepAngle/2) / stepAngle ) - 1) % numOfBins) 
+    rightBin = np.int16(np.floor( (gradDirection[:,:] + stepAngle/2) / stepAngle ) % numOfBins)
 
+    # Calculate the weights of the left and right bins
+    contributionWeightLeft = np.array(( 1 - ( ( (gradDirection[:, :] + stepAngle/2) / stepAngle ) - ( (gradDirection[:, :] + stepAngle/2) // stepAngle ) ) )).astype(float)
+    contributionWeightRight = np.array(( ( (gradDirection[:, :] + stepAngle/2) / stepAngle ) - ( (gradDirection[:, :] + stepAngle/2) // stepAngle ) )).astype(float)
+
+    # Calculate the hog for every pixel
     hogPerPixel = np.zeros((stackedWindows.shape[0],stackedWindows.shape[1],numOfBins,stackedWindows.shape[-1]))
     for bin in range(numOfBins):
-        hogPerPixel[:,:,bin] += np.where(np.array(Bin[0]) == bin,np.array(contributionRatio[0]),0)
-        hogPerPixel[:,:,bin] += np.where(np.array(Bin[1]) == bin,np.array(contributionRatio[1]),0)
-    Gradient = np.repeat(Gradient[:,:],numOfBins,axis=1).reshape((stackedWindows.shape[0],stackedWindows.shape[1],numOfBins,stackedWindows.shape[-1]))
-    hogPerPixel = hogPerPixel * Gradient
+        hogPerPixel[:,:,bin] += np.where(np.array(leftBin) == bin,np.array(contributionWeightLeft),0)
+        hogPerPixel[:,:,bin] += np.where(np.array(rightBin) == bin,np.array(contributionWeightRight),0)
+    grad = np.repeat(grad[:,:],numOfBins,axis=1).reshape((stackedWindows.shape[0],stackedWindows.shape[1],numOfBins,stackedWindows.shape[-1]))
+    hogPerPixel = hogPerPixel * grad
 
-
+    # Calculate the cells
     NumCellsX = int( (stackedWindows.shape[0] / cellSize[0]) )
     NumCellsY = int( (stackedWindows.shape[1] / cellSize[1]) )
     HOGCells = block_reduce(hogPerPixel, block_size=(int(imageShape[0]/NumCellsX), int(imageShape[1]/NumCellsY), 1,1 ), func=np.sum)
@@ -222,19 +245,18 @@ def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), 
     numOfCellsInBlockX = int( blockSize[0] / cellSize[0] )
     numOfCellsInBlockY = int( blockSize[1] / cellSize[1] )
 
+    # Normalize the histogram
     DivisionVector = np.zeros((numOfBlocksInX,numOfBlocksInY,1,stackedWindows.shape[-1]))
-
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):
             DivisionVector[x,y] = block_reduce(HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY], block_size=(numOfBlocksInX, numOfBlocksInY, numOfBins,1), func=np.sum)
-
     FinalVector = np.zeros((numOfBlocksInX,numOfBlocksInY,numOfCellsInBlockX,numOfCellsInBlockY,numOfBins,stackedWindows.shape[-1]))
-
     for x in range(numOfBlocksInX):
         for y in range(numOfBlocksInY):          
             FinalVector[x,y] = HOGCells[x : x+numOfCellsInBlockX, y : y+numOfCellsInBlockY] / (DivisionVector[x,y]+ 1e-5)
 
-    # FinalVector = FinalVector.flatten()
+    if flatten:
+        FinalVector = FinalVector.flatten()
 
     return FinalVector
 

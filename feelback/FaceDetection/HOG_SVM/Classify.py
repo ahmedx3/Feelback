@@ -48,9 +48,10 @@ start_time = time.time()
 for image in pyramid(originalImg, pyramidScale, minSize=(30, 30)):
 
     scaleFactor = copyOriginalImage.shape[0] / float(image.shape[0])
-    mask = DetectSkinColor(image)
+    skinMask = DetectSkinColor(image)
     edges = EdgeDetection(image)
-    windows = slidingWindow(image, stepSize,(winW, winH),mask,edges,skinThreshold,edgeThreshold)
+    commonMask = detectCommonMask(edges,skinMask)
+    windows = slidingWindow(image, stepSize,(winW, winH),skinMask,edges,commonMask,skinThreshold,edgeThreshold)
     if(len(windows)) == 0:
         break
     print("[INFO] Num of windows in the current image pyramid ",len(windows))

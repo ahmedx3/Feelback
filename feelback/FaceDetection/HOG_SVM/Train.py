@@ -50,7 +50,7 @@ def load_dataset(path_to_dataset):
                 labels.append(directory)
                 # read the image and extract features
                 img = cv2.imread(fileName)
-                features.append(ExtractHOGFeatures(img))
+                features.append(ExtractHOGFeatures(img,flatten=True))
 
     return features, labels
 
@@ -64,7 +64,7 @@ def train_classifier(path_to_dataset):
     D_before = len(features[0])
     pca = PCA(n_components=50)
     pca.fit(features)
-    filename = './Models/PCA_v3.sav'
+    filename = './Models/PCA_slowHOG.sav'
     pickle.dump(pca, open(filename, 'wb'))
     features = pca.transform(features)
     D_after = len(features[0])
@@ -92,7 +92,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/Model_v3.sav'
+    filename = './Models/Model_slowHOG.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 

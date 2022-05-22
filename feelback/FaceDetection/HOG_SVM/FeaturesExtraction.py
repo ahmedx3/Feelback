@@ -10,7 +10,7 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
 import cv2
 from .Utils import *
 
-def ExtractHOGFeatures(img,target_img_size=(19,19)):
+def ExtractHOGFeatures(img,target_img_size=(19,19),flatten = False):
     """
     Extracts HOG features from an image
     :param img: image to extract features from
@@ -23,7 +23,8 @@ def ExtractHOGFeatures(img,target_img_size=(19,19)):
     img = HistogramEqualization(img)
     
     # hog = getHOG(img)
-    hog = vectorizedHogSlidingWindows([np.array(img)])
+    hog = vectorizedHogSlidingWindows([np.array(img)],flatten=flatten)
+    # hog = hog_slow(img)
 
     # cellSize = (3,3)
     # blockSize = (6,6)
