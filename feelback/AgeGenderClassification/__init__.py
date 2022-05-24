@@ -190,4 +190,12 @@ class AgeGenderClassification:
                 predictedAge.append("ERROR")
 
         return predictedAge
+
+    # TODO: Implement
+    def getFinalGenders(self, ids: np.ndarray) -> np.ndarray:
+        return np.array(["Male"] * len(ids))
+
+    # TODO: Implement
+    def getFinalAges(self, ids: np.ndarray) -> np.ndarray:
+        return np.array([25] * len(ids))
             

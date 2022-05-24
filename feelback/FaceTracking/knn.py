@@ -375,3 +375,13 @@ class KNNIdentification:
         outliers_ids = np.argwhere((max_freq - freq) / max_freq > 0.75)
         return outliers_ids.ravel()
 
+    def get_valid_ids(self) -> npt.NDArray[np.int]:
+        """
+        Returns:
+            valid_ids: np.ndarray which contains ids of valid classes.
+        """
+
+        all_ids = np.arange(self.n_classes)
+        valid_ids = np.setdiff1d(all_ids, self.get_outliers_ids())
+        return valid_ids.ravel()
+

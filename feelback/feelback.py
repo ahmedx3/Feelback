@@ -9,6 +9,7 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
 
 import cv2
 import numpy as np
+from numpy.lib.recfunctions import unstructured_to_structured
 import os
 
 from .utils import verbose
@@ -62,6 +63,30 @@ class Feelback:
         # ================================== Initialize Gaze Estimation ===================================
         self.gazeEstimator = GazeEstimation()
 
+        self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
+        self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('emotion', "U10"), ('attention', bool)])
+
+
+    @property
+    def framerate(self):
+        return self.frames_to_process_each_second
+
+    @property
+    def persons(self):
+        return self._persons
+
+    @property
+    def emotions(self):
+        return self._data[['person_id', 'frame_number', 'emotion']]
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def attention(self):
+        return self._data[['person_id', 'frame_number', 'attention']]
+
     def run(self):
         frame_number = 0
         # Read frame by frame until video is completed
@@ -108,6 +133,8 @@ class Feelback:
                 ages = self.genderPredictor.getAge(frame_grey, faces_positions, ids)
 
                 # ======================================== Integrate Modules ========================================
+                data = np.array([ids, np.full_like(ids, frame_number), emotions, gaze_attention.astype(int)]).T
+                self._data = np.append(self._data, unstructured_to_structured(data, self._data.dtype))
 
                 # ============================================ Analytics ============================================
 
@@ -129,7 +156,7 @@ class Feelback:
         self.video.release()
         cv2.destroyAllWindows()
 
-        print(self.faceTracker.get_outliers_ids())
+        self.postprocessing()
 
     @staticmethod
     def __imshow(frame, faces_positions, ids, ages, emotions, genders, gaze_attention):
@@ -148,6 +175,20 @@ class Feelback:
             cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         verbose.imshow(frame, delay=1)
+
+    def postprocessing(self):
+        """
+        Remove Outlier persons, and gather data for analysis
+        """
+
+        outliers_ids = self.faceTracker.get_outliers_ids()
+        valid_ids = self.faceTracker.get_valid_ids()
+
+        genders = self.genderPredictor.getFinalGenders(valid_ids)
+        ages = self.genderPredictor.getFinalAges(valid_ids)
+
+        self._data = self._data[np.isin(self._data['person_id'], outliers_ids, invert=True)]
+        self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
 
 
 if __name__ == '__main__':
