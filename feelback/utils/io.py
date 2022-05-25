@@ -7,6 +7,7 @@ import numpy as np
 def get_command_line_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('input_video', help="Input Video File Path")
+    args_parser.add_argument("-o", "--output", help="Save processed video to filename.mp4", metavar='filename')
     args_parser.add_argument("-f", "--fps", help="Process N frames every second", default=3, type=int, metavar='N')
     args_parser.add_argument("-v", "--verbose", help="Enable more verbosity", default=False, action="store_true")
     return args_parser.parse_args()
