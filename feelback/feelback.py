@@ -35,11 +35,6 @@ class Feelback:
     modelPath = os.path.join(__CURRENT_DIR__, "FacialExpressionRecognition/Models/Model.sav")
     emotionPredictor = EmotionExtraction(modelPath)
 
-    # =================================== Initialize Gender And Age =====================================
-    modelAgePath = os.path.join(__CURRENT_DIR__, "AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model")
-    modelGenderPath = os.path.join(__CURRENT_DIR__, "AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model")
-    genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
-
     def __init__(self, video_filename, fps, output_filename=None, verbosity=False):
         verbose.__VERBOSE__ = verbosity
 
@@ -60,6 +55,11 @@ class Feelback:
 
         # ================================== Initialize Gaze Estimation ===================================
         self.gazeEstimator = GazeEstimation()
+
+        # =================================== Initialize Gender And Age =====================================
+        modelAgePath = os.path.join(self.__CURRENT_DIR__, "AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model")
+        modelGenderPath = os.path.join(self.__CURRENT_DIR__, "AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model")
+        self.genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
 
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
         self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('emotion', "U10"), ('attention', bool)])
