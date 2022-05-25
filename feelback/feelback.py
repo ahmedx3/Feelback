@@ -161,10 +161,7 @@ class Feelback:
                 verbose.print("[ERROR] Exception Occurred, Skipping this frame")
 
         # When everything done, release the video capture object
-        self.video.release()
         output_video.release() if self.output_filename is not None else None
-        # Closes all the frames
-        cv2.destroyAllWindows()
 
         self.postprocessing()
 
@@ -199,6 +196,12 @@ class Feelback:
 
         self._data = self._data[np.isin(self._data['person_id'], outliers_ids, invert=True)]
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
+
+    def __del__(self):
+        print(f"Feelback Destructor is called, {self} will be deleted")
+        self.video.release()
+        # Closes all the frames
+        cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
