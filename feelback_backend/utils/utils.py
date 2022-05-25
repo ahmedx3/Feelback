@@ -1,12 +1,21 @@
 
 def to_boolean(value):
     """
-    Converts string to boolean
+    Converts multiple data types to boolean
     """
+
+    if hasattr(value, '__iter__'):
+        if len(value) == 0:
+            return False
+        elif len(value) == 1:
+            value = value[0]
+        else:
+            return True
 
     if isinstance(value, bool):
         return value
 
-    if value in ["True", "T", "true", "t", "1"]:
+    if str(value).lower() in ["true", "t", "1"]:
         return True
+
     return False
