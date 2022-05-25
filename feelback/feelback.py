@@ -84,6 +84,14 @@ class Feelback:
     def attention(self):
         return self._data[['person_id', 'frame_number', 'attention']]
 
+    @property
+    def video_frame_count(self):
+        return video_utils.get_number_of_frames(self.video)
+
+    @property
+    def video_duration(self):
+        return video_utils.get_duration(self.video)
+
     def run(self):
         output_video = video_utils.create_output_video(self.video, self.output_filename, self.framerate)
 
