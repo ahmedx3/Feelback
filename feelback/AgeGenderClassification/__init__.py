@@ -19,8 +19,10 @@ class AgeGenderClassification:
     def __init__(self, model_path_age, model_path_gender):
         self.modelAge = pickle.load(open(model_path_age, 'rb'))
         self.modelGender = pickle.load(open(model_path_gender, 'rb'))
+        self.chosen_gender_method = "top_votes"
+        self.chosen_age_method = "average"
         self.previous_gender_values = defaultdict(list)
-        self.previos_age_values = defaultdict(list)
+        self.previous_age_values = defaultdict(list)
 
     def split_prob(self, prediction):
         split_pred = prediction.split('-')
@@ -92,10 +94,6 @@ class AgeGenderClassification:
             max_prob = round(male_prob / male_votes, 2) if male_votes > female_votes else round(female_prob / female_votes, 2)
             max_pred = (max_class, max_prob)
 
-            # TODO: REMOVE AFTER TESTING
-            # if id == 1:
-            #     print(self.previous_gender_values[id])
-
         return max_pred
 
     def getGender(self, frame, facesLocations, ids):
@@ -130,7 +128,7 @@ class AgeGenderClassification:
 
                 # Compute the prediction based on the criteria chosen
                 prediction = str(self.modelGender.predict([img_features])[0]) + '-' + str(round(max(predicted_prob), 2))
-                prediction = self.get_max_prob_gender(ids[index], prediction, method="single_max")
+                prediction = self.get_max_prob_gender(ids[index], prediction, method=self.chosen_gender_method)
 
                 # Add the prediction to the list of predioctions
                 prediction = str(prediction[0]) + ' ' + str(prediction[1])
@@ -148,15 +146,18 @@ class AgeGenderClassification:
         prediction = round(prediction)
         
         if method == "same_frame":
+            # Add the age to the list corresponding to the ID
+            self.previous_age_values[id].append(prediction)
+
             # return the same value that we got
             return prediction
 
         elif method == "average":
             # Add the age to the list corresponding to the ID
-            self.previos_age_values[id].append(prediction)
+            self.previous_age_values[id].append(prediction)
 
             # Calculate average
-            average_age = np.sum(np.array(self.previos_age_values[id])) / len(self.previos_age_values[id])
+            average_age = np.sum(np.array(self.previous_age_values[id])) / len(self.previous_age_values[id])
 
             # Cast prediction to int
             average_age = round(average_age)
@@ -177,11 +178,12 @@ class AgeGenderClassification:
                 # Preprocess and extract features
                 img = Preprocessing.preprocess_image(face)
                 img_features = FeaturesExtraction.extract_features(img, feature="LPQ")
+
                 # Predict the probability
                 prediction = self.modelAge.predict([img_features])[0]
                 
                 # Compute the prediction based on the criteria chosen
-                prediction = self.get_age_helper(ids[index], prediction, method="average")
+                prediction = self.get_age_helper(ids[index], prediction, method=self.chosen_age_method)
                 
                 # Add the prediction to the list of predioctions
                 predictedAge.append(prediction)
@@ -191,11 +193,49 @@ class AgeGenderClassification:
 
         return predictedAge
 
-    # TODO: Implement
     def getFinalGenders(self, ids: np.ndarray) -> np.ndarray:
-        return np.array(["Male"] * len(ids))
+        # Inialise array
+        final_genders = []
 
-    # TODO: Implement
+        # Loop over ids
+        for id in ids:
+
+            if self.chosen_gender_method == "top_votes":
+                # get the average over the max_kept = 5
+                male_votes, female_votes = 0, 0
+
+                loop_number = min(len(self.previous_gender_values[id]), 5)
+                for index in range(loop_number):
+                    pred = self.split_prob(self.previous_gender_values[id][index])
+                    if pred[0] == 'male':
+                        male_votes += 1
+                    else:
+                        female_votes += 1
+
+                # compute the max prediction value from the votes
+                max_class = 'Male' if male_votes > female_votes else 'Female'
+                final_genders.append(max_class)
+
+            elif self.chosen_gender_method == "single_max":
+                _, pred = self.split_prob(self.previous_gender_values[id][0])
+                max_class = 'Male' if pred == "male" else 'Female'
+                final_genders.append(max_class)
+
+        return np.array(final_genders)
+
     def getFinalAges(self, ids: np.ndarray) -> np.ndarray:
-        return np.array([25] * len(ids))
-            
+        # Inialise array
+        final_ages = []
+
+        # Loop over ids
+        for id in ids:
+            # Calculate average
+            average_age = np.average(np.array(self.previous_age_values[id]))
+
+            # Cast prediction to int
+            average_age = round(average_age)
+
+            # Add to final ages array
+            final_ages.append(average_age)   
+        
+        return np.array(final_ages)

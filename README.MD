@@ -1,5 +1,9 @@
 # FeelBack: An Automated video feedback framework
 
+# Update Conda Environment
+- `conda activate feelback `
+- `conda env update --file requirements.yml --prune`
+
 # Datasets For Age & Gender Estimation
 ## UTK Face: Dataset for Age & gender
 https://susanqq.github.io/UTKFace/

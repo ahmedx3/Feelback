@@ -1,6 +1,8 @@
 ## TODO
 - Try EBIF for age
 
+- Try Gabor filters used in the emotions
+
 - Integrate the Age in the main pipeline
 
 - Create the loader for the AGFW dataset
