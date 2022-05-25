@@ -1,5 +1,6 @@
 import dotenv
 import os
+from . import utils
 
 
 class Config:
@@ -12,7 +13,8 @@ class Config:
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False))
+    SQLALCHEMY_ECHO = utils.to_boolean(os.environ.get("SQLALCHEMY_ECHO", False))
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     DATABASE_URL = os.environ.get("DATABASE_URL")
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
@@ -30,7 +32,7 @@ class ProductionConfig(Config):
 
     ENV = "production"
     DEBUG = False
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False))
 
 
 class DevelopmentConfig(Config):
@@ -41,4 +43,4 @@ class DevelopmentConfig(Config):
     ENV = "development"
     DEVELOPMENT = True
     DEBUG = True
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", True))
