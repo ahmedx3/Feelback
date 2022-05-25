@@ -11,5 +11,6 @@ dependencies:
   - opencv=4.5.5
   - pandas=1.4.2
   - python-dotenv=0.20.0 
+  - python-magic=0.4.25
   - scikit-image=0.19.2
   - scikit-learn=1.1.1

@@ -5,6 +5,4 @@ app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
 
 
-@app.get('/')
-def hello_world():
-    return 'Hello World!'
+from .routes.io import *
