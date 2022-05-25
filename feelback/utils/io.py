@@ -34,9 +34,8 @@ def write_image(img: np.ndarray, directory: str, filename: str):
 def read_video(input_path: str) -> cv2.VideoCapture:
     video = cv2.VideoCapture(input_path)
 
-    if not video.isOpened(): 
-        print(f"Error opening video file at '{input_path}'")
-        exit(-1)
+    if not video.isOpened():
+        raise ValueError(f"Error opening video file at '{input_path}'")
     
     return video
 

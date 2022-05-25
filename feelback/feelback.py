@@ -45,17 +45,13 @@ class Feelback:
 
         self.frames_to_process_each_second = fps
         self.video = io.read_video(video_filename)
-        self.video_fps = int(self.video.get(cv2.CAP_PROP_FPS))
+        self.video_fps = video_utils.get_fps(self.video, digits=3)
 
-        video_width = int(self.video.get(cv2.CAP_PROP_FRAME_WIDTH))
-        video_height = int(self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        video_frames_count = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
-        video_duration = round(video_utils.get_duration(self.video), 3)
-
-        verbose.print(f"[INFO] Video Resolution is {video_width}x{video_height}")
+        width, height = video_utils.get_dimensions(self.video)
+        verbose.print(f"[INFO] Video Resolution is {width}x{height}")
         verbose.print(f"[INFO] Video is running at {self.video_fps} fps")
-        verbose.print(f"[INFO] Video has total of {video_frames_count} frames")
-        verbose.print(f"[INFO] Video duration is {video_duration} sec")
+        verbose.print(f"[INFO] Video has total of {video_utils.get_number_of_frames(self.video)} frames")
+        verbose.print(f"[INFO] Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
 
         # ==================================== Initialize FaceTracking ====================================
         self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance", verbosity=verbosity)
