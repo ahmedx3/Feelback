@@ -1,6 +1,7 @@
 from .. import app, db
 from ..utils import video_utils, Feelback
 from .. import utils
+from .utils import require_video_exists, require_video_processed
 from flask import request, jsonify, send_from_directory
 from flask import Blueprint
 from werkzeug.security import safe_join
@@ -48,12 +49,9 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
 
 
 @video_routes.put('/<video_id>/process')
+@require_video_exists
 def process_video(video_id):
-    video = db.session.query(Video).filter_by(id=video_id).first()
-    if video is None:
-        return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
-
-    if video.finished_processing:
+    if db.session.query(Video).filter_by(id=video_id).first().finished_processing:
         return jsonify({"status": "finished processing"}), Status.OK
 
     request_data: dict = request.get_json()
@@ -98,6 +96,7 @@ def upload_video():
 
 
 @video_routes.get('/<video_id>')
+@require_video_exists
 def get_video(video_id):
     """
     Download Video from Feelback Server
@@ -110,14 +109,11 @@ def get_video(video_id):
 
 
 @video_routes.get('/<video_id>/info')
+@require_video_exists
 def get_video_info(video_id):
     """
     Get Video Info from Feelback Server
     """
 
     video = db.session.query(Video).filter_by(id=video_id).first()
-
-    if video is None:
-        return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
-
     return jsonify({"status": "success", "video": video.to_json()}), Status.OK
