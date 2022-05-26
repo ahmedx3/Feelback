@@ -157,8 +157,10 @@ class Feelback:
             except KeyboardInterrupt:
                 verbose.print("[INFO] Ctrl-C Detected, Exiting")
                 break
-            except:
-                verbose.print("[ERROR] Exception Occurred, Skipping this frame", level=verbose.Level.TRACE)
+            except Exception as e:
+                verbose.print("[DEBUG] Exception Occurred, Skipping this frame", level=verbose.Level.DEBUG)
+                verbose.print(f"[ERROR] {e}", level=verbose.Level.TRACE)
+                verbose.print_exception_stack_trace()
 
         # When everything done, release the video capture object
         output_video.release() if self.output_filename is not None else None

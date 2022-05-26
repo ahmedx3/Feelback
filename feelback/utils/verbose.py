@@ -33,6 +33,11 @@ class Verbose:
         if level <= self.verbosity_level:
             _print(*args, sep=sep, end=end, flush=True)
 
+    def print_exception_stack_trace(self, level=Level.TRACE):
+        if level <= self.verbosity_level:
+            import traceback
+            traceback.print_exc()
+
     def set_verbose_level(self, level: Level):
         self.verbosity_level = level
 
