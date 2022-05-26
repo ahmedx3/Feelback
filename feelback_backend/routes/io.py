@@ -26,9 +26,11 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
     try:
         video = db.session.query(Video).filter_by(id=video_id).first()
         if video is None:
-            video = Video(video_id, feelback.video_frame_count, feelback.video_duration, finished_processing=True)
+            video = Video(video_id, feelback.video_frame_count, feelback.video_duration)
         if video.finished_processing:
             return
+
+        video.finished_processing = True
 
         for person_id, age, gender in feelback.persons:
             video.persons.append(Person(person_id, age, gender))
@@ -41,14 +43,17 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
 
         db.session.commit()
     except Exception as e:
-        print("Failed to store in Database", e)
+        print("Failed to store in Database: ", e)
         db.session.rollback()
 
 
 @video_routes.put('/<video_id>/process')
 def process_video(video_id):
     video = db.session.query(Video).filter_by(id=video_id).first()
-    if video is not None and video.finished_processing:
+    if video is None:
+        return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
+
+    if video.finished_processing:
         return jsonify({"status": "finished processing"}), Status.OK
 
     request_data: dict = request.get_json()
