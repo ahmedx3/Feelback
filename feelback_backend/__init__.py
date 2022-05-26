@@ -1,10 +1,15 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_utils import database_exists, create_database
 from .config import DevelopmentConfig
 
 app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
 db = SQLAlchemy(app)
+
+if not database_exists(db.engine.url):
+    create_database(db.engine.url)
+
 
 from .models import *
 
