@@ -90,8 +90,8 @@ class KmeansIdentification:
         self.centroids = centroids
         self.cluster_count = np.ones(centroids.shape[0], dtype=np.uint16)
 
-        verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
-        verbose.print(f"kmeans centroids: {self.centroids}")
+        verbose.print(f"kmeans iterations: {self.max_iterations - iterations}", level=verbose.Level.TRACE)
+        verbose.print(f"kmeans centroids: {self.centroids}", level=verbose.Level.TRACE)
 
         return clusters
 
@@ -155,8 +155,8 @@ class KmeansIdentification:
         # increase count for clusters that appeared in this frame
         self.cluster_count[cluster_count != 0] += 1
 
-        verbose.print(f"kmeans iterations: {self.max_iterations - iterations}")
-        verbose.print(f"kmeans centroids: {self.centroids}")
+        verbose.print(f"kmeans iterations: {self.max_iterations - iterations}", level=verbose.Level.TRACE)
+        verbose.print(f"kmeans centroids: {self.centroids}", level=verbose.Level.TRACE)
 
         return clusters
 

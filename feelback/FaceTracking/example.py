@@ -18,7 +18,7 @@ def test():
     args = io.get_command_line_args()
     input_video = args.input_video
     frames_to_process_each_second = args.fps
-    __VERBOSE__ = verbose.__VERBOSE__ = args.verbose
+    verbose.set_verbose_level(args.verbose)
 
     video = io.read_video(input_video)
 
@@ -47,14 +47,14 @@ def test():
 
             ids = face_track.get_ids(faces)
 
-            if __VERBOSE__:
+            if verbose.is_verbose():
                 # Draw a rectangle around each face with its person id
                 for i in range(len(ids)):
                     x1, y1, x2, y2 = faces_positions[i]
                     cv2.rectangle(frame, (x1, y1), (x2, y2), colors[ids[i]], 2)
                     cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[ids[i]], 2)
 
-        verbose.imshow(frame, delay=1)
+        verbose.imshow(frame, delay=1, level=verbose.Level.VISUAL)
         verbose.print(f"Processing Frame #{frame_number}")
 
         frame_number += round(video_fps / frames_to_process_each_second)  # Process N every second
@@ -62,7 +62,7 @@ def test():
         # Seek the video to the required frame
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
 
-        verbose.print(f"[INFO] Video Current Time is {round(video_utils.get_current_time(video), 3)} sec")
+        verbose.print(f"[DEBUG] Video Current Time is {round(video_utils.get_current_time(video), 3)} sec", level=verbose.Level.DEBUG)
 
     # When everything done, release the video capture object
     video.release()

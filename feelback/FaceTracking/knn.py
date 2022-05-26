@@ -38,7 +38,7 @@ class KNNIdentification:
         Each class will have at least these number of points: `1 + k//2`.
     """
 
-    def __init__(self, n_classes: int = -1, k=5, threshold=2000, conflict_solving_strategy="min_distance", verbosity=False):
+    def __init__(self, n_classes: int = -1, k=5, threshold=2000, conflict_solving_strategy="min_distance"):
         """
 
         Args:
@@ -65,7 +65,6 @@ class KNNIdentification:
         self.classes_centers = None
         self.classes_count = None
         self.conflict_solving_strategy = conflict_solving_strategy
-        verbose.__VERBOSE__ = verbosity
 
     def knn_init(self, faces: np.ndarray, faces_positions=None) -> npt.NDArray[np.uint16]:
         """
@@ -137,8 +136,8 @@ class KNNIdentification:
                 self.incremental_update_class_info(label, i, faces, faces_positions)
 
         if np.unique(classes).shape[0] != num_of_test_faces:
-            verbose.print("[WARNING] There are some conflicts in the classes")
-            verbose.print(f"[WARNING] Original Classes: {classes}")
+            verbose.print("[WARNING] There are some conflicts in the classes", level=verbose.Level.TRACE)
+            verbose.print(f"[WARNING] Original Classes: {classes}", level=verbose.Level.TRACE)
 
             classes, faces = self.solve_conflicts(num_of_test_faces, classes, faces, faces_positions)
 

@@ -35,8 +35,8 @@ class Feelback:
     modelPath = os.path.join(__CURRENT_DIR__, "FacialExpressionRecognition/Models/Model.sav")
     emotionPredictor = EmotionExtraction(modelPath)
 
-    def __init__(self, video_filename, fps, output_filename=None, verbosity=False):
-        verbose.__VERBOSE__ = verbosity
+    def __init__(self, video_filename, fps, output_filename=None, verbose_level=verbose.Level.INFO):
+        verbose.set_verbose_level(verbose_level)
 
         self.frames_to_process_each_second = fps
         self.video = io.read_video(video_filename)
@@ -51,7 +51,7 @@ class Feelback:
         verbose.print(f"[INFO] Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
 
         # ==================================== Initialize FaceTracking ====================================
-        self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance", verbosity=verbosity)
+        self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance")
 
         # ================================== Initialize Gaze Estimation ===================================
         self.gazeEstimator = GazeEstimation()
@@ -116,10 +116,10 @@ class Feelback:
                 # ========================================== Face Detection =========================================
                 faces_positions = self.faceDetector.detect(frame)
                 faces_positions = np.array(faces_positions, dtype=int)
-                verbose.print(f"[INFO] Detected {faces_positions.shape[0]} faces")
+                verbose.print(f"[DEBUG] Detected {faces_positions.shape[0]} faces", level=verbose.Level.DEBUG)
 
                 if faces_positions is None or len(faces_positions) == 0:
-                    verbose.print("[WARNING] No Faces Detected, Skipping this frame")
+                    verbose.print("[DEBUG] No Faces Detected, Skipping this frame", level=verbose.Level.DEBUG)
                     continue
 
                 faces = []
@@ -147,18 +147,18 @@ class Feelback:
 
                 # ======================================= Verbosity Printing ========================================
 
-                if verbose.__VERBOSE__ or self.output_filename is not None:
+                if verbose.is_verbose() or self.output_filename is not None:
                     self.__imshow(frame, faces_positions, ids, ages, emotions, genders, gaze_attention)
                     output_video.write(frame) if self.output_filename is not None else None
 
-                verbose.print(f"[INFO] Video Current Time is {round(video_utils.get_current_time(self.video), 3)} sec")
+                verbose.print(f"[DEBUG] Video Current Time is {round(video_utils.get_current_time(self.video), 3)} sec", level=verbose.Level.DEBUG)
 
                 # ===================================================================================================
             except KeyboardInterrupt:
-                print('KeyboardInterrupt exception. EXITING')
+                verbose.print("[INFO] Ctrl-C Detected, Exiting")
                 break
             except:
-                verbose.print("[ERROR] Exception Occurred, Skipping this frame")
+                verbose.print("[ERROR] Exception Occurred, Skipping this frame", level=verbose.Level.TRACE)
 
         # When everything done, release the video capture object
         output_video.release() if self.output_filename is not None else None
@@ -181,7 +181,7 @@ class Feelback:
             cv2.putText(frame, f"{ages[i]} years", (x1 + 150, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-        verbose.imshow(frame, delay=1)
+        verbose.imshow(frame, delay=1, level=verbose.Level.VISUAL)
 
     def postprocessing(self):
         """
@@ -198,7 +198,7 @@ class Feelback:
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
 
     def __del__(self):
-        print(f"Feelback Destructor is called, {self} will be deleted")
+        verbose.print(f"[DEBUG] Feelback Destructor is called, {self} will be deleted", level=verbose.Level.DEBUG)
         self.video.release()
         # Closes all the frames
         cv2.destroyAllWindows()

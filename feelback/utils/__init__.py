@@ -7,4 +7,5 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
     sys.path.append(str(file.parents[3]))
     __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
 
-from . import io, img_utils, verbose, video_utils
+from . import io, img_utils, video_utils
+from .verbose import verbose
