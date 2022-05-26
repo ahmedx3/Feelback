@@ -1,4 +1,5 @@
 from .. import db
+from .Person import Person
 
 
 class Attention(db.Model):
@@ -9,10 +10,11 @@ class Attention(db.Model):
     __tablename__ = 'attentions'
 
     frame_number = db.Column(db.Integer, primary_key=True)
-    person_id = db.Column(db.Integer, db.ForeignKey('persons.id'), primary_key=True)
-    video_id = db.Column(db.String(64), db.ForeignKey('videos.id'), primary_key=True)
-
+    person_id = db.Column(db.Integer, primary_key=True)
+    video_id = db.Column(db.String(64), primary_key=True)
     attention = db.Column(db.Boolean, nullable=False)
+
+    __table_args__ = (db.ForeignKeyConstraint((person_id, video_id), (Person.id, Person.video_id)), {})
 
     def __init__(self, frame_number: int, person_id: int, video_id: str, attention: bool):
         self.frame_number = frame_number
