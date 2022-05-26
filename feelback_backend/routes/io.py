@@ -11,7 +11,6 @@ import hashlib
 from ..models import Video, Attention, Emotion, Person
 from threading import Thread
 
-
 video_routes = Blueprint('video', __name__)
 __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 
@@ -20,12 +19,17 @@ def process_video_thread(video_id, video_filename, output_filename, frames_per_s
     feelback = Feelback(video_filename, frames_per_second, output_filename=output_filename)
     feelback.run()
 
-    store_in_database(video_id, feelback)
+    store_feelback_data_in_database(video_id, feelback)
 
 
-def store_in_database(video_id: str, feelback: Feelback):
+def store_feelback_data_in_database(video_id: str, feelback: Feelback):
     try:
-        video = Video(video_id, feelback.video_frame_count, feelback.video_duration, finished_processing=True)
+        video = db.session.query(Video).filter_by(id=video_id).first()
+        if video is None:
+            video = Video(video_id, feelback.video_frame_count, feelback.video_duration, finished_processing=True)
+        if video.finished_processing:
+            return
+
         for person_id, age, gender in feelback.persons:
             video.persons.append(Person(person_id, age, gender))
 
@@ -74,16 +78,23 @@ def upload_video():
     video.seek(0)
     video_id = hashlib.sha1(video.stream.read()).hexdigest()
 
-    video.seek(0)
-    filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
-    video.save(filepath)
+    if db.session.query(Video).filter_by(id=video_id).first() is not None:
+        video = db.session.query(Video).filter_by(id=video_id).first()
+    else:
+        video.seek(0)
+        filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+        video.save(filepath)
+
+        video = Video(video_id, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
+        db.session.add(video)
+        db.session.commit()
 
     return jsonify({
         "status": "success",
-        "id": video_id,
-        "finished_processing": False,
-        "frame_count": video_utils.get_number_of_frames(filepath),
-        "duration": video_utils.get_duration(filepath, digits=3)
+        "id": video.id,
+        "finished_processing": video.finished_processing,
+        "frame_count": video.frame_count,
+        "duration": video.duration
     }), Status.CREATED
 
 
@@ -104,17 +115,16 @@ def get_video_info(video_id):
     """
     Get Video Info from Feelback Server
     """
-    filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
 
-    if filepath is None:
+    video = db.session.query(Video).filter_by(id=video_id).first()
+
+    if video is None:
         return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
-
-    finished_processing = db.session.query(Video).filter_by(id=video_id).with_entities(Video.finished_processing).first()
 
     return jsonify({
         "status": "success",
-        "id": video_id,
-        "finished_processing": utils.to_boolean(finished_processing),
-        "frame_count": video_utils.get_number_of_frames(filepath),
-        "duration": video_utils.get_duration(filepath, digits=3)
+        "id": video.id,
+        "finished_processing": video.finished_processing,
+        "frame_count": video.frame_count,
+        "duration": video.duration
     }), Status.OK
