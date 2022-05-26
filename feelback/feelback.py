@@ -120,6 +120,7 @@ class Feelback:
 
                 if faces_positions is None or len(faces_positions) == 0:
                     verbose.print("[DEBUG] No Faces Detected, Skipping this frame", level=verbose.Level.DEBUG)
+                    output_video.write(frame) if self.output_filename is not None else None
                     continue
 
                 faces = []
@@ -161,6 +162,7 @@ class Feelback:
                 verbose.print("[DEBUG] Exception Occurred, Skipping this frame", level=verbose.Level.DEBUG)
                 verbose.print(f"[ERROR] {e}", level=verbose.Level.TRACE)
                 verbose.print_exception_stack_trace()
+                output_video.write(frame) if self.output_filename is not None else None
 
         # When everything done, release the video capture object
         output_video.release() if self.output_filename is not None else None
