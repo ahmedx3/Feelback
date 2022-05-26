@@ -6,7 +6,7 @@ class Video(db.Model):
     Video Model
     """
 
-    __tablename__ = 'videos'
+    __tablename__ = 'Video'
 
     id = db.Column(db.String(64), primary_key=True)
     frame_count = db.Column(db.Integer, nullable=False)
@@ -16,10 +16,10 @@ class Video(db.Model):
     persons = db.relationship('Person', backref='video', lazy=True)
 
     def __init__(self, id: str, frame_count: int, duration: float, finished_processing: bool = False):
-        self.id = id
-        self.frame_count = frame_count
-        self.duration = duration
-        self.finished_processing = finished_processing
+        self.id = str(id)
+        self.frame_count = int(frame_count)
+        self.duration = float(duration)
+        self.finished_processing = bool(finished_processing)
 
     def __repr__(self):
-        return f"<Video {self.id}>"
+        return f"<Video(id={self.id} frame_count={self.frame_count} duration={self.duration})>"
