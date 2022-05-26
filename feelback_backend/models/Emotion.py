@@ -1,5 +1,6 @@
 from .. import db
 from .Person import Person
+from .BaseModel import BaseModel
 import enum
 
 
@@ -13,7 +14,7 @@ class EmotionType(str, enum.Enum):
     Neutral = "Neutral"
 
 
-class Emotion(db.Model):
+class Emotion(BaseModel):
     """
     Emotion Model
     """

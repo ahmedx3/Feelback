@@ -1,4 +1,5 @@
 from .. import db
+from .BaseModel import BaseModel
 import enum
 
 
@@ -7,7 +8,7 @@ class GenderType(str, enum.Enum):
     Female = "Female"
 
 
-class Person(db.Model):
+class Person(BaseModel):
     """
     Person Model
     """

@@ -1,7 +1,8 @@
 from .. import db
+from .BaseModel import BaseModel
 
 
-class Video(db.Model):
+class Video(BaseModel):
     """
     Video Model
     """

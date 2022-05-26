@@ -13,6 +13,7 @@ class Config:
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
+    JSON_SORT_KEYS = utils.to_boolean(os.environ.get("JSON_SORT_KEYS", False))
     SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False))
     SQLALCHEMY_ECHO = utils.to_boolean(os.environ.get("SQLALCHEMY_ECHO", False))
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")

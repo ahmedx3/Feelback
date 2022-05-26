@@ -89,13 +89,7 @@ def upload_video():
         db.session.add(video)
         db.session.commit()
 
-    return jsonify({
-        "status": "success",
-        "id": video.id,
-        "finished_processing": video.finished_processing,
-        "frame_count": video.frame_count,
-        "duration": video.duration
-    }), Status.CREATED
+    return jsonify({"status": "success", "video": video.to_json()}), Status.CREATED
 
 
 @video_routes.get('/<video_id>')
@@ -121,10 +115,4 @@ def get_video_info(video_id):
     if video is None:
         return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
 
-    return jsonify({
-        "status": "success",
-        "id": video.id,
-        "finished_processing": video.finished_processing,
-        "frame_count": video.frame_count,
-        "duration": video.duration
-    }), Status.OK
+    return jsonify({"status": "success", "video": video.to_json()}), Status.OK

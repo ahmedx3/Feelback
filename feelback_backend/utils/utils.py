@@ -4,7 +4,7 @@ def to_boolean(value):
     Converts multiple data types to boolean
     """
 
-    if hasattr(value, '__iter__'):
+    if hasattr(value, '__iter__') and not isinstance(value, str):
         if len(value) == 0:
             return False
         elif len(value) == 1:

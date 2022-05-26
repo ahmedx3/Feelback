@@ -1,8 +1,9 @@
 from .. import db
 from .Person import Person
+from .BaseModel import BaseModel
 
 
-class Attention(db.Model):
+class Attention(BaseModel):
     """
     Attention Model
     """
