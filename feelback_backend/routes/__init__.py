@@ -1,1 +1,1 @@
-from .io import video_routes
+from .video import video_routes
