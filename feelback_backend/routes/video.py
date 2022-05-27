@@ -122,3 +122,15 @@ def get_video_info(video_id):
 
     video = db.session.query(Video).filter_by(id=video_id).first()
     return jsonify({"status": "success", "data": video.to_json()}), Status.OK
+
+
+@video_routes.get('/')
+@video_routes.get('')
+def get_all_videos_info():
+    """
+    Get Video Info from Feelback Server
+    """
+
+    videos = db.session.query(Video).all()
+    videos = [video.to_json() for video in videos]
+    return jsonify({"status": "success", "data": videos}), Status.OK
