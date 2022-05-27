@@ -21,7 +21,7 @@ def get_all_video_data(video_id):
     """
 
     video = db.session.query(Video).filter_by(id=video_id).first()
-    return jsonify({"status": "success", "video": video.to_json(populate=["persons", "emotions", "attention"])}), Status.OK
+    return jsonify({"status": "success", "data": video.to_json(populate=["persons", "emotions", "attention"])}), Status.OK
 
 
 @video_analytics_routes.get('/persons')
@@ -33,7 +33,7 @@ def get_all_persons_data(video_id):
 
     persons = db.session.query(Person).filter_by(video_id=video_id).all()
     persons = [person.to_json(populate=["emotions", "attention"]) for person in persons]
-    return jsonify({"status": "success", "persons": persons}), Status.OK
+    return jsonify({"status": "success", "data": persons}), Status.OK
 
 
 @video_analytics_routes.get('/person/<person_id>')
@@ -47,4 +47,4 @@ def get_person_data(video_id, person_id):
     if person is None:
         return jsonify({"status": "person not found"}), Status.NOT_FOUND
 
-    return jsonify({"status": "success", "person": person.to_json(populate=["emotions", "attention"])}), Status.OK
+    return jsonify({"status": "success", "data": person.to_json(populate=["emotions", "attention"])}), Status.OK

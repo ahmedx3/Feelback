@@ -17,5 +17,5 @@ db.create_all()
 
 from .routes import *
 
-app.register_blueprint(video_routes, url_prefix='/video')
-app.register_blueprint(video_analytics_routes, url_prefix='/video/<video_id>/analytics')
+app.register_blueprint(video_routes, url_prefix='/videos')
+app.register_blueprint(video_analytics_routes, url_prefix='/videos/<video_id>/analytics')

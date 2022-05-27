@@ -12,7 +12,7 @@ import hashlib
 from ..models import Video, Attention, Emotion, Person
 from threading import Thread
 
-video_routes = Blueprint('video', __name__)
+video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 
 
@@ -48,7 +48,7 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
         db.session.rollback()
 
 
-@video_routes.put('/<video_id>/process')
+@video_routes.put('/<video_id>')
 @require_video_exists
 def process_video(video_id):
     if db.session.query(Video).filter_by(id=video_id).first().finished_processing:
@@ -66,7 +66,8 @@ def process_video(video_id):
     return jsonify({"status": "started processing"}), Status.ACCEPTED
 
 
-@video_routes.post('/upload')
+@video_routes.post('/')
+@video_routes.post('')
 def upload_video():
     """
     Upload Video to Feelback Server
@@ -92,10 +93,10 @@ def upload_video():
         db.session.add(video)
         db.session.commit()
 
-    return jsonify({"status": "success", "video": video.to_json()}), Status.CREATED
+    return jsonify({"status": "success", "data": video.to_json()}), Status.CREATED
 
 
-@video_routes.get('/<video_id>')
+@video_routes.get('/<video_id>/download')
 @require_video_exists
 def get_video(video_id):
     """
@@ -108,7 +109,7 @@ def get_video(video_id):
     return send_from_directory(__UPLOAD_FOLDER__, filename)
 
 
-@video_routes.get('/<video_id>/info')
+@video_routes.get('/<video_id>')
 @require_video_exists
 def get_video_info(video_id):
     """
@@ -116,4 +117,4 @@ def get_video_info(video_id):
     """
 
     video = db.session.query(Video).filter_by(id=video_id).first()
-    return jsonify({"status": "success", "video": video.to_json()}), Status.OK
+    return jsonify({"status": "success", "data": video.to_json()}), Status.OK
