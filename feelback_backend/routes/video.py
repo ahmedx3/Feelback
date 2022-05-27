@@ -67,8 +67,7 @@ def process_video(video_id):
     return jsonify({"status": "started processing"}), Status.ACCEPTED
 
 
-@video_routes.post('/')
-@video_routes.post('')
+@video_routes.post('/', strict_slashes=False)
 def upload_video():
     """
     Upload Video to Feelback Server
@@ -124,8 +123,7 @@ def get_video_info(video_id):
     return jsonify({"status": "success", "data": video.to_json()}), Status.OK
 
 
-@video_routes.get('/')
-@video_routes.get('')
+@video_routes.get('/', strict_slashes=False)
 def get_all_videos_info():
     """
     Get Video Info from Feelback Server

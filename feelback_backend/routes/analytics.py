@@ -12,8 +12,7 @@ Note: <video_id> is in the url_prefix, therefore all the routes in this blueprin
 video_analytics_routes = Blueprint('analytics', __name__, url_prefix='/video/<video_id>/analytics')
 
 
-@video_analytics_routes.get('/')
-@video_analytics_routes.get('')
+@video_analytics_routes.get('/', strict_slashes=False)
 @require_video_processed
 def get_all_video_data(video_id):
     """
