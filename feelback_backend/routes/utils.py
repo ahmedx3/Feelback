@@ -15,13 +15,16 @@ def require_video_exists(route_function):
 
     @wraps(route_function)
     def decorator(*args, **kwargs):
+        # Creates dict with args along with their variable names, then merge with kwargs
+        kwargs.update(zip(route_function.__code__.co_varnames, args))
+
         video_id = kwargs['video_id']
         video = db.session.query(Video).filter_by(id=video_id).first()
 
         if video is None:
             return jsonify({"status": "error", "message": "Video not found"}), Status.NOT_FOUND
 
-        return route_function(*args, **kwargs)
+        return route_function(**kwargs)
 
     return decorator
 
@@ -38,6 +41,9 @@ def require_video_processed(route_function):
 
     @wraps(route_function)
     def decorator(*args, **kwargs):
+        # Creates dict with args along with their variable names, then merge with kwargs
+        kwargs.update(zip(route_function.__code__.co_varnames, args))
+
         video_id = kwargs['video_id']
         video = db.session.query(Video).filter_by(id=video_id).first()
 
@@ -47,6 +53,6 @@ def require_video_processed(route_function):
         if not video.finished_processing:
             return jsonify({"status": "error", "message": "Video not finished processing"}), Status.BAD_REQUEST
 
-        return route_function(*args, **kwargs)
+        return route_function(**kwargs)
 
     return decorator
