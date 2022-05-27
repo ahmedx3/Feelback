@@ -18,8 +18,18 @@ __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 
 @require_video_exists
 def process_video_thread(video_id, video_filename, output_filename, frames_per_second):
-    feelback = Feelback(video_filename, frames_per_second, output_filename=output_filename)
-    feelback.run()
+    feelback = Feelback(video_filename, frames_per_second, output_filename=output_filename, verbose_level=0)
+
+    video = db.session.query(Video).filter_by(id=video_id).first()
+
+    thread = Thread(target=lambda: feelback.run())
+    thread.start()
+
+    while thread.is_alive():
+        video.progress = feelback.progress()
+        db.session.add(video)
+        db.session.commit()
+        thread.join(timeout=3)
 
     store_feelback_data_in_database(video_id, feelback)
 

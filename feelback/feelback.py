@@ -64,6 +64,8 @@ class Feelback:
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
         self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('emotion', "U10"), ('attention', bool)])
 
+        self.frame_number = 0
+
     @property
     def framerate(self):
         return self.frames_to_process_each_second
@@ -92,10 +94,15 @@ class Feelback:
     def video_duration(self):
         return video_utils.get_duration(self.video)
 
+    def progress(self):
+        """
+        Return the progress of the video
+        """
+        return min(100.0, round(100 * self.frame_number / self.video_frame_count, 2))
+
     def run(self):
         output_video = video_utils.create_output_video(self.video, self.output_filename, self.framerate)
 
-        frame_number = 0
         # Read frame by frame until video is completed
         while self.video.isOpened():
             try:
@@ -103,12 +110,12 @@ class Feelback:
                 if not ok:
                     break
 
-                verbose.print(f"[INFO] Processing Frame #{frame_number}")
+                verbose.print(f"[INFO] Processing Frame #{self.frame_number}")
 
-                frame_number += self.frame_number_increment  # Process N every second
+                self.frame_number += self.frame_number_increment  # Process N every second
 
                 # Seek the video to the required frame
-                self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+                self.video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_number)
 
                 # ========================================== Preprocessing ==========================================
                 frame_grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -141,7 +148,7 @@ class Feelback:
                 ages = self.genderPredictor.getAge(frame_grey, faces_positions, ids)
 
                 # ======================================== Integrate Modules ========================================
-                data = np.array([ids, np.full_like(ids, frame_number), emotions, gaze_attention.astype(int)]).T
+                data = np.array([ids, np.full_like(ids, self.frame_number), emotions, gaze_attention.astype(int)]).T
                 self._data = np.append(self._data, unstructured_to_structured(data, self._data.dtype))
 
                 # ============================================ Analytics ============================================
