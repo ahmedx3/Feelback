@@ -45,3 +45,4 @@ class DevelopmentConfig(Config):
     DEVELOPMENT = True
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", True))
+    DROP_DATABASE_ON_STARTUP = utils.to_boolean(os.environ.get("DROP_DATABASE_ON_STARTUP", False))
