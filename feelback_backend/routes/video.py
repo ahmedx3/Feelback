@@ -1,7 +1,7 @@
 from .. import app, db
 from ..utils import video_utils, Feelback
 from .. import utils
-from .utils import require_video_exists, require_video_processed
+from .utils import require_video_exists
 from flask import request, jsonify, send_from_directory
 from flask import Blueprint
 from werkzeug.security import safe_join
@@ -16,6 +16,7 @@ video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 
 
+@require_video_exists
 def process_video_thread(video_id, video_filename, output_filename, frames_per_second):
     feelback = Feelback(video_filename, frames_per_second, output_filename=output_filename)
     feelback.run()
@@ -23,11 +24,11 @@ def process_video_thread(video_id, video_filename, output_filename, frames_per_s
     store_feelback_data_in_database(video_id, feelback)
 
 
+@require_video_exists
 def store_feelback_data_in_database(video_id: str, feelback: Feelback):
     try:
         video = db.session.query(Video).filter_by(id=video_id).first()
-        if video is None:
-            video = Video(video_id, feelback.video_frame_count, feelback.video_duration)
+
         if video.finished_processing:
             return
 
@@ -82,6 +83,8 @@ def upload_video():
     video.seek(0)
     video_id = hashlib.sha1(video.stream.read()).hexdigest()
 
+    print(f"Uploading video {video.filename}")
+
     if db.session.query(Video).filter_by(id=video_id).first() is not None:
         video = db.session.query(Video).filter_by(id=video_id).first()
     else:
@@ -89,7 +92,8 @@ def upload_video():
         filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
         video.save(filepath)
 
-        video = Video(video_id, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
+        filename = os.path.splitext(video.filename)[0]
+        video = Video(video_id, filename, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
         db.session.add(video)
         db.session.commit()
 
@@ -98,7 +102,7 @@ def upload_video():
 
 @video_routes.get('/<video_id>/download')
 @require_video_exists
-def get_video(video_id):
+def download_video(video_id):
     """
     Download Video from Feelback Server
     """
