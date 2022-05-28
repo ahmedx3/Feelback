@@ -4,7 +4,7 @@ import math
 from . import io
 
 
-def get_duration(video: Union[cv2.VideoCapture | str], digits: int = None) -> float:
+def get_duration(video: Union[cv2.VideoCapture, str], digits: int = None) -> float:
     """
     Get Video Duration in Seconds
 
@@ -26,7 +26,7 @@ def get_duration(video: Union[cv2.VideoCapture | str], digits: int = None) -> fl
     return round(duration_seconds, digits)
 
 
-def get_current_time(video: Union[cv2.VideoCapture | str]) -> float:
+def get_current_time(video: Union[cv2.VideoCapture, str]) -> float:
     """
     Get Current Video Time in Seconds
 
@@ -46,7 +46,7 @@ def get_current_time(video: Union[cv2.VideoCapture | str]) -> float:
     return current_time
 
 
-def get_dimensions(video: Union[cv2.VideoCapture | str]) -> tuple:
+def get_dimensions(video: Union[cv2.VideoCapture, str]) -> tuple:
     """
     Get Video Dimensions (Width, Height)
 
@@ -65,7 +65,7 @@ def get_dimensions(video: Union[cv2.VideoCapture | str]) -> tuple:
     return video_width, video_height
 
 
-def get_number_of_frames(video: Union[cv2.VideoCapture | str]) -> int:
+def get_number_of_frames(video: Union[cv2.VideoCapture, str]) -> int:
     """
     Get Video Number of Frames
 
@@ -83,7 +83,7 @@ def get_number_of_frames(video: Union[cv2.VideoCapture | str]) -> int:
     return video_frames_count
 
 
-def get_fps(video: Union[cv2.VideoCapture | str], digits: int = None) -> int:
+def get_fps(video: Union[cv2.VideoCapture, str], digits: int = None) -> int:
     """
     Get Video FPS (Frames Per Second)
 
