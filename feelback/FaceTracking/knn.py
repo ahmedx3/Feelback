@@ -136,8 +136,8 @@ class KNNIdentification:
                 self.incremental_update_class_info(label, i, faces, faces_positions)
 
         if np.unique(classes).shape[0] != num_of_test_faces:
-            verbose.print("[WARNING] There are some conflicts in the classes", level=verbose.Level.TRACE)
-            verbose.print(f"[WARNING] Original Classes: {classes}", level=verbose.Level.TRACE)
+            verbose.warning(f"There are some conflicts in the classes")
+            verbose.warning(f"Original Classes: {classes}")
 
             classes, faces = self.solve_conflicts(num_of_test_faces, classes, faces, faces_positions)
 

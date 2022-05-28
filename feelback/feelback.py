@@ -45,10 +45,10 @@ class Feelback:
         self.frame_number_increment = round(video_fps / self.frames_to_process_each_second)
 
         width, height = video_utils.get_dimensions(self.video)
-        verbose.print(f"[INFO] Video Resolution is {width}x{height}")
-        verbose.print(f"[INFO] Video is running at {video_fps} fps")
-        verbose.print(f"[INFO] Video has total of {video_utils.get_number_of_frames(self.video)} frames")
-        verbose.print(f"[INFO] Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
+        verbose.info(f"Video Resolution is {width}x{height}")
+        verbose.info(f"Video is running at {video_fps} fps")
+        verbose.info(f"Video has total of {video_utils.get_number_of_frames(self.video)} frames")
+        verbose.info(f"Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
 
         # ==================================== Initialize FaceTracking ====================================
         self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance")
@@ -110,7 +110,7 @@ class Feelback:
                 if not ok:
                     break
 
-                verbose.print(f"[INFO] Processing Frame #{self.frame_number}")
+                verbose.info(f"Processing Frame #{self.frame_number}")
 
                 self.frame_number += self.frame_number_increment  # Process N every second
 
@@ -123,10 +123,10 @@ class Feelback:
                 # ========================================== Face Detection =========================================
                 faces_positions = self.faceDetector.detect(frame)
                 faces_positions = np.array(faces_positions, dtype=int)
-                verbose.print(f"[DEBUG] Detected {faces_positions.shape[0]} faces", level=verbose.Level.DEBUG)
+                verbose.debug(f"Detected {faces_positions.shape[0]} faces")
 
                 if faces_positions is None or len(faces_positions) == 0:
-                    verbose.print("[DEBUG] No Faces Detected, Skipping this frame", level=verbose.Level.DEBUG)
+                    verbose.debug("No Faces Detected, Skipping this frame")
                     output_video.write(frame) if self.output_filename is not None else None
                     continue
 
@@ -159,15 +159,15 @@ class Feelback:
                     self.__imshow(frame, faces_positions, ids, ages, emotions, genders, gaze_attention)
                     output_video.write(frame) if self.output_filename is not None else None
 
-                verbose.print(f"[DEBUG] Video Current Time is {round(video_utils.get_current_time(self.video), 3)} sec", level=verbose.Level.DEBUG)
+                verbose.debug(f"Video Current Time is {round(video_utils.get_current_time(self.video), 3)} sec")
 
                 # ===================================================================================================
             except KeyboardInterrupt:
-                verbose.print("[INFO] Ctrl-C Detected, Exiting")
+                verbose.info("Ctrl-C Detected, Exiting")
                 break
             except Exception as e:
-                verbose.print("[DEBUG] Exception Occurred, Skipping this frame", level=verbose.Level.DEBUG)
-                verbose.print(f"[ERROR] {e}", level=verbose.Level.TRACE)
+                verbose.debug("Exception Occurred, Skipping this frame")
+                verbose.error(e)
                 verbose.print_exception_stack_trace()
                 output_video.write(frame) if self.output_filename is not None else None
 
@@ -209,7 +209,7 @@ class Feelback:
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
 
     def __del__(self):
-        verbose.print(f"[DEBUG] Feelback Destructor is called, {self} will be deleted", level=verbose.Level.DEBUG)
+        verbose.debug(f"Feelback Destructor is called, {self} will be deleted")
         self.video.release()
         # Closes all the frames
         cv2.destroyAllWindows()

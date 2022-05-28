@@ -48,9 +48,24 @@ class Verbose:
                 cv2.imshow("DEBUG", image)
             cv2.waitKey(delay)
 
-    def print(self, *args, level=Level.INFO, sep=' ', end='\n'):
+    def print(self, *args, level=Level.INFO, sep=' ', end='\n', **kwargs):
         if level <= self.verbosity_level:
-            _print(*args, sep=sep, end=end, flush=True)
+            _print(*args, sep=sep, end=end, flush=True, **kwargs)
+
+    def info(self, *args, sep=' ', end='\n', **kwargs):
+        self.print("[INFO]", *args, level=self.Level.INFO, sep=sep, end=end, **kwargs)
+
+    def debug(self, *args, sep=' ', end='\n', **kwargs):
+        self.print("[DEBUG]", *args, level=self.Level.DEBUG, sep=sep, end=end, **kwargs)
+
+    def trace(self, *args, sep=' ', end='\n', **kwargs):
+        self.print("[TRACE]", *args, level=self.Level.TRACE, sep=sep, end=end, **kwargs)
+
+    def warning(self, *args, sep=' ', end='\n', **kwargs):
+        self.print("[WARNING]", *args, level=self.Level.TRACE, sep=sep, end=end, **kwargs)
+
+    def error(self, *args, sep=' ', end='\n', **kwargs):
+        self.print("[ERROR]", *args, level=self.Level.TRACE, sep=sep, end=end, **kwargs)
 
     def print_exception_stack_trace(self, level=Level.TRACE):
         if level <= self.verbosity_level:
