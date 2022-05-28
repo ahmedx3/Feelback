@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database, drop_database
 from .config import DevelopmentConfig
@@ -22,5 +22,9 @@ db.create_all()
 from .utils.error_handlers import *
 from .routes import *
 
-app.register_blueprint(video_routes, url_prefix='/videos')
-app.register_blueprint(video_analytics_routes, url_prefix='/videos/<video_id>/analytics')
+api = Blueprint('api', __name__)
+
+api.register_blueprint(video_routes, url_prefix='/videos')
+api.register_blueprint(video_analytics_routes, url_prefix='/videos/<video_id>/analytics')
+
+app.register_blueprint(api, url_prefix='/api/v1')
