@@ -9,7 +9,7 @@ __package__ = '.'.join(file.parent.parts[len(file.parents[3].parts):])
 
 
 from ...feelback import utils as feelback_utils
-from ...feelback.utils import video_utils
+from ...feelback.utils import video_utils, verbose
 from ...feelback import Feelback
 
 

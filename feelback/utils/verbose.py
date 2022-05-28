@@ -1,4 +1,5 @@
 from builtins import print as _print
+import warnings
 import cv2
 import numpy as np
 import enum
@@ -13,12 +14,30 @@ class Verbose:
         TRACE = 3
         VISUAL = 4
 
-    verbosity_level = Level.OFF
+    __verbosity_level = Level.OFF
+    warnings.simplefilter('ignore')
+
+    @property
+    def verbosity_level(self):
+        return self.__verbosity_level
+
+    @verbosity_level.setter
+    def verbosity_level(self, level: Level):
+        if level <= self.Level.INFO:
+            warnings.simplefilter('ignore')
+        elif level == self.Level.DEBUG:
+            warnings.simplefilter('default')
+        elif level >= self.Level.TRACE:
+            warnings.simplefilter('always')
+
+        self.__verbosity_level = level
 
     # Singleton Pattern
     def __new__(Class):
         if not hasattr(Class, 'instance'):
             Class.instance = super(Verbose, Class).__new__(Class)
+            Class.instance.verbosity_level = Class.Level.INFO
+
         return getattr(Class, 'instance')
 
     def imshow(self, image: np.ndarray, title=None, level=Level.VISUAL, delay=0):

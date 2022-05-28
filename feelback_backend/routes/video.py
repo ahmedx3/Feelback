@@ -1,5 +1,5 @@
 from .. import app, db
-from ..utils import video_utils, Feelback
+from ..utils import video_utils, verbose, Feelback
 from .. import utils
 from .utils import require_video_exists
 from flask import request, jsonify, send_from_directory
@@ -18,7 +18,7 @@ __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 
 @require_video_exists
 def process_video_thread(video_id, video_filename, output_filename, frames_per_second):
-    feelback = Feelback(video_filename, frames_per_second, output_filename=output_filename, verbose_level=0)
+    feelback = Feelback(video_filename, frames_per_second, output_filename, verbose.Level.OFF)
 
     video = db.session.query(Video).filter_by(id=video_id).first()
 
