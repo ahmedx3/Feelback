@@ -19,6 +19,7 @@ from .models import *
 
 db.create_all()
 
+from .utils.error_handlers import *
 from .routes import *
 
 app.register_blueprint(video_routes, url_prefix='/videos')
