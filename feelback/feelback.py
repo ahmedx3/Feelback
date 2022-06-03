@@ -35,12 +35,11 @@ class Feelback:
     modelPath = os.path.join(__CURRENT_DIR__, "FacialExpressionRecognition/Models/Model.sav")
     emotionPredictor = EmotionExtraction(modelPath)
 
-    def __init__(self, video_filename, fps, output_filename=None, verbose_level=verbose.Level.INFO):
+    def __init__(self, video_filename, fps, verbose_level=verbose.Level.INFO):
         verbose.set_verbose_level(verbose_level)
 
         self.frames_to_process_each_second = fps
         self.video = io.read_video(video_filename)
-        self.output_filename = output_filename
         video_fps = video_utils.get_fps(self.video, digits=3)
         self.frame_number_increment = round(video_fps / self.frames_to_process_each_second)
 
@@ -62,7 +61,8 @@ class Feelback:
         self.genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
 
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
-        self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('emotion', "U10"), ('attention', bool)])
+        self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('face_position', int, 4),
+                                        ('emotion', "U10"), ('attention', bool)])
 
         self.frame_number = 0
 
@@ -80,7 +80,7 @@ class Feelback:
 
     @property
     def data(self):
-        return self._data
+        return self._data[['person_id', 'frame_number', 'emotion', 'attention']]
 
     @property
     def attention(self):
@@ -101,8 +101,6 @@ class Feelback:
         return min(100.0, round(100 * self.frame_number / self.video_frame_count, 2))
 
     def run(self):
-        output_video = video_utils.create_output_video(self.video, self.output_filename, self.framerate)
-
         # Read frame by frame until video is completed
         while self.video.isOpened():
             try:
@@ -127,7 +125,6 @@ class Feelback:
 
                 if faces_positions is None or len(faces_positions) == 0:
                     verbose.debug("No Faces Detected, Skipping this frame")
-                    output_video.write(frame) if self.output_filename is not None else None
                     continue
 
                 faces = []
@@ -148,16 +145,15 @@ class Feelback:
                 ages = self.genderPredictor.getAge(frame_grey, faces_positions, ids)
 
                 # ======================================== Integrate Modules ========================================
-                data = np.array([ids, np.full_like(ids, self.frame_number), emotions, gaze_attention.astype(int)]).T
-                self._data = np.append(self._data, unstructured_to_structured(data, self._data.dtype))
+                self._append_data(ids, self.frame_number, faces_positions, emotions, gaze_attention)
 
                 # ============================================ Analytics ============================================
 
                 # ======================================= Verbosity Printing ========================================
 
-                if verbose.is_verbose() or self.output_filename is not None:
-                    self.__imshow(frame, faces_positions, ids, ages, emotions, genders, gaze_attention)
-                    output_video.write(frame) if self.output_filename is not None else None
+                if verbose.is_verbose():
+                    self._annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention)
+                    verbose.imshow(frame, delay=1, level=verbose.Level.VISUAL)
 
                 verbose.debug(f"Video Current Time is {round(video_utils.get_current_time(self.video), 3)} sec")
 
@@ -169,21 +165,27 @@ class Feelback:
                 verbose.debug("Exception Occurred, Skipping this frame")
                 verbose.error(e)
                 verbose.print_exception_stack_trace()
-                output_video.write(frame) if self.output_filename is not None else None
-
-        # When everything done, release the video capture object
-        output_video.release() if self.output_filename is not None else None
 
         self.postprocessing()
 
+    def _append_data(self, ids, frame_number, faces_positions, emotions, gaze_attention):
+        new_data = np.empty(ids.shape[0], self._data.dtype)
+        new_data['person_id'] = ids
+        new_data['frame_number'] = frame_number
+        new_data['face_position'] = faces_positions
+        new_data['emotion'] = emotions
+        new_data['attention'] = gaze_attention
+
+        self._data = np.append(self._data, new_data)
+
     @staticmethod
-    def __imshow(frame, faces_positions, ids, ages, emotions, genders, gaze_attention):
+    def _annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention):
         # assign some unique colors for each face id for visualization purposes
-        colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)] * 10
+        colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)]
 
         # Draw a rectangle around each face with its person id
         for i in range(len(ids)):
-            color = colors[ids[i]]
+            color = colors[ids[i] % len(colors)]
             x1, y1, x2, y2 = faces_positions[i]
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), color=color, thickness=2)
@@ -192,7 +194,6 @@ class Feelback:
             cv2.putText(frame, f"{ages[i]} years", (x1 + 150, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-        verbose.imshow(frame, delay=1, level=verbose.Level.VISUAL)
 
     def postprocessing(self):
         """
@@ -208,6 +209,31 @@ class Feelback:
         self._data = self._data[np.isin(self._data['person_id'], outliers_ids, invert=True)]
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
 
+    def save_postprocess_video(self, output_filename):
+        if not output_filename:
+            return
+
+        output_video = video_utils.create_output_video(self.video, output_filename, self.framerate)
+        frame_number = 0
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the first frame
+        while self.video.isOpened():
+            ok, frame = self.video.read()
+            if not ok:
+                break
+
+            frame_number += self.frame_number_increment
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the next frame
+
+            frame_data = self._data[self._data['frame_number'] == frame_number]
+            frame_persons_ids = frame_data['person_id']
+            persons_data = self._persons[np.isin(self._persons['person_id'], frame_persons_ids)]
+            self._annotate_frame(frame, frame_data['face_position'], frame_persons_ids, persons_data['age'],
+                                 frame_data['emotion'], persons_data['gender'], frame_data['attention'])
+
+            output_video.write(frame)
+
+        output_video.release()
+
     def __del__(self):
         verbose.debug(f"Feelback Destructor is called, {self} will be deleted")
         self.video.release()
@@ -217,6 +243,7 @@ class Feelback:
 
 if __name__ == '__main__':
     args = io.get_command_line_args()
-    feelback = Feelback(args.input_video, args.fps, args.output, args.verbose)
+    feelback = Feelback(args.input_video, args.fps, args.verbose)
     feelback.run()
+    feelback.save_postprocess_video(args.output)
 

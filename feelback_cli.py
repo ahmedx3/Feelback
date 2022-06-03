@@ -5,5 +5,6 @@ from feelback import Feelback
 
 if __name__ == '__main__':
     args = get_command_line_args()
-    feelback = Feelback(args.input_video, args.fps, args.output, args.verbose)
+    feelback = Feelback(args.input_video, args.fps, args.verbose)
     feelback.run()
+    feelback.save_postprocess_video(args.output)

@@ -19,11 +19,15 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     DATABASE_URL = os.environ.get("DATABASE_URL")
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
+    ANNOTATED_UPLOAD_FOLDER = os.environ.get("ANNOTATED_UPLOAD_FOLDER", "annotated_uploads")
     FLASK_RUN_PORT = os.environ.get("FLASK_RUN_PORT", 5000)
     FLASK_RUN_HOST = os.environ.get("FLASK_RUN_HOST", "127.0.0.1")
 
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
+
+    if not os.path.exists(ANNOTATED_UPLOAD_FOLDER):
+        os.makedirs(ANNOTATED_UPLOAD_FOLDER)
 
 
 class ProductionConfig(Config):

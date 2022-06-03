@@ -11,14 +11,16 @@ import os
 import hashlib
 from ..models import Video, Attention, Emotion, Person
 from threading import Thread
+import traceback
 
 video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
+__ANNOTATED_UPLOAD_FOLDER__ = app.config['ANNOTATED_UPLOAD_FOLDER']
 
 
 @require_video_exists
 def process_video_thread(video_id, video_filename, output_filename, frames_per_second):
-    feelback = Feelback(video_filename, frames_per_second, output_filename, verbose.Level.OFF)
+    feelback = Feelback(video_filename, frames_per_second, verbose.Level.OFF)
 
     video = db.session.query(Video).filter_by(id=video_id).first()
 
@@ -31,6 +33,7 @@ def process_video_thread(video_id, video_filename, output_filename, frames_per_s
         db.session.commit()
         thread.join(timeout=3)
 
+    feelback.save_postprocess_video(output_filename)
     store_feelback_data_in_database(video_id, feelback)
 
 
@@ -55,7 +58,8 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
 
         db.session.commit()
     except Exception as e:
-        print("Failed to store in Database: ", e)
+        print("[Error] Failed to store in Database: ", e)
+        traceback.print_exc()
         db.session.rollback()
 
 
@@ -67,10 +71,10 @@ def process_video(video_id):
 
     request_data: dict = request.get_json()
     frames_per_second = int(request_data.get('fps', 5))
-    save_debug_video = utils.to_boolean(request_data.get("save_debug_video", False))
+    save_annotated_video = utils.to_boolean(request_data.get("save_annotated_video", False))
 
     video_filename = safe_join(__UPLOAD_FOLDER__, os.fspath(f"{video_id}.mp4"))
-    output_filename = safe_join(__UPLOAD_FOLDER__, f"{video_id}_processed.mp4") if save_debug_video else None
+    output_filename = safe_join(__ANNOTATED_UPLOAD_FOLDER__, f"{video_id}.mp4") if save_annotated_video else None
 
     Thread(target=process_video_thread, args=(video_id, video_filename, output_filename, frames_per_second)).start()
 
@@ -116,10 +120,10 @@ def download_video(video_id):
     Download Video from Feelback Server
     """
 
-    processed = utils.to_boolean(request.args.get("processed", default=False))
-    filename = f"{video_id}.mp4" if not processed else f"{video_id}.processed.mp4"
-
-    return send_from_directory(__UPLOAD_FOLDER__, filename)
+    annotated = utils.to_boolean(request.args.get("annotated", default=False))
+    if annotated:
+        return send_from_directory(__ANNOTATED_UPLOAD_FOLDER__, f"{video_id}.mp4")
+    return send_from_directory(__UPLOAD_FOLDER__, f"{video_id}.mp4")
 
 
 @video_routes.get('/<video_id>')
