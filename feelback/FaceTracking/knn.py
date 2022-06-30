@@ -310,6 +310,15 @@ class KNNIdentification:
         n = self.classes_count[label]
         op = np.subtract if remove else np.add
 
+        # Remove the whole class if it has only one point.
+        if n == 1 and remove:
+            self.n_classes -= 1
+            self.classes_count = np.delete(self.classes_count, label, axis=0)
+            self.classes_centers = np.delete(self.classes_centers, label, axis=0)
+            if faces_positions is not None:
+                self.classes_spatial_positions = np.delete(self.classes_spatial_positions, label, axis=0)
+            return
+
         self.classes_centers[label] = op(self.classes_centers[label] * n, faces[index]) / op(n, 1)
         self.classes_count[label] = op(self.classes_count[label], 1)
 
