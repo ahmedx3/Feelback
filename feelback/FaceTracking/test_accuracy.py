@@ -21,6 +21,7 @@ import math
 face_detector = dlib.get_frontal_face_detector()
 __VERBOSE__ = False
 test_dir = ""
+load_mode = "numpy"
 faces_db = {}
 
 
@@ -71,7 +72,7 @@ def test(number_of_faces):
 def get_face(file):
     face = faces_db.get(file, None)
     if face is None:
-        face = load_face(file)
+        face = load_face_numpy(file) if load_mode == "numpy" else load_face(file)
         faces_db[file] = face
 
     return face
@@ -84,11 +85,28 @@ def load_face(file):
     return face
 
 
+def load_face_numpy(file):
+    return np.load(os.path.join(test_dir, file))
+
+
+def save_faces_db_numpy(output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+    for file, face in faces_db.items():
+        file = os.path.join(output_dir, f"{file}.npy")
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        np.save(file, face)
+
+
 def get_command_line_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('test_dir', help="Test Set Directory")
     args_parser.add_argument("-n", "--number-of-faces", help="Number of faces", default=2, type=int, metavar='N')
     args_parser.add_argument("-v", "--verbose", help="Show more verbose output", action="store_true")
+
+    group = args_parser.add_mutually_exclusive_group()
+    group.add_argument("--load-numpy", help="Load numpy files", action="store_true")
+    group.add_argument("--save-numpy", help="Save faces numpy files to directory", default=None, metavar="directory")
     return args_parser.parse_args()
 
 
@@ -96,8 +114,14 @@ if __name__ == '__main__':
     start = datetime.now()
     args = get_command_line_args()
     test_dir = args.test_dir
+    load_mode = "numpy" if args.load_numpy else "image"
     __VERBOSE__ = args.verbose
+
     test(args.number_of_faces)
     end = datetime.now()
     print(f"Total Time: {end - start}")
     print("=" * 50)
+
+    if args.save_numpy:
+        print(f"Saving Numpy Dataset to {args.save_numpy}")
+        save_faces_db_numpy(args.save_numpy)
