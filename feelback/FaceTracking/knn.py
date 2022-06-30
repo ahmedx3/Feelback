@@ -205,20 +205,24 @@ class KNNIdentification:
         """
 
         new_classes = np.full_like(classes, fill_value=-1, dtype=np.int16)
-        taken_classes = []
-        for i in range(num_of_test_faces):
-            if i >= self.n_classes:
-                # Create a new class for the first unclassified face (its class is still -1)
-                index = np.where(new_classes == -1)[0][0]
-                new_classes, label, faces = self.create_new_class(index, faces[index], new_classes, faces)
 
+        distances = np.empty((self.n_classes, num_of_test_faces))
+        faces = faces[:num_of_test_faces]
+        for i in range(self.n_classes):
             distances_to_class_i = np.linalg.norm(self.classes_centers[i] - faces, axis=1)
-            sorted_indices = np.argsort(distances_to_class_i)
-            # Remove already taken classes from the candidate classes
-            sorted_indices = sorted_indices[np.isin(sorted_indices, taken_classes, invert=True, assume_unique=True)]
+            distances[i] = distances_to_class_i
 
-            new_classes[sorted_indices[0]] = i
-            taken_classes.append(sorted_indices[0])
+        for _ in range(min(distances.shape)):
+            min_class, min_face = np.unravel_index(np.argmin(distances), distances.shape)
+            if distances[min_class, min_face] > self.threshold:
+                new_classes, label, faces = self.create_new_class(min_face, faces[min_face], new_classes, faces)
+            else:
+                new_classes[min_face] = min_class
+                distances[min_class, :] = np.inf
+                distances[:, min_face] = np.inf
+
+        for index in np.where(new_classes[:num_of_test_faces] == -1)[0]:
+            new_classes, label, faces = self.create_new_class(index, faces[index], new_classes, faces)
 
         return new_classes, faces
 
