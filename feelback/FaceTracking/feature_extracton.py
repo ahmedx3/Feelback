@@ -7,7 +7,7 @@ from typing import List
 __CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
 __PARENT_DIR__ = os.path.dirname(__CURRENT_DIR__)
 
-pca = pickle.load(open(f"{__CURRENT_DIR__}/models/pca_n=50_affectnet.sav", 'rb'))
+pca = pickle.load(open(f"{__CURRENT_DIR__}/models/mug_0.3+FACES+Yale-FacesB+JAFFE+TFEID+FEI_frontal_n=50_minmax.model", 'rb'))
 
 
 def eigen_faces_features(faces: List[np.ndarray]) -> np.ndarray:

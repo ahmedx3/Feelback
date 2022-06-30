@@ -14,17 +14,6 @@ from typing import List
 from ..utils import verbose
 
 
-# TODO:
-#  Try multiple approaches for adding a new class:
-#    1. Avg distance for classified class
-#    2. Min distance for classified class
-#    3. Avg distance for nearest class
-#    4. Min distance for nearest class
-#    5. Prefer newly added class
-#    6. Use nearest neighbour instead of K-nearest neighbour when adding a new class
-#    7. Use KNN with Kmeans: Use kmeans to cluster new samples, when they are large enough add them to KNN
-
-
 class KNNIdentification:
     """
     This class use a modified version of K Nearest Neighbours (KNN) Classification Algorithm to use in online
@@ -38,7 +27,7 @@ class KNNIdentification:
         Each class will have at least these number of points: `1 + k//2`.
     """
 
-    def __init__(self, n_classes: int = -1, k=5, threshold=2000, conflict_solving_strategy="min_distance"):
+    def __init__(self, n_classes: int = -1, k=3, threshold=12.5, conflict_solving_strategy="min_distance"):
         """
 
         Args:
