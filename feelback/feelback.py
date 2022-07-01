@@ -108,9 +108,9 @@ class Feelback:
                 if not ok:
                     break
 
-                verbose.info(f"Processing Frame #{self.frame_number}")
+                verbose.info(f"Processing Frame #{self.frame_number} ({self.progress()}%)")
 
-                self.frame_number += self.frame_number_increment  # Process N every second
+                self.frame_number += self.frame_number_increment  # Process N frames every second
 
                 # Seek the video to the required frame
                 self.video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_number)
@@ -145,7 +145,8 @@ class Feelback:
                 ages = self.genderPredictor.getAge(frame_grey, faces_positions, ids)
 
                 # ======================================== Integrate Modules ========================================
-                self._append_data(ids, self.frame_number, faces_positions, emotions, gaze_attention)
+                frame_number = self.frame_number - self.frame_number_increment
+                self._append_data(ids, frame_number, faces_positions, emotions, gaze_attention)
 
                 # ============================================ Analytics ============================================
 
@@ -214,7 +215,7 @@ class Feelback:
             return
 
         verbose.info(f"Saving Output Video to '{output_filename}.mp4'")
-        
+
         output_video = video_utils.create_output_video(self.video, output_filename, self.framerate)
         frame_number = 0
         self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the first frame
@@ -222,9 +223,6 @@ class Feelback:
             ok, frame = self.video.read()
             if not ok:
                 break
-
-            frame_number += self.frame_number_increment
-            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the next frame
 
             frame_data = self._data[self._data['frame_number'] == frame_number]
             frame_persons_ids = frame_data['person_id']
@@ -235,6 +233,9 @@ class Feelback:
             persons_data = self._persons[persons_data_ids.astype(int)]
             self._annotate_frame(frame, frame_data['face_position'], frame_persons_ids, persons_data['age'],
                                  frame_data['emotion'], persons_data['gender'], frame_data['attention'])
+
+            frame_number += self.frame_number_increment
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the next frame
 
             output_video.write(frame)
 
