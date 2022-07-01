@@ -72,7 +72,7 @@ def process_video(video_id):
         return jsonify({"status": "finished processing"}), Status.OK
 
     request_data: dict = request.get_json()
-    frames_per_second = int(request_data.get('fps', 5))
+    frames_per_second = request_data.get('fps', 5)
     save_annotated_video = utils.to_boolean(request_data.get("save_annotated_video", False))
 
     video_filename = safe_join(__UPLOAD_FOLDER__, os.fspath(f"{video_id}.mp4"))

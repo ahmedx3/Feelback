@@ -38,9 +38,9 @@ class Feelback:
     def __init__(self, video_filename, fps, verbose_level=verbose.Level.INFO):
         verbose.set_verbose_level(verbose_level)
 
-        self.frames_to_process_each_second = fps
         self.video = io.read_video(video_filename)
         video_fps = video_utils.get_fps(self.video, digits=3)
+        self.frames_to_process_each_second = video_fps if fps == 'native' else int(fps)
         self.frame_number_increment = round(video_fps / self.frames_to_process_each_second)
 
         width, height = video_utils.get_dimensions(self.video)
