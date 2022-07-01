@@ -56,3 +56,28 @@ def require_video_processed(route_function):
         return route_function(**kwargs)
 
     return decorator
+
+
+def require_person_exists(route_function):
+    """
+    Decorator to check if person exists in database, if not return 404
+
+    Note:
+        It requires that the `route_function` has a parameter called `person_id`
+    """
+
+    @wraps(route_function)
+    def decorator(*args, **kwargs):
+        # Creates dict with args along with their variable names, then merge with kwargs
+        kwargs.update(zip(route_function.__code__.co_varnames, args))
+
+        video_id = kwargs['video_id']
+        person_id = kwargs['person_id']
+
+        person = db.session.query(Person).filter_by(id=person_id, video_id=video_id).first()
+        if person is None:
+            return jsonify({"status": "person not found"}), Status.NOT_FOUND
+
+        return route_function(**kwargs)
+
+    return decorator
