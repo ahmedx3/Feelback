@@ -213,6 +213,8 @@ class Feelback:
         if not output_filename:
             return
 
+        verbose.info(f"Saving Output Video to '{output_filename}.mp4'")
+        
         output_video = video_utils.create_output_video(self.video, output_filename, self.framerate)
         frame_number = 0
         self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the first frame
@@ -226,7 +228,11 @@ class Feelback:
 
             frame_data = self._data[self._data['frame_number'] == frame_number]
             frame_persons_ids = frame_data['person_id']
-            persons_data = self._persons[np.isin(self._persons['person_id'], frame_persons_ids)]
+
+            # the following code is to make sure that the persons_data is in the same order as the frame_persons_ids
+            persons_data_ids = np.ravel([np.where(np.isin(self._persons['person_id'], id)) for id in frame_persons_ids])
+
+            persons_data = self._persons[persons_data_ids.astype(int)]
             self._annotate_frame(frame, frame_data['face_position'], frame_persons_ids, persons_data['age'],
                                  frame_data['emotion'], persons_data['gender'], frame_data['attention'])
 
