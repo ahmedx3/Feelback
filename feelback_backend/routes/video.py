@@ -9,7 +9,7 @@ from magic import Magic
 from http import HTTPStatus as Status
 import os
 import hashlib
-from ..models import Video, Attention, Emotion, Person
+from ..models import Video, Attention, Emotion, Person, Position
 from threading import Thread
 import traceback
 
@@ -46,15 +46,17 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
             return
 
         video.finished_processing = True
+        video.progress = 100.0
 
         for person_id, age, gender in feelback.persons:
             video.persons.append(Person(person_id, age, gender))
 
         db.session.add(video)
 
-        for person_id, frame_number, emotion, attention in feelback.data:
+        for person_id, frame_number, emotion, attention, face_position in feelback.data:
             db.session.add(Emotion(frame_number, person_id, video_id, emotion))
             db.session.add(Attention(frame_number, person_id, video_id, attention))
+            db.session.add(Position(frame_number, person_id, video_id, *face_position))
 
         db.session.commit()
     except Exception as e:

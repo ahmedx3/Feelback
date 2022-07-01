@@ -80,7 +80,7 @@ class Feelback:
 
     @property
     def data(self):
-        return self._data[['person_id', 'frame_number', 'emotion', 'attention']]
+        return self._data[['person_id', 'frame_number', 'emotion', 'attention', 'face_position']]
 
     @property
     def attention(self):
