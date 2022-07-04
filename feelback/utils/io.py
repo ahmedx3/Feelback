@@ -4,11 +4,22 @@ import cv2
 import numpy as np
 
 
+def _fps_check(fps):
+    if fps == 'native':
+        return fps
+    else:
+        try:
+            return int(fps)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"FPS must be an integer or 'native'")
+
+
 def get_command_line_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('input_video', help="Input Video File Path")
     args_parser.add_argument("-o", "--output", help="Save processed video to filename.mp4", metavar='filename')
-    args_parser.add_argument("-f", "--fps", help="Process N frames every second", default=3, type=int, metavar='N')
+    args_parser.add_argument("-f", "--fps", help="Process N frames every second, Or `native` to process all frames",
+                             default=3, type=_fps_check, metavar='N | native')
     args_parser.add_argument("-v", "--verbose", help="Enable more verbosity", default=0, action="count")
     return args_parser.parse_args()
 

@@ -19,12 +19,24 @@
             <v-card-title> Add Reaction Video </v-card-title>
           </v-card>
         </v-col>
-        <v-row justify="center" align="center" class="my-10">
-          <v-btn large @click="startAnalytics"
+      </v-row>
+      <v-row justify="center" align="center" class="my-5">
+        <h1><v-icon large>mdi-cog</v-icon> Configurations</h1>
+      </v-row>
+      <v-row justify="center" align="center" class="my-1">
+        <v-form ref="form">
+          <v-text-field
+            v-model="frameRate"
+            type="number"
+            label="Frame Rate"
+            required
+          ></v-text-field>
+
+          <v-btn @click="startAnalytics"
             >Start Analytics
             <v-icon right dark> mdi-chart-areaspline </v-icon>
           </v-btn>
-        </v-row>
+        </v-form>
       </v-row>
     </v-container>
   </div>

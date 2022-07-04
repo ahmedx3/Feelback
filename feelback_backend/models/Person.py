@@ -22,6 +22,7 @@ class Person(BaseModel):
     video_id = db.Column(db.String(64), db.ForeignKey('Video.id'), primary_key=True)
     emotions = db.relationship('Emotion', backref='person', lazy=True)
     attention = db.relationship('Attention', backref='person', lazy=True)
+    positions = db.relationship('Position', backref='person', lazy=True)
 
     def __init__(self, id: int, age: int, gender: GenderType):
         self.id = int(id)
