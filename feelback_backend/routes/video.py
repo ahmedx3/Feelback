@@ -5,7 +5,7 @@ from .utils import require_video_exists
 from flask import request, jsonify, send_from_directory
 from flask import Blueprint
 from werkzeug.security import safe_join
-from magic import Magic
+# from magic import Magic
 from http import HTTPStatus as Status
 import os
 import hashlib
@@ -90,10 +90,10 @@ def upload_video():
     """
 
     video = request.files['video']
-    mime_type = Magic(mime=True).from_buffer(video.stream.read())
+    # mime_type = Magic(mime=True).from_buffer(video.stream.read())
 
-    if not mime_type.startswith('video'):
-        return jsonify({"status": "error", "message": "Not a video file"}), Status.BAD_REQUEST
+    # if not mime_type.startswith('video'):
+    #     return jsonify({"status": "error", "message": "Not a video file"}), Status.BAD_REQUEST
 
     video.seek(0)
     video_id = hashlib.sha1(video.stream.read()).hexdigest()
