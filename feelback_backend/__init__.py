@@ -1,10 +1,13 @@
 from flask import Flask, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database, drop_database
-from .config import DevelopmentConfig
+from .config import DevelopmentConfig, ProductionConfig
+import os
 
 app = Flask(__name__)
-app.config.from_object(DevelopmentConfig)
+config = DevelopmentConfig if os.environ.get("FLASK_ENV") == "development" else ProductionConfig
+print(f"Using {config.ENV} configuration")
+app.config.from_object(config)
 db = SQLAlchemy(app)
 
 if app.config['DROP_DATABASE_ON_STARTUP'] and database_exists(db.engine.url):

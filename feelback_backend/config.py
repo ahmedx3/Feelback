@@ -36,8 +36,10 @@ class ProductionConfig(Config):
     """
 
     ENV = "production"
-    DEBUG = False
+    DEVELOPMENT = utils.to_boolean(os.environ.get("DEVELOPMENT", False))
+    DEBUG = utils.to_boolean(os.environ.get("DEBUG", False))
     SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False))
+    DROP_DATABASE_ON_STARTUP = False
 
 
 class DevelopmentConfig(Config):
@@ -46,7 +48,7 @@ class DevelopmentConfig(Config):
     """
 
     ENV = "development"
-    DEVELOPMENT = True
-    DEBUG = True
+    DEVELOPMENT = utils.to_boolean(os.environ.get("DEVELOPMENT", True))
+    DEBUG = utils.to_boolean(os.environ.get("DEBUG", True))
     SQLALCHEMY_TRACK_MODIFICATIONS = utils.to_boolean(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", True))
     DROP_DATABASE_ON_STARTUP = utils.to_boolean(os.environ.get("DROP_DATABASE_ON_STARTUP", False))
