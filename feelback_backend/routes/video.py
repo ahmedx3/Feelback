@@ -16,6 +16,7 @@ import traceback
 video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 __UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
 __ANNOTATED_UPLOAD_FOLDER__ = app.config['ANNOTATED_UPLOAD_FOLDER']
+__THUMBNAILS_FOLDER__ = app.config['THUMBNAILS_FOLDER']
 
 
 @require_video_exists
@@ -106,6 +107,7 @@ def upload_video():
         video.seek(0)
         filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
         video.save(filepath)
+        video_utils.generate_thumbnail(filepath, safe_join(__THUMBNAILS_FOLDER__, f"{video_id}.jpg"))
 
         filename = os.path.splitext(video.filename)[0]
         video = Video(video_id, filename, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
@@ -126,6 +128,16 @@ def download_video(video_id):
     if annotated:
         return send_from_directory(__ANNOTATED_UPLOAD_FOLDER__, f"{video_id}.mp4")
     return send_from_directory(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+
+
+@video_routes.get('/<video_id>/thumbnail')
+@require_video_exists
+def get_thumbnail(video_id):
+    """
+    Get Video Thumbnail from Feelback Server
+    """
+
+    return send_from_directory(__THUMBNAILS_FOLDER__, f"{video_id}.jpg")
 
 
 @video_routes.get('/<video_id>')

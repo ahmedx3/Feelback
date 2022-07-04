@@ -127,3 +127,25 @@ def create_output_video(original_video: cv2.VideoCapture, output_filename: str, 
     dimensions = get_dimensions(original_video)
     output = cv2.VideoWriter(f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'mp4v'), accurate_frame_rate, dimensions)
     return output
+
+
+def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: str):
+    """
+    Generate a thumbnail from a video.
+
+    Args:
+        video: OpenCV VideoCapture object or video file path
+        thumbnail_filename (str): Thumbnail file path
+
+    Returns:
+        Thumbnail image
+    """
+
+    if isinstance(video, str):
+        video = io.read_video(video)
+
+    frames_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    video.set(cv2.CAP_PROP_POS_FRAMES, frames_count // 2)
+    _, frame = video.read()
+    cv2.imwrite(thumbnail_filename, frame)
+    return frame
