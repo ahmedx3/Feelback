@@ -23,6 +23,7 @@ from .models import *
 db.create_all()
 
 from .utils.error_handlers import *
+from .utils.middleware import *
 from .routes import *
 
 api = Blueprint('api', __name__)
