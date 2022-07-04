@@ -21,7 +21,11 @@ def get_all_insights(video_id):
 
     emotions_insights = get_emotions_insights(video_id)[0].json["data"]
     gender_insights = get_gender_insights(video_id)[0].json["data"]
-    return jsonify({"status": "success", "data": {"gender": gender_insights, "emotions": emotions_insights}}), Status.OK
+    number_of_persons = db.session.query(Person.id).filter_by(video_id=video_id).count()
+    return jsonify({
+        "status": "success",
+        "data": {"number_of_persons": number_of_persons, "gender": gender_insights, "emotions": emotions_insights}
+    }), Status.OK
 
 
 @video_insights_routes.get('/gender')
