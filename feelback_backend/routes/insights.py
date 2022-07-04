@@ -12,6 +12,18 @@ Note: <video_id> is in the url_prefix, therefore all the routes in this blueprin
 video_insights_routes = Blueprint('insights', __name__, url_prefix='/video/<video_id>/insights')
 
 
+@video_insights_routes.get('/', strict_slashes=False)
+@require_video_processed
+def get_all_insights(video_id):
+    """
+    Get all insights in this video
+    """
+
+    emotions_insights = get_emotions_insights(video_id)[0].json["data"]
+    gender_insights = get_gender_insights(video_id)[0].json["data"]
+    return jsonify({"status": "success", "data": {"gender": gender_insights, "emotions": emotions_insights}}), Status.OK
+
+
 @video_insights_routes.get('/gender')
 @require_video_processed
 def get_gender_insights(video_id):
