@@ -3,19 +3,14 @@
 
 - Try Gabor filters used in the emotions
 
-- Integrate the Age in the main pipeline
-
 - Create the loader for the AGFW dataset
 
 - Find out how AGFW cropped the faces
-
-- Create a model for Age
 
 - Check new classifiers and grid search for them to find best parameters
 
 - Check more preprocessing and resize images (Frontalization & facial landmark localization)
 
-- Mix the datasets
 ## Done
 - Implement loading Datasets to have the same interface
 - Create the training pipeline with svm as base
@@ -35,3 +30,6 @@
 - Change the predicted label to be an aggregation of the prediction over the video with more than one method
 - Change the Age problem to regression
 - Age regression grid search for SVR to find best parameters
+- Integrate the Age in the main pipeline
+- Mix the datasets
+- Create a model for Age

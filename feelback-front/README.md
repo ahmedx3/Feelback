@@ -29,6 +29,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 - A 3 step process for uploading the 2 videos and config
 - A demos page to choose from without the 3 step
 - A loading page with the logo that covers the whole page and has a percentage of finish
+- Record the reaction video using webcam from the browser
 
 #### Analytics
 - one seekbar for the two videos
