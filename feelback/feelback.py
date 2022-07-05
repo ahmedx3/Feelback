@@ -20,6 +20,8 @@ from .FacialExpressionRecognition import EmotionExtraction
 from .GazeTracking import GazeEstimation
 from .utils import io
 from .utils import video_utils
+import matplotlib.pyplot as plt
+from skimage.feature import peak_local_max
 
 
 class Feelback:
@@ -240,6 +242,84 @@ class Feelback:
             output_video.write(frame)
 
         output_video.release()
+
+    @staticmethod
+    def smooth_curve(data, window_size=30):
+        """
+        Smooth the data using a moving average window of size window_size.
+        """
+        cumulative_sum = np.cumsum(data)
+        smoothed = (cumulative_sum[window_size:] - cumulative_sum[:-window_size]) / window_size
+        return np.concatenate([np.zeros(window_size // 2), smoothed, np.zeros(window_size // 2)])
+
+    @staticmethod
+    def get_key_moments_interval(histogram, local_max, local_min):
+        """
+        Get the start, end of each key moment.
+
+        Args:
+            histogram (np.ndarray): The histogram of the emotions in the video.
+            local_max (np.ndarray): The local maxima of the histogram.
+            local_min (np.ndarray): The local minima of the histogram.
+
+        Returns:
+            list[tuple(start, end)]: The start and end of each key moment.
+        """
+
+        key_moments_interval = np.empty((local_max.shape[0], 2), dtype=np.int)
+        for i, key_moment in enumerate(local_max):
+            local_min_before = local_min[np.searchsorted(local_min, key_moment, side='left') - 1]
+            local_min_after = local_min[np.searchsorted(local_min, key_moment, side='right')]
+            max_local_min = max(histogram[local_min_before], histogram[local_min_after])
+            key_moment_value = histogram[key_moment]
+            effective_local_min = key_moment_value - (key_moment_value - max_local_min)/2
+            duration = np.argwhere(histogram[local_min_before:local_min_after] >= effective_local_min).ravel()
+            key_moment_duration = local_min_before + duration
+            start, end = key_moment_duration[0], key_moment_duration[-1]
+            key_moments_interval[i] = start, end
+        return key_moments_interval
+
+    def generate_key_moments(self):
+        emotions = {
+            'surprise': 5,
+            'happy': 3,
+            'neutral': -1,
+            'sadness': -3,
+            'disgust': -5
+        }
+
+        emotions_arr = np.empty_like(self._data, dtype=np.int)
+        for emotion, value in emotions.items():
+            emotions_arr[self._data['emotion'] == emotion] = value
+
+        histogram = np.zeros(int(np.ceil(self.video_frame_count / self.frame_number_increment)), dtype=int)
+
+        for i in range(self._data.shape[0]):
+            histogram[self._data['frame_number'][i] // self.frame_number_increment] += emotions_arr[i]
+
+        histogram[0] = histogram[-1] = 0
+
+        # Smooth the histogram
+        histogram = self.smooth_curve(histogram, histogram.size // 10)
+        histogram = self.smooth_curve(histogram, histogram.size // 10)
+
+        local_max = peak_local_max(histogram, min_distance=5, threshold_abs=histogram.max()//2, exclude_border=True).ravel()
+        local_min = np.array([0, *peak_local_max(-histogram, min_distance=5).ravel(), histogram.size - 1], dtype=int)
+
+        local_max.sort()
+        local_min.sort()
+
+        key_moments_interval = self.get_key_moments_interval(histogram, local_max, local_min)
+
+        if verbose.verbosity_level >= verbose.Level.VISUAL:
+            for start, end in key_moments_interval:
+                plt.vlines(x=start, ymin=0, ymax=histogram[start], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+                plt.vlines(x=end, ymin=0, ymax=histogram[end], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+
+            plt.plot(histogram)
+            plt.scatter(local_max, histogram[local_max], c='r', marker='x')
+            plt.scatter(local_min, histogram[local_min], c='r', marker='x')
+            plt.show()
 
     def __del__(self):
         verbose.debug(f"Feelback Destructor is called, {self} will be deleted")
