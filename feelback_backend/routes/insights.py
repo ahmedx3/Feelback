@@ -19,13 +19,33 @@ def get_all_insights(video_id):
     Get all insights in this video
     """
 
+    attention_insights = get_attention_insights(video_id)[0].json["data"]
+    age_insights = get_age_insights(video_id)[0].json["data"]
     emotions_insights = get_emotions_insights(video_id)[0].json["data"]
     gender_insights = get_gender_insights(video_id)[0].json["data"]
     number_of_persons = db.session.query(Person.id).filter_by(video_id=video_id).count()
     return jsonify({
         "status": "success",
-        "data": {"number_of_persons": number_of_persons, "gender": gender_insights, "emotions": emotions_insights}
+        "data": {
+            "number_of_persons": number_of_persons,
+            "attention": attention_insights,
+            "age": age_insights,
+            "gender": gender_insights,
+            "emotions": emotions_insights
+        }
     }), Status.OK
+
+
+@video_insights_routes.get('/attention')
+@require_video_processed
+def get_attention_insights(video_id):
+    """
+    Get attention (focus) insights in this video
+    """
+
+    attention = db.session.query(Attention.attention).filter_by(video_id=video_id, attention=True).count()
+    total = db.session.query(Attention.attention).filter_by(video_id=video_id).count()
+    return jsonify({"status": "success", "data": attention / total}), Status.OK
 
 
 @video_insights_routes.get('/gender')
@@ -41,6 +61,18 @@ def get_gender_insights(video_id):
 
     genders = {gender.name: count / total for gender, count in genders}
     return jsonify({"status": "success", "data": genders}), Status.OK
+
+
+@video_insights_routes.get('/age')
+@require_video_processed
+def get_age_insights(video_id):
+    """
+    Get age insights in this video
+    """
+
+    age = db.session.query(Person.age).filter_by(video_id=video_id).all()
+    age = [a[0] for a in age]
+    return jsonify({"status": "success", "data": age}), Status.OK
 
 
 @video_insights_routes.get('/emotions')
