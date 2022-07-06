@@ -114,7 +114,8 @@ def upload_video():
         db.session.add(video)
         db.session.commit()
 
-    return jsonify({"status": "success", "data": video.to_json()}), Status.CREATED
+    thumbnail_base_url = f"{request.host_url}api/v1/videos"
+    return jsonify({"status": "success", "data": video.to_json(base_url=thumbnail_base_url)}), Status.CREATED
 
 
 @video_routes.get('/<video_id>/download')
@@ -147,8 +148,9 @@ def get_video_info(video_id):
     Get Video Info from Feelback Server
     """
 
+    thumbnail_base_url = f"{request.host_url}api/v1/videos"
     video = db.session.query(Video).filter_by(id=video_id).first()
-    return jsonify({"status": "success", "data": video.to_json()}), Status.OK
+    return jsonify({"status": "success", "data": video.to_json(base_url=thumbnail_base_url)}), Status.OK
 
 
 @video_routes.get('/', strict_slashes=False)
@@ -157,6 +159,8 @@ def get_all_videos_info():
     Get Video Info from Feelback Server
     """
 
+    thumbnail_base_url = f"{request.host_url}api/v1/videos"
+
     videos = db.session.query(Video).all()
-    videos = [video.to_json() for video in videos]
+    videos = [video.to_json(base_url=thumbnail_base_url) for video in videos]
     return jsonify({"status": "success", "data": videos}), Status.OK
