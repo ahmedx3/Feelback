@@ -13,12 +13,17 @@ from . import Preprocessing
 from . import Utils
 from collections import defaultdict
 import numpy as np
+import os
 
 
 class AgeGenderClassification:
-    def __init__(self, model_path_age, model_path_gender):
-        self.modelAge = pickle.load(open(model_path_age, 'rb'))
-        self.modelGender = pickle.load(open(model_path_gender, 'rb'))
+    __CURRENT_DIR__ = os.path.dirname(os.path.abspath(__file__))
+    model_path_age = os.path.join(__CURRENT_DIR__, "Models_Age/UTK_SVR_LPQ_1030_1037.model")
+    model_path_gender = os.path.join(__CURRENT_DIR__, "Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model")
+    modelAge = pickle.load(open(model_path_age, 'rb'))
+    modelGender = pickle.load(open(model_path_gender, 'rb'))
+
+    def __init__(self):
         self.chosen_gender_method = "top_votes"
         self.chosen_age_method = "average"
         self.previous_gender_values = defaultdict(list)

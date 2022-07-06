@@ -23,6 +23,7 @@ from .utils import video_utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plt_ticker
 from skimage.feature import peak_local_max
+import pickle
 
 
 class Feelback:
@@ -41,16 +42,19 @@ class Feelback:
     def __init__(self, video_filename, fps, verbose_level=verbose.Level.INFO):
         verbose.set_verbose_level(verbose_level)
 
+        self.video_filename = video_filename
         self.video = io.read_video(video_filename)
         self.video_fps = video_utils.get_fps(self.video, digits=3)
         self.frames_to_process_each_second = self.video_fps if fps == 'native' else int(fps)
         self.frame_number_increment = round(self.video_fps / self.frames_to_process_each_second)
+        self.video_frame_count = video_utils.get_number_of_frames(self.video)
+        self.video_duration = video_utils.get_duration(self.video, digits=3)
 
         width, height = video_utils.get_dimensions(self.video)
         verbose.info(f"Video Resolution is {width}x{height}")
         verbose.info(f"Video is running at {self.video_fps} fps")
-        verbose.info(f"Video has total of {video_utils.get_number_of_frames(self.video)} frames")
-        verbose.info(f"Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
+        verbose.info(f"Video has total of {self.video_frame_count} frames")
+        verbose.info(f"Video duration is {self.video_duration} sec")
 
         # ==================================== Initialize FaceTracking ====================================
         self.faceTracker = KNNIdentification(conflict_solving_strategy="min_distance")
@@ -59,9 +63,7 @@ class Feelback:
         self.gazeEstimator = GazeEstimation()
 
         # =================================== Initialize Gender And Age =====================================
-        modelAgePath = os.path.join(self.__CURRENT_DIR__, "AgeGenderClassification/Models_Age/UTK_SVR_LPQ_1030_1037.model")
-        modelGenderPath = os.path.join(self.__CURRENT_DIR__, "AgeGenderClassification/Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model")
-        self.genderPredictor = AgeGenderClassification(modelAgePath, modelGenderPath)
+        self.genderPredictor = AgeGenderClassification()
 
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
         self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('face_position', int, 4),
@@ -101,14 +103,6 @@ class Feelback:
     @property
     def attention(self):
         return self._data[['person_id', 'frame_number', 'attention']]
-
-    @property
-    def video_frame_count(self):
-        return video_utils.get_number_of_frames(self.video)
-
-    @property
-    def video_duration(self):
-        return video_utils.get_duration(self.video)
 
     def progress(self):
         """
@@ -168,7 +162,7 @@ class Feelback:
 
                 # ======================================= Verbosity Printing ========================================
 
-                if verbose.is_verbose():
+                if verbose.verbosity_level >= verbose.Level.VISUAL:
                     self._annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention)
                     verbose.imshow(frame, delay=1, level=verbose.Level.VISUAL)
 
@@ -182,6 +176,9 @@ class Feelback:
                 verbose.debug("Exception Occurred, Skipping this frame")
                 verbose.error(e)
                 verbose.print_exception_stack_trace()
+
+        # Closes all the frames
+        cv2.destroyAllWindows()
 
         self.postprocessing()
 
@@ -220,6 +217,8 @@ class Feelback:
         outliers_ids = self.faceTracker.get_outliers_ids()
         valid_ids = self.faceTracker.get_valid_ids()
 
+        verbose.debug(f"Outlier ids: {outliers_ids}")
+
         genders = self.genderPredictor.getFinalGenders(valid_ids)
         ages = self.genderPredictor.getFinalAges(valid_ids)
 
@@ -230,6 +229,10 @@ class Feelback:
 
     def save_postprocess_video(self, output_filename):
         if not output_filename:
+            return
+
+        if self.video is None:
+            verbose.error("No Video Loaded, Cannot Save Post Process Video")
             return
 
         verbose.info(f"Saving Output Video to '{output_filename}.mp4'")
@@ -347,8 +350,8 @@ class Feelback:
         plt.figure(dpi=500)
 
         # Sets the number of ticks on the x-axis.
-        plt.gca().xaxis.set_major_locator(plt_ticker.MultipleLocator((histogram.size * convert_to_seconds) // 10))
-        plt.gca().xaxis.set_minor_locator(plt_ticker.MultipleLocator((histogram.size * convert_to_seconds) // 20))
+        plt.gca().xaxis.set_major_locator(plt_ticker.MultipleLocator(int(self.video_duration / 10)))
+        plt.gca().xaxis.set_minor_locator(plt_ticker.MultipleLocator(int(self.video_duration / 20)))
 
         for start, end in self.key_moments_seconds:
             s = int(start / convert_to_seconds)
@@ -371,14 +374,49 @@ class Feelback:
 
     def __del__(self):
         verbose.debug(f"Feelback Destructor is called, {self} will be deleted")
-        self.video.release()
-        # Closes all the frames
-        cv2.destroyAllWindows()
+        if self.video is not None:
+            self.video.release()
+            self.video = None
+
+    def __getstate__(self):
+        """
+        Returns a dictionary representing the state of the object.
+        Used for serialization. (Pickle.dump)
+        """
+
+        state = self.__dict__.copy()
+        # Remove the unpicklable entries.
+        del state['video']
+        return state
+
+    def __setstate__(self, state):
+        """
+        Sets the state of the object.
+        Used for deserialization. (Pickle.load)
+        """
+
+        self.__dict__.update(state)
+
+        try:
+            self.video = io.read_video(self.video_filename)
+        except Exception as e:
+            self.video = None
+            print(f"[WARNING] Can not restore video file: {e}")
 
 
-if __name__ == '__main__':
+def main():
     args = io.get_command_line_args()
     feelback = Feelback(args.input_video, args.fps, args.verbose)
     feelback.run()
     feelback.save_postprocess_video(args.output)
+    feelback.visualize_key_moments(args.output_key_moments)
+
+    if args.dump is not None:
+        verbose.info(f"Dumping Feelback object to '{args.dump}'")
+        with open(args.dump, 'wb') as f:
+            pickle.dump(feelback, f)
+
+
+if __name__ == '__main__':
+    main()
 
