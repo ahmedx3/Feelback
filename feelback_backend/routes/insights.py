@@ -2,14 +2,14 @@ from .. import db
 from flask import request, jsonify
 from flask import Blueprint
 from http import HTTPStatus as Status
-from ..models import Video, Attention, Emotion, Person
+from ..models import Video, Attention, KeyMoment, Emotion, Person
 from .utils import require_video_processed, require_person_exists
 
 """
 Note: <video_id> is in the url_prefix, therefore all the routes in this blueprint will have video_id as a parameter
 """
 
-video_insights_routes = Blueprint('insights', __name__, url_prefix='/video/<video_id>/insights')
+video_insights_routes = Blueprint('insights', __name__, url_prefix='/videos/<video_id>/insights')
 
 
 @video_insights_routes.get('/', strict_slashes=False)
@@ -24,10 +24,12 @@ def get_all_insights(video_id):
     emotions_insights = get_emotions_insights(video_id)[0].json["data"]
     gender_insights = get_gender_insights(video_id)[0].json["data"]
     number_of_persons = db.session.query(Person.id).filter_by(video_id=video_id).count()
+    number_of_key_moments = db.session.query(KeyMoment.id).filter_by(video_id=video_id).count()
     return jsonify({
         "status": "success",
         "data": {
             "number_of_persons": number_of_persons,
+            "number_of_key_moments": number_of_key_moments,
             "attention": attention_insights,
             "age": age_insights,
             "gender": gender_insights,

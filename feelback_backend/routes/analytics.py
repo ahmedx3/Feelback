@@ -9,7 +9,7 @@ from .utils import require_video_processed, require_person_exists
 Note: <video_id> is in the url_prefix, therefore all the routes in this blueprint will have video_id as a parameter
 """
 
-video_analytics_routes = Blueprint('analytics', __name__, url_prefix='/video/<video_id>/analytics')
+video_analytics_routes = Blueprint('analytics', __name__, url_prefix='/videos/<video_id>/analytics')
 
 
 @video_analytics_routes.get('/', strict_slashes=False)

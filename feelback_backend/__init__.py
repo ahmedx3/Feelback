@@ -31,5 +31,6 @@ api = Blueprint('api', __name__)
 api.register_blueprint(video_routes, url_prefix='/videos')
 api.register_blueprint(video_analytics_routes, url_prefix='/videos/<video_id>/analytics')
 api.register_blueprint(video_insights_routes, url_prefix='/videos/<video_id>/insights')
+api.register_blueprint(video_key_moments_routes, url_prefix='/videos/<video_id>/key_moments')
 
 app.register_blueprint(api, url_prefix='/api/v1')

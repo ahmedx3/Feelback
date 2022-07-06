@@ -129,13 +129,15 @@ def create_output_video(original_video: cv2.VideoCapture, output_filename: str, 
     return output
 
 
-def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: str):
+def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: str, frame_number: int = None):
     """
     Generate a thumbnail from a video.
 
     Args:
         video: OpenCV VideoCapture object or video file path
         thumbnail_filename (str): Thumbnail file path
+        frame_number (int): Frame Number to generate thumbnail from
+                            Defaults to the middle frame of the video
 
     Returns:
         Thumbnail image
@@ -144,8 +146,10 @@ def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: 
     if isinstance(video, str):
         video = io.read_video(video)
 
-    frames_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    video.set(cv2.CAP_PROP_POS_FRAMES, frames_count // 2)
+    if frame_number is None:
+        frame_number = int(get_number_of_frames(video) // 2)
+
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
     _, frame = video.read()
     cv2.imwrite(thumbnail_filename, frame)
     return frame

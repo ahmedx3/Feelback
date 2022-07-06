@@ -27,6 +27,7 @@ class Video(BaseModel):
 
     trailer = db.relationship('Video', backref=db.backref('reaction', uselist=False), remote_side=[id], lazy=True)
     persons = db.relationship('Person', backref='video', lazy=True)
+    key_moments = db.relationship('KeyMoment', backref='video', lazy=True)
 
     def __init__(self, id: str, filename: str, frame_count: int, duration: float, progress: float = 0.0,
                  finished_processing: bool = False):

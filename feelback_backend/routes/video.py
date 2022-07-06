@@ -8,7 +8,7 @@ from werkzeug.security import safe_join
 from http import HTTPStatus as Status
 import os
 import hashlib
-from ..models import Video, VideoType, Attention, Emotion, Person, Position
+from ..models import Video, VideoType, Attention, Emotion, KeyMoment, Person, Position
 from threading import Thread
 import traceback
 
@@ -45,20 +45,31 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
         if video.finished_processing:
             return
 
-        video.finished_processing = True
-        video.progress = 100.0
-
         for person_id, age, gender in feelback.persons:
             video.persons.append(Person(person_id, age, gender))
 
+        for start, end in feelback.key_moments_seconds:
+            video.key_moments.append(KeyMoment(start, end))
+
         db.session.add(video)
+        db.session.flush()  # Flush to database to get key moments autoincrement ids (does not do a transaction commit)
+
+        for key_moment, (start, end) in zip(video.key_moments, feelback.key_moments_frames):
+            video_filename = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+            thumbnail_filename = safe_join(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_{key_moment.id}.jpg")
+            video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
 
         for person_id, frame_number, emotion, attention, face_position in feelback.data:
             db.session.add(Emotion(frame_number, person_id, video_id, emotion))
             db.session.add(Attention(frame_number, person_id, video_id, attention))
             db.session.add(Position(frame_number, person_id, video_id, *face_position))
 
+        video.finished_processing = True
+        video.progress = 100.0
+
+        db.session.add(video)
         db.session.commit()
+
     except Exception as e:
         print("[Error] Failed to store in Database: ", e)
         traceback.print_exc()
