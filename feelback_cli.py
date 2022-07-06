@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import feelback
+from feelback import feelback
 
 if __name__ == '__main__':
-    feelback.feelback.main()
+    feelback.main()

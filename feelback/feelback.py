@@ -417,6 +417,15 @@ def main():
             pickle.dump(feelback, f)
 
 
+"""
+Pickle SHOULD NEVER BE USED TO DUMP/LOAD DATA FROM '__main__' MODULE
+BECAUSE IT NOT BE PORTABLE AND WILL NOT BE LOADED FROM DIFFERENT MODULES
+
+Therefore calling this script as __main__ is meant to do nothing.
+To use feelback as a module, call feelback.main() instead, same as `feelback_cli.py` does
+"""
 if __name__ == '__main__':
-    main()
+    print("Feelback is a module, please call `feelback.main()` instead")
+    print("Use `feelback_cli.py` to run Feelback CLI, or use our web interface")
+    exit(1)
 
