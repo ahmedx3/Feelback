@@ -21,6 +21,7 @@ from .GazeTracking import GazeEstimation
 from .utils import io
 from .utils import video_utils
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plt_ticker
 from skimage.feature import peak_local_max
 
 
@@ -41,13 +42,13 @@ class Feelback:
         verbose.set_verbose_level(verbose_level)
 
         self.video = io.read_video(video_filename)
-        video_fps = video_utils.get_fps(self.video, digits=3)
-        self.frames_to_process_each_second = video_fps if fps == 'native' else int(fps)
-        self.frame_number_increment = round(video_fps / self.frames_to_process_each_second)
+        self.video_fps = video_utils.get_fps(self.video, digits=3)
+        self.frames_to_process_each_second = self.video_fps if fps == 'native' else int(fps)
+        self.frame_number_increment = round(self.video_fps / self.frames_to_process_each_second)
 
         width, height = video_utils.get_dimensions(self.video)
         verbose.info(f"Video Resolution is {width}x{height}")
-        verbose.info(f"Video is running at {video_fps} fps")
+        verbose.info(f"Video is running at {self.video_fps} fps")
         verbose.info(f"Video has total of {video_utils.get_number_of_frames(self.video)} frames")
         verbose.info(f"Video duration is {video_utils.get_duration(self.video, digits=3)} sec")
 
@@ -65,6 +66,11 @@ class Feelback:
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
         self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('face_position', int, 4),
                                         ('emotion', "U10"), ('attention', bool)])
+        self._key_moments = None
+        self._key_moments_visualization_data = None
+
+        # We have a minimum distance of 5 seconds between any two key moments
+        self.key_moments_min_distance = 5 * self.frames_to_process_each_second
 
         self.frame_number = 0
 
@@ -75,6 +81,14 @@ class Feelback:
     @property
     def persons(self):
         return self._persons
+
+    @property
+    def key_moments_frames(self):
+        return self._key_moments
+
+    @property
+    def key_moments_seconds(self):
+        return self._key_moments / self.video_fps
 
     @property
     def emotions(self):
@@ -200,7 +214,7 @@ class Feelback:
 
     def postprocessing(self):
         """
-        Remove Outlier persons, and gather data for analysis
+        Remove Outlier persons, generate key moments, and gather data for analysis
         """
 
         outliers_ids = self.faceTracker.get_outliers_ids()
@@ -211,6 +225,8 @@ class Feelback:
 
         self._data = self._data[np.isin(self._data['person_id'], outliers_ids, invert=True)]
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
+
+        self.generate_key_moments()
 
     def save_postprocess_video(self, output_filename):
         if not output_filename:
@@ -252,10 +268,9 @@ class Feelback:
         smoothed = (cumulative_sum[window_size:] - cumulative_sum[:-window_size]) / window_size
         return np.concatenate([np.zeros(window_size // 2), smoothed, np.zeros(window_size // 2)])
 
-    @staticmethod
-    def get_key_moments_interval(histogram, local_max, local_min):
+    def get_key_moments_interval(self, histogram, local_max, local_min):
         """
-        Get the start, end of each key moment.
+        Get the start, end frames of each key moment.
 
         Args:
             histogram (np.ndarray): The histogram of the emotions in the video.
@@ -263,10 +278,10 @@ class Feelback:
             local_min (np.ndarray): The local minima of the histogram.
 
         Returns:
-            list[tuple(start, end)]: The start and end of each key moment.
+            list[tuple(start, end)]: The start and end frames of each key moment.
         """
 
-        key_moments_interval = np.empty((local_max.shape[0], 2), dtype=np.int)
+        key_moments_interval = np.empty((local_max.shape[0], 2), dtype=int)
         for i, key_moment in enumerate(local_max):
             local_min_before = local_min[np.searchsorted(local_min, key_moment, side='left') - 1]
             local_min_after = local_min[np.searchsorted(local_min, key_moment, side='right')]
@@ -277,9 +292,13 @@ class Feelback:
             key_moment_duration = local_min_before + duration
             start, end = key_moment_duration[0], key_moment_duration[-1]
             key_moments_interval[i] = start, end
-        return key_moments_interval
+
+        return key_moments_interval * self.frame_number_increment
 
     def generate_key_moments(self):
+        if self._key_moments_visualization_data is not None:
+            return self._key_moments_visualization_data
+
         emotions = {
             'surprise': 5,
             'happy': 3,
@@ -288,7 +307,7 @@ class Feelback:
             'disgust': -5
         }
 
-        emotions_arr = np.empty_like(self._data, dtype=np.int)
+        emotions_arr = np.empty_like(self._data, dtype=int)
         for emotion, value in emotions.items():
             emotions_arr[self._data['emotion'] == emotion] = value
 
@@ -303,23 +322,52 @@ class Feelback:
         histogram = self.smooth_curve(histogram, histogram.size // 10)
         histogram = self.smooth_curve(histogram, histogram.size // 10)
 
-        local_max = peak_local_max(histogram, min_distance=5, threshold_abs=histogram.max()//2, exclude_border=True).ravel()
-        local_min = np.array([0, *peak_local_max(-histogram, min_distance=5).ravel(), histogram.size - 1], dtype=int)
+        distance = self.key_moments_min_distance
+        local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
+        local_min = np.array([0, *peak_local_max(-histogram, distance).ravel(), histogram.size - 1], dtype=int)
 
         local_max.sort()
         local_min.sort()
 
-        key_moments_interval = self.get_key_moments_interval(histogram, local_max, local_min)
+        self._key_moments = self.get_key_moments_interval(histogram, local_max, local_min)
 
-        if verbose.verbosity_level >= verbose.Level.VISUAL:
-            for start, end in key_moments_interval:
-                plt.vlines(x=start, ymin=0, ymax=histogram[start], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
-                plt.vlines(x=end, ymin=0, ymax=histogram[end], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+        verbose.debug("Key Moments:", [f"(start:{s:.3f}, end:{e:.3f})" for s, e in self.key_moments_seconds])
 
-            plt.plot(histogram)
-            plt.scatter(local_max, histogram[local_max], c='r', marker='x')
-            plt.scatter(local_min, histogram[local_min], c='r', marker='x')
-            plt.show()
+        self._key_moments_visualization_data = histogram, local_max, local_min
+        return self._key_moments_visualization_data
+
+    def visualize_key_moments(self, output_filename=None):
+        if verbose.verbosity_level < verbose.Level.VISUAL and output_filename is None:
+            return
+
+        histogram, local_max, local_min = self.generate_key_moments()
+
+        convert_to_seconds = self.frame_number_increment / self.video_fps
+
+        plt.figure(dpi=500)
+
+        # Sets the number of ticks on the x-axis.
+        plt.gca().xaxis.set_major_locator(plt_ticker.MultipleLocator((histogram.size * convert_to_seconds) // 10))
+        plt.gca().xaxis.set_minor_locator(plt_ticker.MultipleLocator((histogram.size * convert_to_seconds) // 20))
+
+        for start, end in self.key_moments_seconds:
+            s = int(start / convert_to_seconds)
+            e = int(end / convert_to_seconds)
+            plt.vlines(x=start, ymin=0, ymax=histogram[s], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+            plt.vlines(x=end, ymin=0, ymax=histogram[e], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+
+        plt.grid(visible=True, which='both', color="grey", linewidth="1", alpha=0.2, linestyle="-.")
+
+        plt.plot(convert_to_seconds * np.arange(histogram.size), histogram, c='b')
+        plt.scatter(convert_to_seconds * local_max, histogram[local_max], c='g', marker='x')
+        plt.scatter(convert_to_seconds * local_min, histogram[local_min], c='r', marker='o')
+
+        plt.xlabel("Time in Seconds")
+
+        if output_filename is not None:
+            verbose.info(f"Saving Key Moments Visualization to '{output_filename}'")
+            plt.savefig(output_filename)
+        plt.show() if verbose.verbosity_level >= verbose.Level.VISUAL else None
 
     def __del__(self):
         verbose.debug(f"Feelback Destructor is called, {self} will be deleted")
