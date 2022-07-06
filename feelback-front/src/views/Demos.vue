@@ -10,9 +10,12 @@
         <h1>Demos</h1>
       </v-row>
       <v-row>
-        <v-card class="mx-auto my-5" max-width="344" v-for="x in 6" :key="x">
-          <v-img src="../assets/Thor_Moment.jpg" height="200px"></v-img>
-          <v-card-title> Demo 1 </v-card-title>
+        <v-card class="mx-auto my-5" max-width="344" v-for="video in allVideos" :key="video">
+          <v-img :src="video.img_url" height="200px"></v-img>
+          <v-card-title> {{ video.filename }} </v-card-title>
+          <v-card-subtitle>
+            <h6 class="subtitle-2">duration: {{ video.duration }} seconds</h6>
+          </v-card-subtitle>
         </v-card>
       </v-row>
     </v-container>
@@ -20,10 +23,24 @@
 </template>
 
 <script>
-// @ is an alias to /src
-// import HelloWorld from '@/components/HelloWorld.vue';
+import api from '../api/index';
 
 export default {
   name: 'Demos',
+  data() {
+    return {
+      allVideos: [],
+    };
+  },
+  methods: {
+    getAllReactionVideosInformation() {
+      api.getAllReactionVideosInformation().then((res) => {
+        this.allVideos = res.data;
+      });
+    },
+  },
+  mounted() {
+    this.getAllReactionVideosInformation();
+  },
 };
 </script>

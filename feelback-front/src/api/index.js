@@ -20,4 +20,31 @@ export default {
       return false;
     }
   },
+
+  async uploadVideo(formData) {
+    try {
+      const response = await axios.post(`${baseURL}/api/v1/videos`, formData);
+      return response.data;
+    } catch {
+      return false;
+    }
+  },
+
+  async startProcessingVideo(videoID, videoInfo) {
+    try {
+      const response = await axios.put(`${baseURL}/api/v1/videos/${videoID}`, videoInfo);
+      return response.data;
+    } catch {
+      return false;
+    }
+  },
+
+  async getAllReactionVideosInformation() {
+    try {
+      const response = await axios.get(`${baseURL}/api/v1/videos/reactions`);
+      return response.data;
+    } catch {
+      return false;
+    }
+  },
 };
