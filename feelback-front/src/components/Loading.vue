@@ -11,14 +11,8 @@
 
 <script>
 export default {
-  data: () => ({
-    percentage: 33,
-  }),
-
-  mounted() {
-    setInterval(() => {
-      this.percentage = this.percentage < 100 ? (this.percentage += 1) : 100;
-    }, 300);
+  props: {
+    percentage: Number,
   },
 };
 </script>
