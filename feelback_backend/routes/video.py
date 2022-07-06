@@ -5,11 +5,10 @@ from .utils import require_video_exists
 from flask import request, jsonify, send_from_directory
 from flask import Blueprint
 from werkzeug.security import safe_join
-# from magic import Magic
 from http import HTTPStatus as Status
 import os
 import hashlib
-from ..models import Video, Attention, Emotion, Person, Position
+from ..models import Video, VideoType, Attention, Emotion, Person, Position
 from threading import Thread
 import traceback
 
@@ -69,8 +68,13 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
 @video_routes.put('/<video_id>')
 @require_video_exists
 def process_video(video_id):
-    if db.session.query(Video).filter_by(id=video_id).first().finished_processing:
+    video = db.session.query(Video).filter_by(id=video_id).first()
+
+    if video.finished_processing:
         return jsonify({"status": "finished processing"}), Status.OK
+
+    if video.type == VideoType.Trailer:
+        return jsonify({"status": "error", "message": "only reaction videos can be processed"}), Status.BAD_REQUEST
 
     request_data: dict = request.get_json()
     frames_per_second = request_data.get('fps', 5)
@@ -90,16 +94,26 @@ def upload_video():
     Upload Video to Feelback Server
     """
 
-    video = request.files['video']
-    # mime_type = Magic(mime=True).from_buffer(video.stream.read())
+    if 'video' not in request.files:
+        return jsonify({"status": "error", "message": "video file is required"}), Status.BAD_REQUEST
 
-    # if not mime_type.startswith('video'):
-    #     return jsonify({"status": "error", "message": "Not a video file"}), Status.BAD_REQUEST
+    if 'type' not in request.form:
+        return jsonify({"status": "error", "message": "type parameter is required"}), Status.BAD_REQUEST
+
+    video = request.files['video']
+    video_type = VideoType[request.form['type'].capitalize()]
+
+    reaction_id = request.form.get('reaction_id', None)
+    trailer_id = request.form.get('trailer_id', None)
+
+    if reaction_id is not None and reaction_id.strip() == '':
+        reaction_id = None
+
+    if trailer_id is not None and trailer_id.strip() == '':
+        trailer_id = None
 
     video.seek(0)
     video_id = hashlib.sha1(video.stream.read()).hexdigest()
-
-    print(f"Uploading video {video.filename}")
 
     if db.session.query(Video).filter_by(id=video_id).first() is not None:
         video = db.session.query(Video).filter_by(id=video_id).first()
@@ -111,8 +125,28 @@ def upload_video():
 
         filename = os.path.splitext(video.filename)[0]
         video = Video(video_id, filename, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
-        db.session.add(video)
-        db.session.commit()
+
+    video.type = video_type
+
+    if video_type == VideoType.Trailer:
+        if reaction_id is not None and db.session.query(Video).filter_by(id=reaction_id).first() is None:
+            return jsonify({"status": "error", "message": "reaction video not found"}), Status.BAD_REQUEST
+
+        reaction_video = db.session.query(Video).filter_by(id=reaction_id).first()
+        if reaction_video is not None:
+            reaction_video.trailer_id = video_id
+            db.session.add(reaction_video)
+
+    elif video_type == VideoType.Reaction:
+        if trailer_id is not None and db.session.query(Video).filter_by(id=trailer_id).first() is None:
+            return jsonify({"status": "error", "message": "trailer video not found"}), Status.BAD_REQUEST
+
+        trailer_video = db.session.query(Video).filter_by(id=trailer_id).first()
+        if trailer_video is not None:
+            video.trailer_id = trailer_id
+
+    db.session.add(video)
+    db.session.commit()
 
     thumbnail_base_url = f"{request.host_url}api/v1/videos"
     return jsonify({"status": "success", "data": video.to_json(base_url=thumbnail_base_url)}), Status.CREATED
@@ -154,13 +188,35 @@ def get_video_info(video_id):
 
 
 @video_routes.get('/', strict_slashes=False)
-def get_all_videos_info():
+def get_all_videos_info(type=None):
     """
-    Get Video Info from Feelback Server
+    Get All Videos Info from Feelback Server
     """
 
     thumbnail_base_url = f"{request.host_url}api/v1/videos"
 
-    videos = db.session.query(Video).all()
+    if type is None:
+        videos = db.session.query(Video).all()
+    else:
+        videos = db.session.query(Video).filter_by(type=type).all()
+
     videos = [video.to_json(base_url=thumbnail_base_url) for video in videos]
     return jsonify({"status": "success", "data": videos}), Status.OK
+
+
+@video_routes.get('/trailers')
+def get_all_trailer_videos_info():
+    """
+    Get All Trailer Videos Info from Feelback Server
+    """
+
+    return get_all_videos_info(type=VideoType.Trailer)
+
+
+@video_routes.get('/reactions')
+def get_all_reaction_videos_info():
+    """
+    Get All Reaction Videos Info from Feelback Server
+    """
+
+    return get_all_videos_info(type=VideoType.Reaction)
