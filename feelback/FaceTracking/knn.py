@@ -27,7 +27,7 @@ class KNNIdentification:
         Each class will have at least these number of points: `1 + k//2`.
     """
 
-    def __init__(self, n_classes: int = -1, k=3, threshold=12.5, conflict_solving_strategy="min_distance"):
+    def __init__(self, n_classes: int = -1, k=5, threshold=12.5, conflict_solving_strategy="min_distance"):
         """
 
         Args:
@@ -54,6 +54,7 @@ class KNNIdentification:
         self.classes_centers = None
         self.classes_count = None
         self.conflict_solving_strategy = conflict_solving_strategy
+        np.random.seed(42)
 
     def knn_init(self, faces: np.ndarray, faces_positions=None) -> npt.NDArray[np.uint16]:
         """
@@ -78,7 +79,9 @@ class KNNIdentification:
         if self.n_classes == -1:
             self.n_classes = faces.shape[0]
 
-        self.features = np.tile(faces, (1 + self.k // 2, 1))
+        repeated_faces = np.tile(faces, (self.k // 2, 1))
+        repeated_faces += np.random.normal(0, 0.1, size=repeated_faces.shape)
+        self.features = np.append(faces, repeated_faces, axis=0)
         self.classes = np.tile(np.arange(faces.shape[0]), 1 + self.k // 2)
         self.classes_centers = faces.copy()
         self.classes_spatial_positions = np.copy(faces_positions)
@@ -274,7 +277,9 @@ class KNNIdentification:
         label = self.n_classes
         classes[i] = label
         classes = np.append(classes, np.repeat(label, self.k // 2), axis=0)
-        faces = np.append(faces, np.tile(row, (self.k // 2, 1)), axis=0)
+        repeated_faces = np.tile(row, (self.k // 2, 1))
+        repeated_faces += np.random.normal(0, 0.1, size=repeated_faces.shape)
+        faces = np.append(faces, repeated_faces, axis=0)
         self.classes_count = np.append(self.classes_count, [1], axis=0)
         self.classes_centers = np.append(self.classes_centers, [row], axis=0)
         if faces_positions is not None:
