@@ -72,7 +72,7 @@ class Feelback:
         self._key_moments_visualization_data = None
 
         # We have a minimum distance of 5 seconds between any two key moments
-        self.key_moments_min_distance = 5 * self.frames_to_process_each_second
+        self.key_moments_min_distance = int(5 * self.frames_to_process_each_second)
 
         self.frame_number = 0
 
