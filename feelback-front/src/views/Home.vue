@@ -104,7 +104,7 @@ export default {
           api.startProcessingVideo(reactionID, videoInfo).then(() => {
             // Route to loading page
             console.log(res);
-            this.$router.push('/dashboard');
+            this.$router.push(`/dashboard/${reactionID}`);
           });
         });
       });

@@ -72,7 +72,7 @@ class Feelback:
         self._key_moments_visualization_data = None
 
         # We have a minimum distance of 5 seconds between any two key moments
-        self.key_moments_min_distance = 5 * self.frames_to_process_each_second
+        self.key_moments_min_distance = int(5 * self.frames_to_process_each_second)
 
         self.frame_number = 0
 
@@ -193,21 +193,35 @@ class Feelback:
         self._data = np.append(self._data, new_data)
 
     @staticmethod
-    def _annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention):
+    def _annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention, annotations=None):
+        if annotations is None:
+            annotations = ['ids', 'age', 'gender', 'emotions', 'attention']
+
         # assign some unique colors for each face id for visualization purposes
         colors = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 0, 255), (255, 255, 0), (128, 255, 0), (255, 128, 0)]
 
         # Draw a rectangle around each face with its person id
         for i in range(len(ids)):
-            color = colors[ids[i] % len(colors)]
-            x1, y1, x2, y2 = faces_positions[i]
+            font, font_scale, color, line_thickness = cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors[ids[i] % len(colors)], 2
+            text_format = font, font_scale, color, line_thickness
 
+            x1, y1, x2, y2 = faces_positions[i]
             cv2.rectangle(frame, (x1, y1), (x2, y2), color=color, thickness=2)
-            cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-            cv2.putText(frame, f"{genders[i]}", (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-            cv2.putText(frame, f"{ages[i]} years", (x1 + 150, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-            cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-            cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+
+            if 'ids' in annotations:
+                cv2.putText(frame, f"Person #{ids[i]}", (x1, y1), *text_format)
+
+            if 'gender' in annotations:
+                cv2.putText(frame, f"{genders[i]}", (x1, y1 - 30), *text_format)
+
+            if 'age' in annotations:
+                cv2.putText(frame, f"{ages[i]} years", (x1 + 150, y1), *text_format)
+
+            if 'emotions' in annotations:
+                cv2.putText(frame, emotions[i], (x1 + 150, y1 - 30), *text_format)
+
+            if 'attention' in annotations:
+                cv2.putText(frame, f"Attention: {gaze_attention[i]}", (x1, y1 - 60), *text_format)
 
     def postprocessing(self):
         """
@@ -227,7 +241,7 @@ class Feelback:
 
         self.generate_key_moments()
 
-    def save_postprocess_video(self, output_filename):
+    def save_postprocess_video(self, output_filename, annotations=None):
         if not output_filename:
             return
 
@@ -253,7 +267,7 @@ class Feelback:
 
             persons_data = self._persons[persons_data_ids.astype(int)]
             self._annotate_frame(frame, frame_data['face_position'], frame_persons_ids, persons_data['age'],
-                                 frame_data['emotion'], persons_data['gender'], frame_data['attention'])
+                                 frame_data['emotion'], persons_data['gender'], frame_data['attention'], annotations)
 
             frame_number += self.frame_number_increment
             self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)  # Seek the video to the next frame
@@ -408,7 +422,7 @@ def main():
     args = io.get_command_line_args()
     feelback = Feelback(args.input_video, args.fps, args.verbose)
     feelback.run()
-    feelback.save_postprocess_video(args.output)
+    feelback.save_postprocess_video(args.output, args.output_annotations)
     feelback.visualize_key_moments(args.output_key_moments)
 
     if args.dump is not None:

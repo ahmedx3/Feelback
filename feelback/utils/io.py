@@ -15,15 +15,36 @@ def _fps_check(fps):
 
 
 def get_command_line_args():
-    args_parser = argparse.ArgumentParser()
+    args_parser = argparse.ArgumentParser(description="Feelback is An Automated Video Feedback Framework",
+                                          formatter_class=argparse.RawTextHelpFormatter)
+
     args_parser.add_argument('input_video', help="Input Video File Path")
     args_parser.add_argument("-o", "--output", help="Save processed video to filename.mp4", metavar='filename')
+
+    annotations = ['all', 'none', 'ids', 'age', 'gender', 'emotions', 'attention']
+    args_parser.add_argument("--output-annotations", nargs="+", choices=annotations, metavar='annotations',
+                             help=f"Which annotations to add to processed video\n" +
+                                  f"annotations can be any of: {annotations}\n" +
+                                  f"You can add multiple annotations separated by space\n" +
+                                  f"Default: all\n\n", default=['all'])
+
     args_parser.add_argument("--dump", help="Dump Feelback Object", type=str, default=None, metavar='filename')
     args_parser.add_argument("--output-key-moments", help="Save Key Moments Visualizations to file", metavar='filename')
     args_parser.add_argument("-f", "--fps", help="Process N frames every second, Or `native` to process all frames",
                              default=3, type=_fps_check, metavar='N | native')
     args_parser.add_argument("-v", "--verbose", help="Enable more verbosity", default=0, action="count")
-    return args_parser.parse_args()
+    args = args_parser.parse_args()
+
+    if 'all' in args.output_annotations:
+        args.output_annotations.extend(annotations)
+        args.output_annotations = set(args.output_annotations)
+        args.output_annotations.remove('all')
+        args.output_annotations = list(args.output_annotations)
+
+    if 'none' in args.output_annotations:
+        args.output_annotations = []
+
+    return args
 
 
 def get_filenames(path: str) -> list:
