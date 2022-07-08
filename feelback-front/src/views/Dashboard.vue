@@ -37,7 +37,7 @@ export default {
 
   mounted() {
     // Get video ID from the url
-    const videoID = this.$route.query.id;
+    const videoID = this.$route.params.id;
 
     // Loop and send request to check that the video is done processing
     this.getVideoPercentage(videoID);
