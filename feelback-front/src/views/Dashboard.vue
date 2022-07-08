@@ -1,6 +1,6 @@
 <template>
   <Loading v-if="loading" :percentage="loadingPercentage" />
-  <Analytics v-else />
+  <Analytics v-else :reactionVideoID="reactionVideoID" :trailerVideoID="trailerVideoID" />
 </template>
 
 <script>
@@ -17,6 +17,10 @@ export default {
   data: () => ({
     loading: true,
     loadingPercentage: 0,
+
+    // Video IDs
+    reactionVideoID: null,
+    trailerVideoID: null,
   }),
 
   methods: {
@@ -24,6 +28,10 @@ export default {
       const response = await api.getVideoStatus(videoID);
 
       if (response && response.data.finished_processing) {
+        // Set videos
+        this.reactionVideoID = videoID;
+        this.trailerVideoID = response.data.trailer_id;
+
         this.loadingPercentage = 100;
         this.loading = false;
       } else {

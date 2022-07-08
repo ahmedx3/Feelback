@@ -4,13 +4,13 @@
     <v-row dense class="video-container">
       <v-col cols="8">
         <video muted id="video1">
-          <source src="../assets/Thor_Reaction.mp4" type="video/webm" />
+          <source :src="getVideoSource(reactionVideoID)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
       <v-col cols="4">
         <video muted id="video2">
-          <source src="../assets/Thor_Trailer.mp4" type="video/webm" />
+          <source :src="getVideoSource(trailerVideoID)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
@@ -90,6 +90,11 @@ export default {
     KeyMoments,
   },
 
+  props: {
+    reactionVideoID: String,
+    trailerVideoID: String,
+  },
+
   data: () => ({
     // Page variables
     tab: null,
@@ -157,6 +162,10 @@ export default {
       api.getVideoInsights(videoID).then((response) => {
         this.OverallStats = response.data;
       });
+    },
+
+    getVideoSource(videoID) {
+      return api.getVideoURL(videoID);
     },
   },
 

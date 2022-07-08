@@ -47,4 +47,8 @@ export default {
       return false;
     }
   },
+
+  getVideoURL(videoID) {
+    return `${baseURL}/api/v1/videos/${videoID}/download?processed=false`;
+  },
 };

@@ -11,7 +11,11 @@
         <p class="text-overline">Viewers</p>
       </v-col>
       <v-col cols="4" class="stat">
-        <h3 class="blue--text text-h2 mb-2">00</h3>
+        <h3 class="blue--text text-h2 mb-2">
+          {{
+            stats && stats.number_of_key_moments ? Math.floor(stats.number_of_key_moments / 10) : 0
+          }}{{ stats && stats.number_of_key_moments ? stats.number_of_key_moments % 10 : 0 }}
+        </h3>
         <p class="text-overline">Key Moments</p>
       </v-col>
       <v-col cols="4" class="stat">
