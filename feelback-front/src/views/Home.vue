@@ -4,6 +4,7 @@
       <v-spacer> </v-spacer>
       <v-img src="../assets/logo.png" max-height="125" contain> </v-img>
       <v-spacer> </v-spacer>
+      <v-btn class="blue darken-3" large :to="{ name: 'Demos' }">Demos</v-btn>
     </v-toolbar>
     <v-container fill-height class="my-10">
       <v-row justify="center" align="center">
@@ -91,7 +92,8 @@ export default {
 
           let rate = 0;
 
-          if (this.frameRate === 0) {
+          // eslint-disable-next-line eqeqeq
+          if (this.frameRate == 0) {
             rate = 'native';
           } else {
             rate = this.frameRate;

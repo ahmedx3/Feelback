@@ -10,7 +10,13 @@
         <h1>Demos</h1>
       </v-row>
       <v-row>
-        <v-card class="mx-auto my-5" max-width="344" v-for="video in allVideos" :key="video">
+        <v-card
+          class="mx-auto my-5"
+          max-width="344"
+          v-for="video in allVideos"
+          :key="video"
+          @click="goToDashboard(video.reaction_id)"
+        >
           <v-img :src="video.img_url" height="200px"></v-img>
           <v-card-title> {{ video.filename }} </v-card-title>
           <v-card-subtitle>
@@ -36,6 +42,14 @@ export default {
     getAllReactionVideosInformation() {
       api.getAllReactionVideosInformation().then((res) => {
         this.allVideos = res.data;
+      });
+    },
+    goToDashboard(reactionId) {
+      this.$router.push({
+        name: 'Dashboard',
+        params: {
+          id: reactionId,
+        },
       });
     },
   },
