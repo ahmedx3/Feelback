@@ -123,7 +123,7 @@ export default {
         this.stats.age.forEach((entry) => {
           if (entry <= 14) {
             value.children += 1;
-          } else if (entry <= 22) {
+          } else if (entry <= 20) {
             value.youth += 1;
           } else if (entry <= 40) {
             value.adults += 1;

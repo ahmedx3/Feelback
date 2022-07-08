@@ -2,13 +2,13 @@
   <v-container>
     <!-- Videos Section -->
     <v-row dense class="video-container">
-      <v-col cols="8">
+      <v-col cols="8" style="height: 100%">
         <video muted id="video1">
           <source :src="getVideoSource(reactionVideoID)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
-      <v-col cols="4">
+      <v-col cols="4" style="height: 100%">
         <video muted id="video2">
           <source :src="getVideoSource(trailerVideoID)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
