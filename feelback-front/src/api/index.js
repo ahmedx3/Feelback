@@ -51,4 +51,13 @@ export default {
   getVideoURL(videoID) {
     return `${baseURL}/api/v1/videos/${videoID}/download?processed=false`;
   },
+
+  async getVideoKeymoments(videoID) {
+    try {
+      const response = await axios.get(`${baseURL}/api/v1/videos/${videoID}/key_moments`);
+      return response.data;
+    } catch {
+      return false;
+    }
+  },
 };

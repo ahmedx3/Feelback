@@ -71,7 +71,7 @@
         <InDepthAnalytics />
       </v-tab-item>
       <v-tab-item key="3">
-        <KeyMoments />
+        <KeyMoments :KeyMoments="KeyMoments" :seekToCertainSecond="seekToCertainSecond" />
       </v-tab-item>
     </v-tabs-items>
   </v-container>
@@ -145,6 +145,11 @@ export default {
       this.mediaTwo.currentTime = (this.seekedValue / 100) * this.mediaTwo.duration;
     },
 
+    seekToCertainSecond(seekSecond) {
+      this.mediaOne.currentTime = seekSecond;
+      this.mediaTwo.currentTime = seekSecond;
+    },
+
     setVideoFullPlaybackTime() {
       const timer = setInterval(() => {
         if (this.mediaOne.readyState > 0) {
@@ -161,6 +166,16 @@ export default {
       // Get OverAll Stats
       api.getVideoInsights(videoID).then((response) => {
         this.OverallStats = response.data;
+      });
+    },
+
+    getKeymoments() {
+      // Get video ID from the url
+      const videoID = this.$route.params.id;
+
+      // Get OverAll Stats
+      api.getVideoKeymoments(videoID).then((response) => {
+        this.KeyMoments = response.data;
       });
     },
 
@@ -189,6 +204,7 @@ export default {
 
     // Get Analytics data
     this.getInsights();
+    this.getKeymoments();
   },
 };
 </script>
