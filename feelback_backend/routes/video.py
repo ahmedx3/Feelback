@@ -89,6 +89,9 @@ def process_video(video_id):
 
     request_data: dict = request.get_json()
     frames_per_second = request_data.get('fps', 5)
+    if not str(frames_per_second).isdigit() or (str(frames_per_second).isdigit() and int(frames_per_second) < 1):
+        frames_per_second = 'native'
+
     save_annotated_video = utils.to_boolean(request_data.get("save_annotated_video", False))
 
     video_filename = safe_join(__UPLOAD_FOLDER__, os.fspath(f"{video_id}.mp4"))

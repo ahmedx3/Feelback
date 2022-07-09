@@ -68,7 +68,7 @@ class Feelback:
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
         self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('face_position', int, 4),
                                         ('emotion', "U10"), ('attention', bool)])
-        self._key_moments = None
+        self._key_moments = np.empty((0, 2), dtype=int)
         self._key_moments_visualization_data = None
 
         # We have a minimum distance of 5 seconds between any two key moments
@@ -281,6 +281,12 @@ class Feelback:
         """
         Smooth the data using a moving average window of size window_size.
         """
+
+        if window_size >= data.size:
+            window_size = int(data.size // 2 - 1)
+
+        window_size = max(1, window_size)
+
         cumulative_sum = np.cumsum(data)
         smoothed = (cumulative_sum[window_size:] - cumulative_sum[:-window_size]) / window_size
         return np.concatenate([np.zeros(window_size // 2), smoothed, np.zeros(window_size // 2)])
@@ -359,13 +365,19 @@ class Feelback:
 
         histogram, local_max, local_min = self.generate_key_moments()
 
+        if len(self.key_moments_frames) == 0:
+            return
+
         convert_to_seconds = self.frame_number_increment / self.video_fps
 
         plt.figure(dpi=500)
 
-        # Sets the number of ticks on the x-axis.
-        plt.gca().xaxis.set_major_locator(plt_ticker.MultipleLocator(int(self.video_duration / 10)))
-        plt.gca().xaxis.set_minor_locator(plt_ticker.MultipleLocator(int(self.video_duration / 20)))
+        try:
+            # Sets the number of ticks on the x-axis.
+            plt.gca().xaxis.set_major_locator(plt_ticker.MultipleLocator(int(self.video_duration / 10)))
+            plt.gca().xaxis.set_minor_locator(plt_ticker.MultipleLocator(int(self.video_duration / 20)))
+        except:
+            pass
 
         for start, end in self.key_moments_seconds:
             s = int(start / convert_to_seconds)

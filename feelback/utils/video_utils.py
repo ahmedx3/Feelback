@@ -1,7 +1,11 @@
 from typing import Union
 import cv2
 import math
-from . import io
+import subprocess
+import time
+from . import io, verbose
+import tempfile
+import shutil
 
 
 def get_duration(video: Union[cv2.VideoCapture, str], digits: int = None) -> float:
@@ -153,3 +157,24 @@ def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: 
     _, frame = video.read()
     cv2.imwrite(thumbnail_filename, frame)
     return frame
+
+
+def trim_video(video_filename: str, end):
+    """
+    Trim a video using ffmpeg and save output to temp file.
+
+    Args:
+        video_filename: video file path
+        end (float): End time in seconds
+    """
+
+    output_filename = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+
+    end_time = time.strftime('%H:%M:%S', time.gmtime(end))
+    command = f"ffmpeg -i '{video_filename}' -to '{end_time}' -c copy '{output_filename}' -y"
+    verbose.debug(f"Command: {command}")
+    try:
+        subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
+        shutil.move(output_filename, video_filename)
+    except subprocess.CalledProcessError as e:
+        verbose.debug(e.output)
