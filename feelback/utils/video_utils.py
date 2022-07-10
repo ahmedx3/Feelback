@@ -3,7 +3,8 @@ import cv2
 import math
 import subprocess
 import time
-from . import io, verbose
+from . import io
+from .verbose import verbose
 import tempfile
 import shutil
 
@@ -159,13 +160,14 @@ def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: 
     return frame
 
 
-def trim_video(video_filename: str, end):
+def trim_video(video_filename: str, end, replace=True):
     """
     Trim a video using ffmpeg and save output to temp file.
 
     Args:
         video_filename: video file path
         end (float): End time in seconds
+        replace (bool): Replace original video file with trimmed video file
     """
 
     output_filename = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
@@ -175,6 +177,7 @@ def trim_video(video_filename: str, end):
     verbose.debug(f"Command: {command}")
     try:
         subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
-        shutil.move(output_filename, video_filename)
+        shutil.move(output_filename, video_filename) if replace else None
+        return video_filename if replace else output_filename
     except subprocess.CalledProcessError as e:
         verbose.debug(e.output)

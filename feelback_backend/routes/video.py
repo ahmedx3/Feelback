@@ -1,8 +1,8 @@
 from .. import app, db
 from ..utils import video_utils, verbose, Feelback
 from .. import utils
-from .utils import require_video_exists
-from flask import request, jsonify, send_from_directory
+from .utils import require_video_exists, require_reaction_video_exists
+from flask import request, jsonify, send_from_directory, send_file
 from flask import Blueprint
 from werkzeug.security import safe_join
 from http import HTTPStatus as Status
@@ -117,11 +117,7 @@ def upload_video():
     video = request.files['video']
     video_type = VideoType[request.form['type'].capitalize()]
 
-    reaction_id = request.form.get('reaction_id', None)
     trailer_id = request.form.get('trailer_id', None)
-
-    if reaction_id is not None and reaction_id.strip() == '':
-        reaction_id = None
 
     if trailer_id is not None and trailer_id.strip() == '':
         trailer_id = None
@@ -129,8 +125,8 @@ def upload_video():
     video.seek(0)
     video_id = hashlib.sha1(video.stream.read()).hexdigest()
 
-    if db.session.query(Video).filter_by(id=video_id).first() is not None:
-        video = db.session.query(Video).filter_by(id=video_id).first()
+    if db.session.query(Video).filter_by(id=video_id, type=video_type).first() is not None:
+        video = db.session.query(Video).filter_by(id=video_id, type=video_type).first()
     else:
         video.seek(0)
         filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
@@ -142,22 +138,18 @@ def upload_video():
 
     video.type = video_type
 
-    if video_type == VideoType.Trailer:
-        if reaction_id is not None and db.session.query(Video).filter_by(id=reaction_id).first() is None:
-            return jsonify({"status": "error", "message": "reaction video not found"}), Status.BAD_REQUEST
-
-        reaction_video = db.session.query(Video).filter_by(id=reaction_id).first()
-        if reaction_video is not None:
-            reaction_video.trailer_id = video_id
-            db.session.add(reaction_video)
-
-    elif video_type == VideoType.Reaction:
+    if video_type == VideoType.Reaction:
         if trailer_id is not None and db.session.query(Video).filter_by(id=trailer_id).first() is None:
             return jsonify({"status": "error", "message": "trailer video not found"}), Status.BAD_REQUEST
 
         trailer_video = db.session.query(Video).filter_by(id=trailer_id).first()
         if trailer_video is not None:
             video.trailer_id = trailer_id
+
+            if video.duration > trailer_video.duration:
+                video.duration = trailer_video.duration
+                filepath = safe_join(__UPLOAD_FOLDER__, f"{video.id}.mp4")
+                video_utils.trim_video(filepath, video.duration)
 
     db.session.add(video)
     db.session.commit()
@@ -179,14 +171,39 @@ def download_video(video_id):
     return send_from_directory(__UPLOAD_FOLDER__, f"{video_id}.mp4")
 
 
+@video_routes.get('/<video_id>/trailer/download')
+@require_reaction_video_exists(require_trailer=True)
+def download_trailer_video(video_id):
+    """
+    Download The Trailer Video for this Reaction Video from Feelback Server
+    This will trim the trailer to match the reaction video duration
+    """
+
+    video = db.session.query(Video).filter_by(id=video_id, type=VideoType.Reaction).first()
+    filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+    filepath = video_utils.trim_video(filepath, video.duration, replace=False)
+    return send_file(filepath)
+
+
 @video_routes.get('/<video_id>/thumbnail')
 @require_video_exists
 def get_thumbnail(video_id):
     """
-    Get Video Thumbnail from Feelback Server
+    Get Video Trailer Thumbnail from Feelback Server
     """
 
     return send_from_directory(__THUMBNAILS_FOLDER__, f"{video_id}.jpg")
+
+
+@video_routes.get('/<video_id>/trailer/thumbnail')
+@require_reaction_video_exists(require_trailer=True)
+def get_trailer_thumbnail(video_id):
+    """
+    Get The Trailer Video Thumbnail for this Reaction Video from Feelback Server
+    """
+
+    trailer_id = db.session.query(Video.trailer_id).filter_by(id=video_id, type=VideoType.Reaction).first()[0]
+    return send_from_directory(__THUMBNAILS_FOLDER__, f"{trailer_id}.jpg")
 
 
 @video_routes.get('/<video_id>')
@@ -199,6 +216,20 @@ def get_video_info(video_id):
     thumbnail_base_url = f"{request.host_url}api/v1/videos"
     video = db.session.query(Video).filter_by(id=video_id).first()
     return jsonify({"status": "success", "data": video.to_json(base_url=thumbnail_base_url)}), Status.OK
+
+
+@video_routes.get('/<video_id>/trailer')
+@require_reaction_video_exists(require_trailer=True)
+def get_trailer_video_info(video_id):
+    """
+    Get The Trailer Video Info for this Reaction Video from Feelback Server
+    """
+
+    thumbnail_base_url = f"{request.host_url}api/v1/videos"
+    video = db.session.query(Video).filter_by(id=video_id, type=VideoType.Reaction).first()
+    json = video.trailer.to_json(base_url=thumbnail_base_url)
+    json['duration'] = video.duration
+    return jsonify({"status": "success", "data": json}), Status.OK
 
 
 @video_routes.get('/', strict_slashes=False)
