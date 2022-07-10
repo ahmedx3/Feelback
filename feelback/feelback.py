@@ -74,7 +74,8 @@ class Feelback:
         self._key_moments_visualization_data = None
 
         # We have a minimum distance of 5 seconds between any two key moments
-        self.key_moments_min_distance = int(5 * self.frames_to_process_each_second)
+        # But for short videos, this distance is smaller according to video length
+        self.key_moments_min_distance = int(max(1, min(5, self.video_duration / 5)) * self.frames_to_process_each_second)
 
         self.frame_number = 0
 
@@ -395,9 +396,9 @@ class Feelback:
         histogram = self.smooth_curve(histogram, histogram.size // 10)
         histogram = self.smooth_curve(histogram, histogram.size // 10)
 
-        distance = self.key_moments_min_distance
+        distance = max(1, self.key_moments_min_distance - 1)
         local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
-        local_min = np.array([0, *peak_local_max(-histogram, distance).ravel(), histogram.size - 1], dtype=int)
+        local_min = np.array([0, *peak_local_max(-histogram, max(1, distance // 5)).ravel(), histogram.size - 1], dtype=int)
 
         local_max.sort()
         local_min.sort()
