@@ -66,8 +66,10 @@ class Feelback:
         self.genderPredictor = AgeGenderClassification()
 
         self._persons = np.empty(0, dtype=[('person_id', int), ('age', int), ('gender', "U6")])
-        self._data = np.empty(0, dtype=[('person_id', int), ('frame_number', int), ('face_position', int, 4),
-                                        ('emotion', "U10"), ('attention', bool)])
+        self._frame_data = np.empty(0, dtype=[('frame_number', int), ('person_id', int), ('face_position', int, 4),
+                                              ('emotion', "U10"), ('attention', bool)])
+        self._time_data = np.empty(0, dtype=[('time', int), ('person_id', int), ('emotion', "U10"), ('attention', bool)])
+
         self._key_moments = np.empty((0, 2), dtype=int)
         self._key_moments_visualization_data = None
 
@@ -93,16 +95,32 @@ class Feelback:
         return self._key_moments / self.video_fps
 
     @property
-    def emotions(self):
-        return self._data[['person_id', 'frame_number', 'emotion']]
+    def emotions_frame_by_frame(self):
+        return self._frame_data[['frame_number', 'person_id', 'emotion']]
 
     @property
-    def data(self):
-        return self._data[['person_id', 'frame_number', 'emotion', 'attention', 'face_position']]
+    def emotions_second_by_second(self):
+        return self._time_data[['time', 'person_id', 'emotion']]
 
     @property
-    def attention(self):
-        return self._data[['person_id', 'frame_number', 'attention']]
+    def data_frame_by_frame(self):
+        return self._frame_data[['frame_number', 'person_id', 'emotion', 'attention', 'face_position']]
+
+    @property
+    def data_second_by_second(self):
+        return self._time_data[['time', 'person_id', 'emotion', 'attention']]
+
+    @property
+    def attention_frame_by_frame(self):
+        return self._frame_data[['frame_number', 'person_id', 'attention']]
+
+    @property
+    def attention_second_by_second(self):
+        return self._time_data[['time', 'person_id', 'attention']]
+
+    @property
+    def faces_positions_frame_by_frame(self):
+        return self._frame_data[['frame_number', 'person_id', 'face_position']]
 
     def progress(self):
         """
@@ -156,7 +174,7 @@ class Feelback:
 
                 # ======================================== Integrate Modules ========================================
                 frame_number = self.frame_number - self.frame_number_increment
-                self._append_data(ids, frame_number, faces_positions, emotions, gaze_attention)
+                self._append_data(frame_number, ids, faces_positions, emotions, gaze_attention)
 
                 # ============================================ Analytics ============================================
 
@@ -182,15 +200,15 @@ class Feelback:
 
         self.postprocessing()
 
-    def _append_data(self, ids, frame_number, faces_positions, emotions, gaze_attention):
-        new_data = np.empty(ids.shape[0], self._data.dtype)
-        new_data['person_id'] = ids
+    def _append_data(self, frame_number, ids, faces_positions, emotions, gaze_attention):
+        new_data = np.empty(ids.shape[0], self._frame_data.dtype)
         new_data['frame_number'] = frame_number
+        new_data['person_id'] = ids
         new_data['face_position'] = faces_positions
         new_data['emotion'] = emotions
         new_data['attention'] = gaze_attention
 
-        self._data = np.append(self._data, new_data)
+        self._frame_data = np.append(self._frame_data, new_data)
 
     @staticmethod
     def _annotate_frame(frame, faces_positions, ids, ages, emotions, genders, gaze_attention, annotations=None):
@@ -236,10 +254,42 @@ class Feelback:
         genders = self.genderPredictor.getFinalGenders(valid_ids)
         ages = self.genderPredictor.getFinalAges(valid_ids)
 
-        self._data = self._data[np.isin(self._data['person_id'], outliers_ids, invert=True)]
+        self._frame_data = self._frame_data[np.isin(self._frame_data['person_id'], outliers_ids, invert=True)]
         self._persons = unstructured_to_structured(np.array([valid_ids, ages, genders]).T, self._persons.dtype)
+        self.normalize_frame_data()
 
         self.generate_key_moments()
+
+    def normalize_frame_data(self):
+        """
+        Normalize frame data to prevent huge fluctuations, by grouping data by time in seconds
+        For each second, calculate the most common emotion, and attention throughout all frames in that second
+        """
+
+        time = 0
+        frame_number = 0
+        for i in range(self._frame_data.shape[0]):
+            end_frame_number = frame_number + int(self.video_fps)
+            current_second_data = self._frame_data[(self._frame_data['frame_number'] >= frame_number) & (self._frame_data['frame_number'] < end_frame_number)]
+            for person_id in self._persons['person_id']:
+                person_data = current_second_data[current_second_data['person_id'] == person_id]
+
+                if person_data.shape[0] == 0:
+                    continue
+
+                emotions, count = np.unique(person_data['emotion'], return_counts=True)
+
+                # Emotion of the person is the most common emotion
+                emotion = emotions[np.argmax(count)]
+
+                # if person does pay attention in any frame, then attention is true for the whole second
+                attention = np.any(person_data['attention'])
+
+                time_data = np.array([(time, person_id, emotion, attention)], dtype=self._time_data.dtype)
+                self._time_data = np.append(self._time_data, time_data)
+
+            frame_number = end_frame_number
+            time += 1
 
     def save_postprocess_video(self, output_filename, annotations=None):
         if not output_filename:
@@ -259,7 +309,7 @@ class Feelback:
             if not ok:
                 break
 
-            frame_data = self._data[self._data['frame_number'] == frame_number]
+            frame_data = self._frame_data[self._frame_data['frame_number'] == frame_number]
             frame_persons_ids = frame_data['person_id']
 
             # the following code is to make sure that the persons_data is in the same order as the frame_persons_ids
@@ -330,14 +380,14 @@ class Feelback:
             'disgust': -5
         }
 
-        emotions_arr = np.empty_like(self._data, dtype=int)
+        emotions_arr = np.empty_like(self._frame_data, dtype=int)
         for emotion, value in emotions.items():
-            emotions_arr[self._data['emotion'] == emotion] = value
+            emotions_arr[self._frame_data['emotion'] == emotion] = value
 
         histogram = np.zeros(int(np.ceil(self.video_frame_count / self.frame_number_increment)), dtype=int)
 
-        for i in range(self._data.shape[0]):
-            histogram[self._data['frame_number'][i] // self.frame_number_increment] += emotions_arr[i]
+        for i in range(self._frame_data.shape[0]):
+            histogram[self._frame_data['frame_number'][i] // self.frame_number_increment] += emotions_arr[i]
 
         histogram[0] = histogram[-1] = 0
 

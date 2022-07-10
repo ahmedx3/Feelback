@@ -55,9 +55,11 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
             thumbnail_filename = io.get_key_moment_thumbnail_path(video_id, key_moment.id)
             video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
 
-        for person_id, frame_number, emotion, attention, face_position in feelback.data:
-            db.session.add(Emotion(frame_number, person_id, video_id, emotion))
-            db.session.add(Attention(frame_number, person_id, video_id, attention))
+        for time, person_id, emotion, attention in feelback.data_second_by_second:
+            db.session.add(Emotion(time, person_id, video_id, emotion))
+            db.session.add(Attention(time, person_id, video_id, attention))
+
+        for frame_number, person_id, face_position in feelback.faces_positions_frame_by_frame:
             db.session.add(Position(frame_number, person_id, video_id, *face_position))
 
         video.finished_processing = True
