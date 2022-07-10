@@ -1,17 +1,16 @@
-from .. import app, db
-from flask import request, jsonify, send_from_directory
+from .. import db
+from flask import request, jsonify
 from flask import Blueprint
 from http import HTTPStatus as Status
 from ..models import Video, Attention, KeyMoment, Emotion, Person
 from .utils import require_video_processed
+from ..utils import io
 
 """
 Note: <video_id> is in the url_prefix, therefore all the routes in this blueprint will have video_id as a parameter
 """
 
 video_key_moments_routes = Blueprint('key_moments', __name__, url_prefix='/videos/<video_id>/key_moments')
-
-__THUMBNAILS_FOLDER__ = app.config['THUMBNAILS_FOLDER']
 
 
 @video_key_moments_routes.get('/<key_moment_id>/thumbnail')
@@ -21,7 +20,7 @@ def get_thumbnail(video_id, key_moment_id):
     Get Video Key Moment Thumbnail from Feelback Server
     """
 
-    return send_from_directory(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_{key_moment_id}.jpg")
+    return io.send_key_moment_thumbnail(video_id, key_moment_id)
 
 
 @video_key_moments_routes.get('/<key_moment_id>')

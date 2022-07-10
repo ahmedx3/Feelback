@@ -1,10 +1,9 @@
-from .. import app, db
-from ..utils import video_utils, verbose, Feelback
+from .. import db
+from ..utils import video_utils, verbose, Feelback, io
 from .. import utils
 from .utils import require_video_exists, require_reaction_video_exists
-from flask import request, jsonify, send_from_directory, send_file
+from flask import request, jsonify, send_file
 from flask import Blueprint
-from werkzeug.security import safe_join
 from http import HTTPStatus as Status
 import os
 import hashlib
@@ -13,9 +12,6 @@ from threading import Thread
 import traceback
 
 video_routes = Blueprint('videos', __name__, url_prefix='/videos')
-__UPLOAD_FOLDER__ = app.config['UPLOAD_FOLDER']
-__ANNOTATED_UPLOAD_FOLDER__ = app.config['ANNOTATED_UPLOAD_FOLDER']
-__THUMBNAILS_FOLDER__ = app.config['THUMBNAILS_FOLDER']
 
 
 @require_video_exists
@@ -55,8 +51,8 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
         db.session.flush()  # Flush to database to get key moments autoincrement ids (does not do a transaction commit)
 
         for key_moment, (start, end) in zip(video.key_moments, feelback.key_moments_frames):
-            video_filename = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
-            thumbnail_filename = safe_join(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_{key_moment.id}.jpg")
+            video_filename = io.get_video_path(video_id)
+            thumbnail_filename = io.get_key_moment_thumbnail_path(video_id, key_moment.id)
             video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
 
         for person_id, frame_number, emotion, attention, face_position in feelback.data:
@@ -94,8 +90,8 @@ def process_video(video_id):
 
     save_annotated_video = utils.to_boolean(request_data.get("save_annotated_video", False))
 
-    video_filename = safe_join(__UPLOAD_FOLDER__, os.fspath(f"{video_id}.mp4"))
-    output_filename = safe_join(__ANNOTATED_UPLOAD_FOLDER__, f"{video_id}.mp4") if save_annotated_video else None
+    video_filename = io.get_video_path(video_id)
+    output_filename = io.get_annotated_video_path(video_id) if save_annotated_video else None
 
     Thread(target=process_video_thread, args=(video_id, video_filename, output_filename, frames_per_second)).start()
 
@@ -129,9 +125,9 @@ def upload_video():
         video = db.session.query(Video).filter_by(id=video_id, type=video_type).first()
     else:
         video.seek(0)
-        filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+        filepath = io.get_video_path(video_id)
         video.save(filepath)
-        video_utils.generate_thumbnail(filepath, safe_join(__THUMBNAILS_FOLDER__, f"{video_id}.jpg"))
+        video_utils.generate_thumbnail(filepath, io.get_video_thumbnail_path(video_id))
 
         filename = os.path.splitext(video.filename)[0]
         video = Video(video_id, filename, video_utils.get_number_of_frames(filepath), video_utils.get_duration(filepath, digits=3))
@@ -148,7 +144,7 @@ def upload_video():
 
             if video.duration > trailer_video.duration:
                 video.duration = trailer_video.duration
-                filepath = safe_join(__UPLOAD_FOLDER__, f"{video.id}.mp4")
+                filepath = io.get_video_path(video_id)
                 video_utils.trim_video(filepath, video.duration)
 
     db.session.add(video)
@@ -167,8 +163,8 @@ def download_video(video_id):
 
     annotated = utils.to_boolean(request.args.get("annotated", default=False))
     if annotated:
-        return send_from_directory(__ANNOTATED_UPLOAD_FOLDER__, f"{video_id}.mp4")
-    return send_from_directory(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+        return io.send_annotated_video(video_id)
+    return io.send_video(video_id)
 
 
 @video_routes.get('/<video_id>/trailer/download')
@@ -180,7 +176,7 @@ def download_trailer_video(video_id):
     """
 
     video = db.session.query(Video).filter_by(id=video_id, type=VideoType.Reaction).first()
-    filepath = safe_join(__UPLOAD_FOLDER__, f"{video_id}.mp4")
+    filepath = io.get_video_path(video_id)
     filepath = video_utils.trim_video(filepath, video.duration, replace=False)
     return send_file(filepath)
 
@@ -192,7 +188,7 @@ def get_thumbnail(video_id):
     Get Video Trailer Thumbnail from Feelback Server
     """
 
-    return send_from_directory(__THUMBNAILS_FOLDER__, f"{video_id}.jpg")
+    return io.send_video_thumbnail(video_id)
 
 
 @video_routes.get('/<video_id>/trailer/thumbnail')
@@ -203,7 +199,7 @@ def get_trailer_thumbnail(video_id):
     """
 
     trailer_id = db.session.query(Video.trailer_id).filter_by(id=video_id, type=VideoType.Reaction).first()[0]
-    return send_from_directory(__THUMBNAILS_FOLDER__, f"{trailer_id}.jpg")
+    return io.send_video_thumbnail(trailer_id)
 
 
 @video_routes.get('/<video_id>')
