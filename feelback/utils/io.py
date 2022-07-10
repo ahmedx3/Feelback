@@ -36,10 +36,9 @@ def get_command_line_args():
     args = args_parser.parse_args()
 
     if 'all' in args.output_annotations:
-        args.output_annotations.extend(annotations)
-        args.output_annotations = set(args.output_annotations)
+        args.output_annotations = annotations
         args.output_annotations.remove('all')
-        args.output_annotations = list(args.output_annotations)
+        args.output_annotations.remove('none')
 
     if 'none' in args.output_annotations:
         args.output_annotations = []
