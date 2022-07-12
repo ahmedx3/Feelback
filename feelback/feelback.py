@@ -430,19 +430,26 @@ class Feelback:
         except:
             pass
 
+        margin_label = 'Key Moment Margin'
+        range_label = 'Key Moment Range'
         for start, end in self.key_moments_seconds:
             s = int(start / convert_to_seconds)
             e = int(end / convert_to_seconds)
-            plt.vlines(x=start, ymin=0, ymax=histogram[s], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+            plt.vlines(x=start, ymin=0, ymax=histogram[s], color='r', linewidth=2, alpha=0.5, linestyles='dashed', label=margin_label)
+            plt.fill_between(convert_to_seconds * np.arange(s, e), histogram[s:e], alpha=0.5, color='y', label=range_label)
             plt.vlines(x=end, ymin=0, ymax=histogram[e], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
+            margin_label = range_label = None
 
         plt.grid(visible=True, which='both', color="grey", linewidth="1", alpha=0.2, linestyle="-.")
+        plt.hlines(0, 0, self.video_duration, color='black', linewidth=1)
 
         plt.plot(convert_to_seconds * np.arange(histogram.size), histogram, c='b')
-        plt.scatter(convert_to_seconds * local_max, histogram[local_max], c='g', marker='x')
-        plt.scatter(convert_to_seconds * local_min, histogram[local_min], c='r', marker='o')
-
+        plt.scatter(convert_to_seconds * local_max, histogram[local_max], c='g', marker='x', zorder=10, label='Local Maxima')
+        plt.scatter(convert_to_seconds * local_min, histogram[local_min], c='r', marker='o', label='Local Minima')
+        plt.legend()
         plt.xlabel("Time in Seconds")
+        plt.ylabel("Total Emotion Value")
+        plt.title("Key Moments Visualization")
 
         if output_filename is not None:
             verbose.info(f"Saving Key Moments Visualization to '{output_filename}'")
