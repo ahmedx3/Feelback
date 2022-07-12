@@ -75,7 +75,7 @@ class Feelback:
 
         # We have a minimum distance of 5 seconds between any two key moments
         # But for short videos, this distance is smaller according to video length
-        self.key_moments_min_distance = int(max(1, min(5, self.video_duration / 5)) * self.frames_to_process_each_second)
+        self.key_moments_min_distance = int(max(1, min(5, self.video_duration / 10) * self.frames_to_process_each_second))
 
         self.frame_number = 0
 
@@ -359,7 +359,7 @@ class Feelback:
         for i, key_moment in enumerate(local_max):
             local_min_before = local_min[np.searchsorted(local_min, key_moment, side='left') - 1]
             local_min_after = local_min[np.searchsorted(local_min, key_moment, side='right')]
-            max_local_min = max(histogram[local_min_before], histogram[local_min_after])
+            max_local_min = max(0, histogram[local_min_before], histogram[local_min_after])
             key_moment_value = histogram[key_moment]
             effective_local_min = key_moment_value - (key_moment_value - max_local_min)/2
             duration = np.argwhere(histogram[local_min_before:local_min_after] >= effective_local_min).ravel()
@@ -368,6 +368,16 @@ class Feelback:
             key_moments_interval[i] = start, end
 
         return key_moments_interval * self.frame_number_increment
+
+    def _get_local_max_local_min_histogram(self, histogram):
+        distance = max(1, self.key_moments_min_distance - 1)
+        local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
+        local_min = np.array([0, *peak_local_max(-histogram, max(1, distance // 5)).ravel(), histogram.size - 1], dtype=int)
+
+        local_max.sort()
+        local_min.sort()
+
+        return local_max, local_min
 
     def generate_key_moments(self):
         if self._key_moments_visualization_data is not None:
@@ -396,18 +406,17 @@ class Feelback:
         histogram = self.smooth_curve(histogram, histogram.size // 10)
         histogram = self.smooth_curve(histogram, histogram.size // 10)
 
-        distance = max(1, self.key_moments_min_distance - 1)
-        local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
-        local_min = np.array([0, *peak_local_max(-histogram, max(1, distance // 5)).ravel(), histogram.size - 1], dtype=int)
-
-        local_max.sort()
-        local_min.sort()
-
+        local_max, local_min = self._get_local_max_local_min_histogram(histogram)
         self._key_moments = self.get_key_moments_interval(histogram, local_max, local_min)
+
+        self._key_moments_visualization_data = histogram, local_max, local_min
+
+        histogram = -histogram  # To get Negative Key Moments as well
+        local_max, local_min = self._get_local_max_local_min_histogram(histogram)
+        self._key_moments = np.vstack((self._key_moments, self.get_key_moments_interval(histogram, local_max, local_min)))
 
         verbose.debug("Key Moments:", [f"(start:{s:.3f}, end:{e:.3f})" for s, e in self.key_moments_seconds])
 
-        self._key_moments_visualization_data = histogram, local_max, local_min
         return self._key_moments_visualization_data
 
     def visualize_key_moments(self, output_filename=None):
