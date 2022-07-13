@@ -77,6 +77,7 @@ class Feelback:
         # But for short videos, this distance is smaller according to video length
         self.key_moments_min_distance = int(max(1, min(5, self.video_duration / 10) * self.frames_to_process_each_second))
 
+        self.finished_processing = False
         self.frame_number = 0
 
     @property
@@ -130,6 +131,9 @@ class Feelback:
         return min(100.0, round(100 * self.frame_number / self.video_frame_count, 2))
 
     def run(self):
+        if self.finished_processing:
+            return
+
         # Read frame by frame until video is completed
         while self.video.isOpened():
             try:
@@ -190,7 +194,7 @@ class Feelback:
                 # ===================================================================================================
             except KeyboardInterrupt:
                 verbose.info("Ctrl-C Detected, Exiting")
-                break
+                exit(0)
             except Exception as e:
                 verbose.debug("Exception Occurred, Skipping this frame")
                 verbose.error(e)
@@ -200,6 +204,7 @@ class Feelback:
         cv2.destroyAllWindows()
 
         self.postprocessing()
+        self.finished_processing = True
 
     def _append_data(self, frame_number, ids, faces_positions, emotions, gaze_attention):
         new_data = np.empty(ids.shape[0], self._frame_data.dtype)
@@ -499,7 +504,15 @@ class Feelback:
 
 def main():
     args = io.get_command_line_args()
-    feelback = Feelback(args.input_video, args.fps, args.verbose)
+
+    if args.load is not None:
+        with open(args.load, 'rb') as f:
+            verbose.set_verbose_level(args.verbose)
+            verbose.debug(f"Loading Feelback from '{args.load}'")
+            feelback = pickle.load(f)
+    else:
+        feelback = Feelback(args.input_video, args.fps, args.verbose)
+
     feelback.run()
     feelback.save_postprocess_video(args.output, args.output_annotations)
     feelback.visualize_key_moments(args.output_key_moments)

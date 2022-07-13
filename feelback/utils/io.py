@@ -28,7 +28,10 @@ def get_command_line_args():
                                   f"You can add multiple annotations separated by space\n" +
                                   f"Default: all\n\n", default=['all'])
 
-    args_parser.add_argument("--dump", help="Dump Feelback Object", type=str, default=None, metavar='filename')
+    g = args_parser.add_mutually_exclusive_group()
+    g.add_argument("--dump", help="Dump Feelback Object After Processing", type=str, default=None, metavar='filename')
+    g.add_argument("--load", help="Load Dumped Feelback Object [For Debug]", type=str, default=None, metavar='filename')
+
     args_parser.add_argument("--output-key-moments", help="Save Key Moments Visualizations to file", metavar='filename')
     args_parser.add_argument("-f", "--fps", help="Process N frames every second, Or `native` to process all frames",
                              default=3, type=_fps_check, metavar='N | native')
