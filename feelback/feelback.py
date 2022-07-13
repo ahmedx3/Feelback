@@ -370,9 +370,9 @@ class Feelback:
         return key_moments_interval * self.frame_number_increment
 
     def _get_local_max_local_min_histogram(self, histogram):
-        distance = max(1, self.key_moments_min_distance - 1)
+        distance = max(1, self.key_moments_min_distance)
         local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
-        local_min = np.array([0, *peak_local_max(-histogram, max(1, distance // 5)).ravel(), histogram.size - 1], dtype=int)
+        local_min = np.array([0, *peak_local_max(-histogram, distance).ravel(), histogram.size - 1], dtype=int)
 
         local_max.sort()
         local_min.sort()
@@ -445,7 +445,7 @@ class Feelback:
             s = int(start / convert_to_seconds)
             e = int(end / convert_to_seconds)
             plt.vlines(x=start, ymin=0, ymax=histogram[s], color='r', linewidth=2, alpha=0.5, linestyles='dashed', label=margin_label)
-            plt.fill_between(convert_to_seconds * np.arange(s, e), histogram[s:e], alpha=0.5, color='y', label=range_label)
+            plt.fill_between(convert_to_seconds * np.arange(s, e + 1), histogram[s:e + 1], alpha=0.5, color='y', label=range_label)
             plt.vlines(x=end, ymin=0, ymax=histogram[e], color='r', linewidth=2, alpha=0.5, linestyles='dashed')
             margin_label = range_label = None
 
