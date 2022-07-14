@@ -301,6 +301,8 @@ class Feelback:
         if not output_filename:
             return
 
+        annotations = io.process_annotation_flags(annotations)
+
         output_filename = output_filename.rstrip('.mp4')
 
         if self.video is None:

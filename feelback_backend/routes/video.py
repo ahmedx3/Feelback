@@ -15,7 +15,7 @@ video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 
 
 @require_video_exists
-def process_video_thread(video_id, video_filename, output_filename, frames_per_second):
+def process_video_thread(video_id, video_filename, output_filename, annotations, frames_per_second):
     feelback = Feelback(video_filename, frames_per_second, verbose.Level.OFF)
 
     video = db.session.query(Video).filter_by(id=video_id).first()
@@ -29,7 +29,7 @@ def process_video_thread(video_id, video_filename, output_filename, frames_per_s
         db.session.commit()
         thread.join(timeout=3)
 
-    feelback.save_postprocess_video(output_filename)
+    feelback.save_postprocess_video(output_filename, annotations)
     store_feelback_data_in_database(video_id, feelback)
 
 
@@ -86,16 +86,17 @@ def process_video(video_id):
         return jsonify({"status": "error", "message": "only reaction videos can be processed"}), Status.BAD_REQUEST
 
     request_data: dict = request.get_json()
-    frames_per_second = request_data.get('fps', 5)
-    if not str(frames_per_second).isdigit() or (str(frames_per_second).isdigit() and int(frames_per_second) < 1):
-        frames_per_second = 'native'
+    fps = request_data.get('fps', 5)
+    if not str(fps).isdigit() or (str(fps).isdigit() and int(fps) < 1):
+        fps = 'native'
 
     save_annotated_video = utils.to_boolean(request_data.get("save_annotated_video", False))
+    annotations = request_data.get('annotations', [])
 
     video_filename = io.get_video_path(video_id)
     output_filename = io.get_annotated_video_path(video_id) if save_annotated_video else None
 
-    Thread(target=process_video_thread, args=(video_id, video_filename, output_filename, frames_per_second)).start()
+    Thread(target=process_video_thread, args=(video_id, video_filename, output_filename, annotations, fps)).start()
 
     return jsonify({"status": "started processing"}), Status.ACCEPTED
 

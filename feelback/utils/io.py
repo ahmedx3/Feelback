@@ -3,6 +3,8 @@ import os
 import cv2
 import numpy as np
 
+_annotations = ['all', 'none', 'ids', 'age', 'gender', 'emotions', 'attention']
+
 
 def _fps_check(fps):
     if fps == 'native':
@@ -21,10 +23,9 @@ def get_command_line_args():
     args_parser.add_argument('input_video', help="Input Video File Path")
     args_parser.add_argument("-o", "--output", help="Save processed video to filename.mp4", metavar='filename')
 
-    annotations = ['all', 'none', 'ids', 'age', 'gender', 'emotions', 'attention']
-    args_parser.add_argument("--output-annotations", nargs="+", choices=annotations, metavar='annotations',
+    args_parser.add_argument("--output-annotations", nargs="+", choices=_annotations, metavar='annotations',
                              help=f"Which annotations to add to processed video\n" +
-                                  f"annotations can be any of: {annotations}\n" +
+                                  f"annotations can be any of: {_annotations}\n" +
                                   f"You can add multiple annotations separated by space\n" +
                                   f"Default: all\n\n", default=['all'])
 
@@ -37,16 +38,19 @@ def get_command_line_args():
                              default=3, type=_fps_check, metavar='N | native')
     args_parser.add_argument("-v", "--verbose", help="Enable more verbosity", default=0, action="count")
     args = args_parser.parse_args()
-
-    if 'all' in args.output_annotations:
-        args.output_annotations = annotations
-        args.output_annotations.remove('all')
-        args.output_annotations.remove('none')
-
-    if 'none' in args.output_annotations:
-        args.output_annotations = []
-
+    args.output_annotations = process_annotation_flags(args.output_annotations)
     return args
+
+
+def process_annotation_flags(annotations):
+    if 'all' in annotations:
+        annotations = _annotations
+        annotations.remove('all')
+        annotations.remove('none')
+
+    if 'none' in annotations:
+        annotations = []
+    return annotations
 
 
 def get_filenames(path: str) -> list:
