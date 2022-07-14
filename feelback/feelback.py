@@ -301,6 +301,8 @@ class Feelback:
         if not output_filename:
             return
 
+        output_filename = output_filename.rstrip('.mp4')
+
         if self.video is None:
             verbose.error("No Video Loaded, Cannot Save Post Process Video")
             return
