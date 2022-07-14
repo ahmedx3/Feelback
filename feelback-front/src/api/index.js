@@ -48,13 +48,22 @@ export default {
     }
   },
 
-  getVideoURL(videoID) {
-    return `${baseURL}/api/v1/videos/${videoID}/download?processed=false`;
+  getVideoURL(videoID, processed) {
+    return `${baseURL}/api/v1/videos/${videoID}/download?processed=${processed}`;
   },
 
   async getVideoKeymoments(videoID) {
     try {
       const response = await axios.get(`${baseURL}/api/v1/videos/${videoID}/key_moments`);
+      return response.data;
+    } catch {
+      return false;
+    }
+  },
+
+  async getVideoAnalytics(videoID) {
+    try {
+      const response = await axios.get(`${baseURL}/api/v1/videos/${videoID}/analytics`);
       return response.data;
     } catch {
       return false;

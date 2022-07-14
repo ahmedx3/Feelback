@@ -99,13 +99,27 @@ export default {
       if (this.stats && this.stats.emotions) {
         let topEmotion;
         let maxPercentage = 0;
+        let secondTopEmotion;
+        let secondMaxPercentage = 0;
         Object.entries(this.stats.emotions).forEach((object) => {
           const [key, value] = object;
+
+          // Largest value
           if (value > maxPercentage) {
+            secondTopEmotion = topEmotion;
+            secondMaxPercentage = maxPercentage;
             topEmotion = key;
             maxPercentage = value;
+          } else if (value > secondMaxPercentage && value !== topEmotion) {
+            secondTopEmotion = key;
+            secondMaxPercentage = value;
           }
         });
+
+        // Check if top is neutral
+        if (topEmotion === 'Neutral') {
+          return secondTopEmotion;
+        }
 
         return topEmotion;
       }

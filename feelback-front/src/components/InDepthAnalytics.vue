@@ -1,86 +1,249 @@
 <template>
-  <zingchart :data="chartConfig" />
+  <div v-if="InDepthStats">
+    <h1 class="title blue--text">In-Depth Analytics</h1>
+
+    <v-row justify="center">
+      <v-col cols="4">
+        <v-select
+          :items="['Horizontal', 'Aggregate', 'Mood']"
+          label="Graph Type"
+          v-model="SelectedChartType"
+          dense
+          filled
+          @change="graphChanged"
+        ></v-select>
+      </v-col>
+      <v-col cols="4">
+        <v-select
+          :items="criterias"
+          label="Selected Criteria"
+          v-model="criteriaType"
+          dense
+          filled
+          :disabled="SelectedChartType === 'Mood'"
+        ></v-select>
+      </v-col>
+    </v-row>
+    <v-row justify="center">
+      <v-col cols="12" class="text-center">
+        <h4 class="blue--text">Filters</h4>
+      </v-col>
+      <v-col cols="3">
+        <v-select
+          :items="['All', 'Male', 'Female']"
+          label="Gender"
+          v-model="genderFilter"
+          dense
+        ></v-select>
+      </v-col>
+      <v-col cols="3">
+        <v-select
+          :items="['All', 'Children', 'Youth', 'Adults', 'Seniors']"
+          label="Age"
+          v-model="ageFilter"
+          dense
+        ></v-select>
+      </v-col>
+    </v-row>
+
+    <!-- Charts -->
+
+    <transition name="fade">
+      <!-- Horizontal Charts -->
+      <div v-if="SelectedChartType === 'Horizontal' && criteriaType === 'Emotions'">
+        <HorizontalChart
+          :data="cleanData(InDepthStats, 'Emotions', 'Horizontal')"
+          :scaleY="{
+            label: {
+              text: 'Emotions',
+              fontSize: 16,
+            },
+            values: ['Disguist 🤢', 'Sad 😞', 'Neutral 😐', 'Happy 😊', 'Surprise 😲'],
+          }"
+        />
+      </div>
+
+      <HorizontalChart
+        v-if="SelectedChartType === 'Horizontal' && criteriaType === 'Attention'"
+        :data="cleanData(InDepthStats, 'Attention', 'Horizontal')"
+        :scaleY="{
+          // set scale label
+          label: {
+            text: 'Attention',
+            fontSize: 16,
+          },
+          values: ['Distracted', 'Focused'],
+        }"
+      />
+
+      <!-- Area Charts -->
+      <AreaChart
+        v-if="SelectedChartType === 'Aggregate'"
+        :data="cleanData(InDepthStats, criteriaType, 'Aggregate')"
+      />
+
+      <!-- Mood Chart -->
+      <div>
+        <LineChart
+          v-if="SelectedChartType === 'Mood'"
+          :data="cleanData(InDepthStats, criteriaType, 'Mood')"
+        />
+      </div>
+    </transition>
+  </div>
 </template>
 
 <script>
-import zingchartVue from 'zingchart-vue';
+import HorizontalChart from './charts/HorizontalChart.vue';
+import AreaChart from './charts/AreaChart.vue';
+import LineChart from './charts/LineChart.vue';
 
 export default {
+  components: {
+    HorizontalChart,
+    AreaChart,
+    LineChart,
+  },
+
+  props: {
+    InDepthStats: Array,
+  },
+
   data() {
     return {
-      chartConfig: {
-        layout: 'horizontal',
+      // Graph controls
+      SelectedChartType: 'Horizontal',
+      criteriaType: 'Emotions',
 
-        graphset: [
-          {
-            type: 'line',
-            theme: 'dark',
+      // Filters
+      ageFilter: 'All',
+      genderFilter: 'All',
 
-            plotarea: {
-              'adjust-layout': true /* For automatic margin adjustment. */,
-            },
-
-            title: {
-              text: 'Analytics',
-              'font-size': '24px',
-              'adjust-layout': true,
-            },
-
-            legend: {
-              layout: 'float',
-              'background-color': 'none',
-              'border-width': 0,
-              shadow: 0,
-              align: 'center',
-              'adjust-layout': true,
-              'toggle-action': 'remove',
-              item: {
-                padding: 7,
-                marginRight: 17,
-                cursor: 'hand',
-              },
-            },
-
-            scaleX: {
-              // set scale label
-
-              label: {
-                text: 'Frame Number',
-
-                fontSize: 16,
-              },
-            },
-            scaleY: {
-              // set scale label
-
-              label: {
-                text: 'Emotions',
-                fontSize: 16,
-              },
-              values: ['Happy 😊', 'Sad 😞', 'Surprise 😲', 'Neutral 😐', 'Disguist 🤢'],
-            },
-
-            series: [
-              {
-                aspect: 'stepped',
-                values: ['Happy 😊', 'Sad 😞', 'Surprise 😲', 'Neutral 😐'],
-                text: 'Person 1',
-              },
-              {
-                aspect: 'stepped',
-                values: ['Surprise 😲', 'Surprise 😲', 'Happy 😊', 'Sad 😞', 'Disguist 🤢'],
-                text: 'Person 2',
-              },
-            ],
-          },
-        ],
-      },
+      // Criterias
+      criterias: ['Emotions', 'Attention'],
     };
   },
-  components: {
-    zingchart: zingchartVue,
+
+  methods: {
+    cleanData(persons, criteria, type) {
+      const data = [];
+
+      persons.forEach((person, index) => {
+        const values = [];
+
+        // Check the filters
+        if (this.ageFilter === 'Children' && person.age > 14) return;
+        if (this.ageFilter === 'Youth' && (person.age > 20 || person.age <= 14)) return;
+        if (this.ageFilter === 'Adults' && (person.age > 40 || person.age <= 20)) return;
+        if (this.ageFilter === 'Seniors' && person.age < 40) return;
+        if (this.genderFilter === 'Male' && person.gender === 'Female') return;
+        if (this.genderFilter === 'Female' && person.gender === 'Male') return;
+
+        // Add the data
+        if (criteria === 'Emotions' && type === 'Horizontal') {
+          person.emotions.forEach((emotion) => {
+            values.push(this.mapEmotions(emotion.emotion));
+          });
+        } else if (criteria === 'Attention' && type === 'Horizontal') {
+          person.attention.forEach((attention) => {
+            values.push(attention.attention);
+          });
+        } else if (criteria === 'Attention' && type === 'Aggregate') {
+          let sum = 0;
+          person.attention.forEach((attention) => {
+            sum += attention.attention;
+            values.push(sum);
+          });
+        } else if (criteria === 'Happiness' && type === 'Aggregate') {
+          let sum = 0;
+          person.emotions.forEach((emotion) => {
+            sum += emotion.emotion === 'Happy' ? 1 : 0;
+            values.push(sum);
+          });
+        } else if (criteria === 'Sadness' && type === 'Aggregate') {
+          let sum = 0;
+          person.emotions.forEach((emotion) => {
+            sum += emotion.emotion === 'Sad' ? 1 : 0;
+            values.push(sum);
+          });
+        } else if (criteria === 'Disgust' && type === 'Aggregate') {
+          let sum = 0;
+          person.emotions.forEach((emotion) => {
+            sum += emotion.emotion === 'Disgust' ? 1 : 0;
+            values.push(sum);
+          });
+        } else if (criteria === 'Surprisement' && type === 'Aggregate') {
+          let sum = 0;
+          person.emotions.forEach((emotion) => {
+            sum += emotion.emotion === 'Surprise' ? 1 : 0;
+            values.push(sum);
+          });
+        }
+
+        if (index < 3) {
+          const colors = ['#D31E1E', '#29A2CC', '#7CA82B'];
+          data.push({
+            aspect: 'spline',
+            values,
+            text: `Person ${person.id}`,
+            'line-color': colors[index],
+            'background-color': colors[index],
+            marker: {
+              'background-color': colors[index],
+              'border-color': colors[index],
+            },
+          });
+        } else {
+          data.push({
+            aspect: 'spline',
+            values,
+            text: `Person ${person.id}`,
+          });
+        }
+      });
+
+      return data;
+    },
+
+    mapEmotions(emotion) {
+      switch (emotion) {
+        case 'Neutral':
+          return 'Neutral 😐';
+
+        case 'Happy':
+          return 'Happy 😊';
+
+        case 'Sad':
+          return 'Sad 😞';
+
+        case 'Surprise':
+          return 'Surprise 😲';
+
+        case 'Disgust':
+          return 'Disguist 🤢';
+
+        default:
+          return 'Neutral 😐';
+      }
+    },
+
+    graphChanged(value) {
+      if (value === 'Horizontal') {
+        this.criterias = ['Emotions', 'Attention'];
+        this.criteriaType = 'Emotions';
+      } else if (value === 'Aggregate') {
+        this.criterias = ['Attention', 'Happiness', 'Sadness', 'Disgust', 'Surprisement'];
+        this.criteriaType = 'Attention';
+      }
+    },
   },
 };
 </script>
 
-<style></style>
+<style>
+.title {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+</style>

@@ -4,13 +4,13 @@
     <v-row dense class="video-container">
       <v-col cols="8" style="height: 100%">
         <video muted id="video1">
-          <source :src="getVideoSource(reactionVideoID)" type="video/webm" />
+          <source :src="getVideoSource(reactionVideoID, showVideoLabels)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
       <v-col cols="4" style="height: 100%">
         <video muted id="video2">
-          <source :src="getVideoSource(trailerVideoID)" type="video/webm" />
+          <source :src="getVideoSource(trailerVideoID, false)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
@@ -38,11 +38,14 @@
           </v-col>
           <v-col cols="8">
             <v-row dense justify="center" align="center">
-              <v-col cols="auto">
-                <v-btn icon @click="playPauseVideo">
+              <v-col cols="auto" class="centralize">
+                <v-btn icon @click="playPauseVideo" class="mr-3">
                   <v-icon v-if="!playVideo" large color="blue"> mdi-play </v-icon>
                   <v-icon v-else large color="blue"> mdi-pause </v-icon>
                 </v-btn>
+                <span>
+                  <v-switch v-model="showVideoLabels" inset label="Annotated"></v-switch>
+                </span>
               </v-col>
             </v-row>
           </v-col>
@@ -68,7 +71,7 @@
         <OverallStats :stats="OverallStats" />
       </v-tab-item>
       <v-tab-item key="2">
-        <InDepthAnalytics />
+        <InDepthAnalytics :InDepthStats="InDepthStats ? InDepthStats.persons : []" />
       </v-tab-item>
       <v-tab-item key="3">
         <KeyMoments :KeyMoments="KeyMoments" :seekToCertainSecond="seekToCertainSecond" />
@@ -106,6 +109,7 @@ export default {
     seekedValue: 0,
     currentPlaybackTime: 0,
     fullPlaybackTime: 0,
+    showVideoLabels: true,
     // Analytics Data
     OverallStats: null,
     KeyMoments: null,
@@ -179,8 +183,18 @@ export default {
       });
     },
 
-    getVideoSource(videoID) {
-      return api.getVideoURL(videoID);
+    getAnalytics() {
+      // Get video ID from the url
+      const videoID = this.$route.params.id;
+
+      // Get OverAll Stats
+      api.getVideoAnalytics(videoID).then((response) => {
+        this.InDepthStats = response.data;
+      });
+    },
+
+    getVideoSource(videoID, processed) {
+      return api.getVideoURL(videoID, processed);
     },
   },
 
@@ -205,6 +219,7 @@ export default {
     // Get Analytics data
     this.getInsights();
     this.getKeymoments();
+    this.getAnalytics();
   },
 };
 </script>
@@ -222,5 +237,11 @@ export default {
 .video-container video {
   height: 100%;
   width: 100%;
+}
+
+.centralize {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
