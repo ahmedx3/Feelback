@@ -7,7 +7,14 @@
     <v-row dense class="mt-3 mb-7">
       <v-col cols="4" v-for="(moment, i) in KeyMoments" :key="i">
         <v-card class="mx-auto" max-width="344">
-          <v-img :src="moment.img_url" height="200px"></v-img>
+          <v-carousel cycle height="200" hide-delimiter-background show-arrows-on-hover>
+            <v-carousel-item>
+              <v-img :src="moment.img_url" height="200px"></v-img>
+            </v-carousel-item>
+            <v-carousel-item>
+              <v-img :src="moment.img_url" height="200px"></v-img>
+            </v-carousel-item>
+          </v-carousel>
 
           <v-card-title style="justify-content: center"> Key Moment {{ i + 1 }} </v-card-title>
 
