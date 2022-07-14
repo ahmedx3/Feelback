@@ -14,6 +14,20 @@ import traceback
 video_routes = Blueprint('videos', __name__, url_prefix='/videos')
 
 
+def generate_key_moment_thumbnail(video_id, key_moment_id, start, end, type=VideoType.Reaction):
+    if type == VideoType.Reaction:
+        thumbnail_filename = io.get_key_moment_thumbnail_path(video_id, key_moment_id)
+        video_filename = io.get_video_path(video_id)
+        video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
+
+    elif type == VideoType.Trailer:
+        trailer = db.session.query(Video).filter_by(id=video_id, type=VideoType.Reaction).first().trailer
+        if trailer:
+            thumbnail_filename = io.get_trailer_key_moment_thumbnail_path(video_id, key_moment_id)
+            video_filename = io.get_video_path(trailer.id)
+            video_utils.generate_thumbnail(video_filename, thumbnail_filename, start)
+
+
 @require_video_exists
 def process_video_thread(video_id, video_filename, output_filename, annotations, frames_per_second):
     feelback = Feelback(video_filename, frames_per_second, verbose.Level.OFF)
@@ -51,9 +65,8 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
         db.session.flush()  # Flush to database to get key moments autoincrement ids (does not do a transaction commit)
 
         for key_moment, (start, end) in zip(video.key_moments, feelback.key_moments_frames):
-            video_filename = io.get_video_path(video_id)
-            thumbnail_filename = io.get_key_moment_thumbnail_path(video_id, key_moment.id)
-            video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
+            generate_key_moment_thumbnail(video_id, key_moment.id, start, end, type=VideoType.Reaction)
+            generate_key_moment_thumbnail(video_id, key_moment.id, start, end, type=VideoType.Trailer)
 
         for time, person_id, emotion, attention in feelback.data_second_by_second:
             db.session.add(Emotion(time, person_id, video_id, emotion))

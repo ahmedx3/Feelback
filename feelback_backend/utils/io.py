@@ -70,3 +70,19 @@ def get_key_moment_thumbnail_path(video_id, key_moment_id):
     """
 
     return safe_join(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_{key_moment_id}.jpg")
+
+
+def send_key_moment_trailer_thumbnail(video_id, key_moment_id):
+    """
+    Send Key Moment Thumbnail of The Trailer Video from Feelback Server
+    """
+
+    return send_from_directory(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_trailer_{key_moment_id}.jpg")
+
+
+def get_trailer_key_moment_thumbnail_path(video_id, key_moment_id):
+    """
+    Get Key Moment Thumbnail Path of The Trailer Video from Feelback Server
+    """
+
+    return safe_join(__THUMBNAILS_FOLDER__, f"{video_id}_key_moment_trailer_{key_moment_id}.jpg")

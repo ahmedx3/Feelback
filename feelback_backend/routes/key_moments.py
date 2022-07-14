@@ -5,6 +5,7 @@ from http import HTTPStatus as Status
 from ..models import Video, Attention, KeyMoment, Emotion, Person
 from .utils import require_video_processed
 from ..utils import io
+from ..utils import utils
 
 """
 Note: <video_id> is in the url_prefix, therefore all the routes in this blueprint will have video_id as a parameter
@@ -20,6 +21,9 @@ def get_thumbnail(video_id, key_moment_id):
     Get Video Key Moment Thumbnail from Feelback Server
     """
 
+    trailer = utils.to_boolean(request.args.get('trailer', False))
+    if trailer:
+        return io.send_key_moment_trailer_thumbnail(video_id, key_moment_id)
     return io.send_key_moment_thumbnail(video_id, key_moment_id)
 
 

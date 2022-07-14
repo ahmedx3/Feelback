@@ -26,6 +26,7 @@ class KeyMoment(BaseModel):
 
         if base_url is not None:
             json["img_url"] = f"{base_url}/{self.video_id}/key_moments/{self.id}/thumbnail"
+            json["trailer_img_url"] = f"{base_url}/{self.video_id}/key_moments/{self.id}/thumbnail?trailer=true"
 
         return json
 
