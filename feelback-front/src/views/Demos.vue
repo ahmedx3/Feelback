@@ -15,7 +15,7 @@
           max-width="344"
           v-for="video in allVideos"
           :key="video"
-          @click="goToDashboard(video.reaction_id)"
+          @click="goToDashboard(video.id)"
         >
           <v-img :src="video.img_url" height="200px"></v-img>
           <v-card-title> {{ video.filename }} </v-card-title>
