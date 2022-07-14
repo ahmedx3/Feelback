@@ -7,7 +7,7 @@ from flask import Blueprint
 from http import HTTPStatus as Status
 import os
 import hashlib
-from ..models import Video, VideoType, Attention, Emotion, KeyMoment, Person, Position
+from ..models import Video, VideoType, Attention, Emotion, KeyMoment, Person, Position, OverallMood
 from threading import Thread
 import traceback
 
@@ -71,6 +71,9 @@ def store_feelback_data_in_database(video_id: str, feelback: Feelback):
         for time, person_id, emotion, attention in feelback.data_second_by_second:
             db.session.add(Emotion(time, person_id, video_id, emotion))
             db.session.add(Attention(time, person_id, video_id, attention))
+
+        for time, mood in feelback.mood_data:
+            video.mood.append(OverallMood(time, mood))
 
         for frame_number, person_id, face_position in feelback.faces_positions_frame_by_frame:
             db.session.add(Position(frame_number, person_id, video_id, *face_position))

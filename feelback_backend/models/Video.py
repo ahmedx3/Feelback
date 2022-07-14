@@ -27,6 +27,7 @@ class Video(BaseModel):
 
     persons = db.relationship('Person', backref='video', lazy=True)
     key_moments = db.relationship('KeyMoment', backref='video', lazy=True)
+    mood = db.relationship('OverallMood', backref='video', lazy=True)
 
     def __init__(self, id: str, filename: str, frame_count: int, duration: float, progress: float = 0.0,
                  finished_processing: bool = False):

@@ -124,6 +124,13 @@ class Feelback:
     def faces_positions_frame_by_frame(self):
         return self._frame_data[['frame_number', 'person_id', 'face_position']]
 
+    @property
+    def mood_data(self):
+        convert_to_seconds = self.frame_number_increment / self.video_fps
+        histogram = self._key_moments_visualization_data[0]
+        time = convert_to_seconds * np.arange(histogram.size)
+        return np.column_stack((time, histogram))
+
     def progress(self):
         """
         Return the progress of the video
