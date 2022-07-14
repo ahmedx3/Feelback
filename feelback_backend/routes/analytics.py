@@ -2,7 +2,7 @@ from .. import db
 from flask import request, jsonify
 from flask import Blueprint
 from http import HTTPStatus as Status
-from ..models import Video, Attention, Emotion, Person
+from ..models import Video, Attention, Emotion, Person, OverallMood
 from .utils import require_video_processed, require_person_exists
 
 """
@@ -22,8 +22,20 @@ def get_all_video_data(video_id):
     video = db.session.query(Video).filter_by(id=video_id).first()
     return jsonify({
         "status": "success",
-        "data": video.to_json(populate=["persons", "emotions", "attention", "positions"])
+        "data": video.to_json(populate=["persons", "emotions", "attention", "positions", "mood"])
     }), Status.OK
+
+
+@video_analytics_routes.get('/mood')
+@require_video_processed
+def get_overall_mood_data(video_id):
+    """
+    Get overall mood analytics of all people in this video
+    """
+
+    overall_mood = db.session.query(OverallMood).filter_by(video_id=video_id).all()
+    overall_mood = [mood.to_json() for mood in overall_mood]
+    return jsonify({"status": "success", "data": overall_mood}), Status.OK
 
 
 @video_analytics_routes.get('/persons')

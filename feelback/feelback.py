@@ -124,6 +124,13 @@ class Feelback:
     def faces_positions_frame_by_frame(self):
         return self._frame_data[['frame_number', 'person_id', 'face_position']]
 
+    @property
+    def mood_data(self):
+        convert_to_seconds = self.frame_number_increment / self.video_fps
+        histogram = self._key_moments_visualization_data[0]
+        time = convert_to_seconds * np.arange(histogram.size)
+        return np.column_stack((time, histogram))
+
     def progress(self):
         """
         Return the progress of the video
@@ -337,7 +344,7 @@ class Feelback:
         output_video.release()
 
     @staticmethod
-    def smooth_curve(data, window_size=30):
+    def smooth_curve(data, window_size=30) -> np.ndarray:
         """
         Smooth the data using a moving average window of size window_size.
         """
@@ -349,7 +356,7 @@ class Feelback:
 
         cumulative_sum = np.cumsum(data)
         smoothed = (cumulative_sum[window_size:] - cumulative_sum[:-window_size]) / window_size
-        return np.concatenate([np.zeros(window_size // 2), smoothed, np.zeros(window_size // 2)])
+        return smoothed
 
     def get_key_moments_interval(self, histogram, local_max, local_min):
         """
@@ -381,12 +388,42 @@ class Feelback:
     def _get_local_max_local_min_histogram(self, histogram):
         distance = max(1, self.key_moments_min_distance)
         local_max = peak_local_max(histogram, distance, threshold_abs=histogram.max() // 2, exclude_border=True).ravel()
-        local_min = np.array([0, *peak_local_max(-histogram, distance).ravel(), histogram.size - 1], dtype=int)
+        local_min = np.array([0, *peak_local_max(-histogram, distance // 2).ravel(), histogram.size - 1], dtype=int)
 
         local_max.sort()
         local_min.sort()
 
         return local_max, local_min
+
+    def _merge_key_moments_overlap(self, key_moments):
+        """
+        Merge the key moments that overlap.
+
+        Args:
+            key_moments (np.ndarray): The key moments.
+                                      Array of shape (n_key_moments, 2).
+                                      Each row is a (start, end) of a key moment.
+
+        Returns:
+            np.ndarray: The merged key moments.
+        """
+
+        start = 0
+        end = 1
+
+        merged_key_moments = []
+        for key_moment in key_moments:
+            if len(merged_key_moments) == 0:
+                merged_key_moments.append(key_moment)
+                continue
+
+            last_key_moment = merged_key_moments[-1]
+            if last_key_moment[end] >= key_moment[start]:
+                merged_key_moments[-1] = (last_key_moment[start], key_moment[end])
+            else:
+                merged_key_moments.append(key_moment)
+
+        return np.array(merged_key_moments).reshape(-1, 2)
 
     def generate_key_moments(self):
         if self._key_moments_visualization_data is not None:
@@ -409,20 +446,29 @@ class Feelback:
         for i in range(self._frame_data.shape[0]):
             histogram[self._frame_data['frame_number'][i] // self.frame_number_increment] += emotions_arr[i]
 
+        # Smooth the histogram
+        window_size = histogram.size // 10
+        histogram = np.concatenate([np.zeros(window_size), histogram, np.zeros(window_size)])
+        histogram = self.smooth_curve(histogram, window_size)
+        histogram = self.smooth_curve(histogram, window_size)
+
         histogram[0] = histogram[-1] = 0
 
-        # Smooth the histogram
-        histogram = self.smooth_curve(histogram, histogram.size // 10)
-        histogram = self.smooth_curve(histogram, histogram.size // 10)
-
         local_max, local_min = self._get_local_max_local_min_histogram(histogram)
-        self._key_moments = self.get_key_moments_interval(histogram, local_max, local_min)
+        positive_key_moments = self.get_key_moments_interval(histogram, local_max, local_min)
+        positive_key_moments = self._merge_key_moments_overlap(positive_key_moments)
 
         self._key_moments_visualization_data = histogram, local_max, local_min
 
         histogram = -histogram  # To get Negative Key Moments as well
         local_max, local_min = self._get_local_max_local_min_histogram(histogram)
-        self._key_moments = np.vstack((self._key_moments, self.get_key_moments_interval(histogram, local_max, local_min)))
+        negative_key_moments = self.get_key_moments_interval(histogram, local_max, local_min)
+        negative_key_moments = self._merge_key_moments_overlap(negative_key_moments)
+
+        self._key_moments = np.append(positive_key_moments, negative_key_moments, axis=0)
+
+        # Sort Key Moments by start
+        self._key_moments = self._key_moments[np.argsort(self._key_moments[:, 0])]
 
         verbose.debug("Key Moments:", [f"(start:{s:.3f}, end:{e:.3f})" for s, e in self.key_moments_seconds])
 

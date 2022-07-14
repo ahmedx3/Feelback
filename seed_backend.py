@@ -23,7 +23,7 @@ def main(video_filename, trailer, feelback):
     app.testing = True
     client = app.test_client()
 
-    trailer_id = None
+    trailer_id = ''
     if trailer:
         response = client.post('/api/v1/videos', data={
             'video': open(trailer, 'rb'),

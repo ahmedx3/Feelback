@@ -4,3 +4,4 @@ from .KeyMoment import KeyMoment
 from .Person import Person, GenderType
 from .Position import Position
 from .Video import Video, VideoType
+from .OverallMood import OverallMood
