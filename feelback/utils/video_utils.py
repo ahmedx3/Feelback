@@ -130,7 +130,7 @@ def create_output_video(original_video: cv2.VideoCapture, output_filename: str, 
     accurate_frame_rate = (output_total_frames / original_video_total_frames) * original_video_fps
 
     dimensions = get_dimensions(original_video)
-    output = cv2.VideoWriter(f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'mp4v'), accurate_frame_rate, dimensions)
+    output = cv2.VideoWriter(f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'x264'), accurate_frame_rate, dimensions)
     return output
 
 
