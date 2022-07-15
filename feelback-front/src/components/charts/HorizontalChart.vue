@@ -41,6 +41,12 @@ export default {
               },
             },
 
+            plot: {
+              marker: {
+                visible: false,
+              },
+            },
+
             scaleX: {
               // set scale label
 

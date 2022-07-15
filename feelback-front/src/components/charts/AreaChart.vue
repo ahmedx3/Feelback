@@ -57,6 +57,12 @@ export default {
               },
             },
 
+            plot: {
+              marker: {
+                visible: false,
+              },
+            },
+
             series: this.data,
           },
         ],
