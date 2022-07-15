@@ -3,8 +3,12 @@
     <!-- Videos Section -->
     <v-row dense class="video-container">
       <v-col cols="8" style="height: 100%">
-        <video muted id="video1">
-          <source :src="getVideoSource(reactionVideoID, showVideoLabels)" type="video/webm" />
+        <video muted v-show="showVideoLabels" id="video1">
+          <source :src="getVideoSource(reactionVideoID, true)" type="video/webm" />
+          Sorry, your browser doesn't support embedded videos.
+        </video>
+        <video muted v-show="!showVideoLabels" id="video3">
+          <source :src="getVideoSource(reactionVideoID, false)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
@@ -44,7 +48,7 @@
                   <v-icon v-else large color="blue"> mdi-pause </v-icon>
                 </v-btn>
                 <span>
-                  <v-switch v-model="showVideoLabels" inset label="Annotated"></v-switch>
+                  <v-switch @change="showAnnotation" inset label="Annotated"></v-switch>
                 </span>
               </v-col>
             </v-row>
@@ -71,7 +75,10 @@
         <OverallStats :stats="OverallStats" />
       </v-tab-item>
       <v-tab-item key="2">
-        <InDepthAnalytics :InDepthStats="InDepthStats ? InDepthStats.persons : []" />
+        <InDepthAnalytics
+          :InDepthStats="InDepthStats ? InDepthStats.persons : []"
+          :moodData="InDepthStats ? InDepthStats.mood : []"
+        />
       </v-tab-item>
       <v-tab-item key="3">
         <KeyMoments :KeyMoments="KeyMoments" :seekToCertainSecond="seekToCertainSecond" />
@@ -104,12 +111,13 @@ export default {
     // Videos
     mediaOne: null,
     mediaTwo: null,
+    mediaThree: null,
     // Video Controls
     playVideo: false,
     seekedValue: 0,
     currentPlaybackTime: 0,
     fullPlaybackTime: 0,
-    showVideoLabels: true,
+    showVideoLabels: false,
     // Analytics Data
     OverallStats: null,
     KeyMoments: null,
@@ -125,9 +133,11 @@ export default {
       if (this.playVideo) {
         this.mediaOne.play();
         this.mediaTwo.play();
+        this.mediaThree.play();
       } else {
         this.mediaOne.pause();
         this.mediaTwo.pause();
+        this.mediaThree.pause();
       }
     },
 
@@ -135,10 +145,12 @@ export default {
       // Pause both videos
       this.mediaOne.pause();
       this.mediaTwo.pause();
+      this.mediaThree.pause();
 
       // Set the time in both videos to zero
       this.mediaOne.currentTime = 0;
       this.mediaTwo.currentTime = 0;
+      this.mediaThree.currentTime = 0;
 
       // Set play video to false
       this.playVideo = false;
@@ -147,11 +159,13 @@ export default {
     seekbarChanged() {
       this.mediaOne.currentTime = (this.seekedValue / 100) * this.mediaOne.duration;
       this.mediaTwo.currentTime = (this.seekedValue / 100) * this.mediaTwo.duration;
+      this.mediaThree.currentTime = (this.seekedValue / 100) * this.mediaThree.duration;
     },
 
     seekToCertainSecond(seekSecond) {
       this.mediaOne.currentTime = seekSecond;
       this.mediaTwo.currentTime = seekSecond;
+      this.mediaThree.currentTime = seekSecond;
     },
 
     setVideoFullPlaybackTime() {
@@ -193,8 +207,21 @@ export default {
       });
     },
 
-    getVideoSource(videoID, processed) {
-      return api.getVideoURL(videoID, processed);
+    getVideoSource(videoID, annotated) {
+      return api.getVideoURL(videoID, annotated);
+    },
+
+    getTrailerVideoSource(videoID) {
+      return api.getTrailerVideoURL(videoID);
+    },
+
+    showAnnotation(value) {
+      // Sync all videos
+      const seekSecond = value ? this.mediaThree.currentTime : this.mediaOne.currentTime;
+      this.seekToCertainSecond(seekSecond);
+
+      // Change value
+      this.showVideoLabels = value;
     },
   },
 
@@ -202,6 +229,7 @@ export default {
     // Select the two videos and save them to data
     this.mediaOne = document.querySelector('#video1');
     this.mediaTwo = document.querySelector('#video2');
+    this.mediaThree = document.querySelector('#video3');
 
     // Set the full video playback time
     this.setVideoFullPlaybackTime();
@@ -215,6 +243,7 @@ export default {
     // Ended event to stop the videos
     this.mediaOne.addEventListener('ended', this.stopVideo);
     this.mediaTwo.addEventListener('ended', this.stopVideo);
+    this.mediaThree.addEventListener('ended', this.stopVideo);
 
     // Get Analytics data
     this.getInsights();

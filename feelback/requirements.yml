@@ -10,3 +10,4 @@ dependencies:
   - pandas=1.4.2
   - scikit-image=0.19.2
   - scikit-learn=1.1.1
+  - ffmpeg

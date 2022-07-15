@@ -29,7 +29,7 @@ export default {
               // set scale label
 
               label: {
-                text: 'Seconds',
+                text: 'Frames',
                 fontSize: 16,
               },
             },
@@ -42,16 +42,7 @@ export default {
               },
             },
 
-            // series: this.data,
-            series: [
-              {
-                aspect: 'spline',
-                values: [
-                  5, 6, 8, 10, 11, 12, 15, 20, 16, 14, 10, 5, 0, -3, -10, -15, -20,
-                  -15, -13, -10, 0, 1, 3, 6, 8, 15, 20, 30, 21, 18, 59, 50, 28, 33,
-                ],
-              },
-            ],
+            series: this.data,
           },
         ],
       },

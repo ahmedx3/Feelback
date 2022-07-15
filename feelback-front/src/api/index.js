@@ -48,8 +48,12 @@ export default {
     }
   },
 
-  getVideoURL(videoID, processed) {
-    return `${baseURL}/api/v1/videos/${videoID}/download?processed=${processed}`;
+  getVideoURL(videoID, annotated) {
+    return `${baseURL}/api/v1/videos/${videoID}/download?annotated=${annotated}`;
+  },
+
+  getTrailerVideoURL(videoID) {
+    return `${baseURL}/api/v1/videos/${videoID}/trailer/download`;
   },
 
   async getVideoKeymoments(videoID) {

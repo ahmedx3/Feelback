@@ -34,6 +34,7 @@
           label="Gender"
           v-model="genderFilter"
           dense
+          :disabled="SelectedChartType === 'Mood'"
         ></v-select>
       </v-col>
       <v-col cols="3">
@@ -42,6 +43,7 @@
           label="Age"
           v-model="ageFilter"
           dense
+          :disabled="SelectedChartType === 'Mood'"
         ></v-select>
       </v-col>
     </v-row>
@@ -84,10 +86,7 @@
 
       <!-- Mood Chart -->
       <div>
-        <LineChart
-          v-if="SelectedChartType === 'Mood'"
-          :data="cleanData(InDepthStats, criteriaType, 'Mood')"
-        />
+        <LineChart v-if="SelectedChartType === 'Mood'" :data="getMoodData(moodData)" />
       </div>
     </transition>
   </div>
@@ -107,6 +106,7 @@ export default {
 
   props: {
     InDepthStats: Array,
+    moodData: Array,
   },
 
   data() {
@@ -125,6 +125,21 @@ export default {
   },
 
   methods: {
+    getMoodData(moods) {
+      const values = [];
+      console.log(moods);
+      moods.forEach((mood) => {
+        values.push(mood.mood);
+      });
+
+      return [
+        {
+          aspect: 'spline',
+          values,
+        },
+      ];
+    },
+
     cleanData(persons, criteria, type) {
       const data = [];
 

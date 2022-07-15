@@ -12,7 +12,7 @@
               <v-img :src="moment.img_url" height="200px"></v-img>
             </v-carousel-item>
             <v-carousel-item>
-              <v-img :src="moment.img_url" height="200px"></v-img>
+              <v-img :src="moment.trailer_img_url" height="200px"></v-img>
             </v-carousel-item>
           </v-carousel>
 
