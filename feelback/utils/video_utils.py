@@ -173,7 +173,7 @@ def trim_video(video_filename: str, end, replace=True):
     output_filename = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
 
     end_time = time.strftime('%H:%M:%S', time.gmtime(end))
-    command = f"ffmpeg -i '{video_filename}' -to '{end_time}' -c copy '{output_filename}' -y"
+    command = f'ffmpeg -i "{video_filename}" -to "{end_time}" -c copy "{output_filename}" -y'
     verbose.debug(f"Command: {command}")
     try:
         subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
