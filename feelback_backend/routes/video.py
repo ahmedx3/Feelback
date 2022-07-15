@@ -196,7 +196,7 @@ def download_trailer_video(video_id):
 
     video = db.session.query(Video).filter_by(id=video_id, type=VideoType.Reaction).first()
     filepath = io.get_video_path(video.trailer_id)
-    filepath = video_utils.trim_video(filepath, video.duration, replace=False)
+    filepath = video_utils.trim_video(filepath, video.duration, replace=False, tolerance=1)
     return send_file(filepath)
 
 

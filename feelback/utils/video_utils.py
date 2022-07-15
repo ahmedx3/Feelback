@@ -160,7 +160,7 @@ def generate_thumbnail(video: Union[cv2.VideoCapture, str], thumbnail_filename: 
     return frame
 
 
-def trim_video(video_filename: str, end, replace=True):
+def trim_video(video_filename: str, end, replace=True, tolerance=0.3):
     """
     Trim a video using ffmpeg and save output to temp file.
 
@@ -168,7 +168,13 @@ def trim_video(video_filename: str, end, replace=True):
         video_filename: video file path
         end (float): End time in seconds
         replace (bool): Replace original video file with trimmed video file
+        tolerance (float): Tolerance for trimming in seconds
+                           If difference in duration > tolerance, trim video to end time
     """
+
+    if abs(end - get_duration(video_filename, digits=9)) <= tolerance:
+        verbose.info(f"Video '{video_filename}'is already trimmed to '{end}'")
+        return video_filename
 
     output_filename = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
 
