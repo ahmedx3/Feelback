@@ -195,17 +195,17 @@ export default {
           });
         }
 
-        if (index < 3) {
-          const colors = ['#D31E1E', '#29A2CC', '#7CA82B'];
+        if (index < 4) {
+          const colors = ['#D31E1E', '#29A2CC', '#7CA82B', '#FF00FF'];
           data.push({
             aspect: 'spline',
             values,
             text: `Person ${person.id}`,
-            'line-color': colors[index],
-            'background-color': colors[index],
+            'line-color': colors[person.id],
+            'background-color': colors[person.id],
             marker: {
-              'background-color': colors[index],
-              'border-color': colors[index],
+              'background-color': colors[person.id],
+              'border-color': colors[person.id],
             },
           });
         } else {

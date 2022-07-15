@@ -14,7 +14,7 @@
       </v-col>
       <v-col cols="4" style="height: 100%">
         <video muted id="video2">
-          <source :src="getVideoSource(trailerVideoID, false)" type="video/webm" />
+          <source :src="getTrailerVideoSource(reactionVideoID)" type="video/webm" />
           Sorry, your browser doesn't support embedded videos.
         </video>
       </v-col>
