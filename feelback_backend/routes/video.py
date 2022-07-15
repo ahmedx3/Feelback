@@ -25,7 +25,7 @@ def generate_key_moment_thumbnail(video_id, key_moment_id, start, end, type=Vide
         if trailer:
             thumbnail_filename = io.get_trailer_key_moment_thumbnail_path(video_id, key_moment_id)
             video_filename = io.get_video_path(trailer.id)
-            video_utils.generate_thumbnail(video_filename, thumbnail_filename, start)
+            video_utils.generate_thumbnail(video_filename, thumbnail_filename, (start + end) // 2)
 
 
 @require_video_exists
