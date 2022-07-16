@@ -4,7 +4,7 @@ from sqlalchemy_utils import database_exists, create_database, drop_database
 from .config import DevelopmentConfig, ProductionConfig
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='dist')
 config = DevelopmentConfig if os.environ.get("FLASK_ENV") == "development" else ProductionConfig
 print(f"Using {config.ENV} configuration")
 app.config.from_object(config)
