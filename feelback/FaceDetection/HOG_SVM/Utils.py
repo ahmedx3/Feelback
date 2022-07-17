@@ -260,6 +260,54 @@ def vectorizedHogSlidingWindows(slidingWindows,blockSize=(6,6), cellSize=(3,3), 
 
     return FinalVector
 
+# def nonMaxSuppression(faces, overlapThresh=0.3):
+#     """ Perform non-maximum suppression on the overlapping rectangles
+
+#     Args:
+#         faces (_type_): array of overlapping boxes (faces)
+#         overlapThresh (float, optional): threshold of areas of intesecting boxes. Defaults to 0.3.
+
+#     Returns:
+#         _type_: array of non-overlapping boxes
+#     """
+#     faces = np.asarray(faces)
+
+#     if len(faces) == 0:
+#         return []
+
+#     pickedBoundries = []
+
+#     if faces.dtype.kind == "i":
+#         faces = faces.astype("float")
+    
+#     x1 = faces[:, 0]
+#     y1 = faces[:, 1]
+#     x2 = faces[:, 2]
+#     y2 = faces[:, 3]
+
+#     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+
+#     idxs = np.argsort(y2)
+    
+#     while len(idxs) > 0:
+#         last = len(idxs) - 1
+#         i = idxs[last]
+#         pickedBoundries.append((x1[i], y1[i], x2[i], y2[i]))
+
+#         xx1 = np.maximum(x1[i], x1[idxs[:last]])
+#         yy1 = np.maximum(y1[i], y1[idxs[:last]])
+#         xx2 = np.minimum(x2[i], x2[idxs[:last]])
+#         yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+#         overlappingWidth = np.maximum(0, xx2 - xx1 + 1)
+#         overlappingHeight = np.maximum(0, yy2 - yy1 + 1)
+
+#         overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[:last]]
+
+#         idxs = np.delete(idxs, np.concatenate(([last], np.where(overlapRatio > overlapThresh)[0])))
+    
+#     return pickedBoundries
+
 def nonMaxSuppression(faces, overlapThresh=0.3):
     """ Perform non-maximum suppression on the overlapping rectangles
 
@@ -287,23 +335,23 @@ def nonMaxSuppression(faces, overlapThresh=0.3):
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
 
-    idxs = np.argsort(y2)
+    idxs = np.argsort(y1)
     
     while len(idxs) > 0:
-        last = len(idxs) - 1
-        i = idxs[last]
+        
+        i = idxs[0]
         pickedBoundries.append((x1[i], y1[i], x2[i], y2[i]))
 
-        xx1 = np.maximum(x1[i], x1[idxs[:last]])
-        yy1 = np.maximum(y1[i], y1[idxs[:last]])
-        xx2 = np.minimum(x2[i], x2[idxs[:last]])
-        yy2 = np.minimum(y2[i], y2[idxs[:last]])
+        xx1 = np.maximum(x1[i], x1[idxs[0:]])
+        yy1 = np.maximum(y1[i], y1[idxs[0:]])
+        xx2 = np.minimum(x2[i], x2[idxs[0:]])
+        yy2 = np.minimum(y2[i], y2[idxs[0:]])
 
         overlappingWidth = np.maximum(0, xx2 - xx1 + 1)
         overlappingHeight = np.maximum(0, yy2 - yy1 + 1)
 
-        overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[:last]]
+        overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[0:]]
 
-        idxs = np.delete(idxs, np.concatenate(([last], np.where(overlapRatio > overlapThresh)[0])))
+        idxs = np.delete(idxs, np.concatenate(([0], np.where(overlapRatio > overlapThresh)[0])))
     
     return pickedBoundries
