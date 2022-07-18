@@ -10,12 +10,10 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
 import math
 import pickle
 import cv2
-from matplotlib.patches import Rectangle
 import dlib
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-# from . import Utils
 import pywt
 import os
 
@@ -27,7 +25,7 @@ class FeatureExtractor:
     def __init__(self, load=False):
         self.flag = True
         self.detector = dlib.get_frontal_face_detector()
-        landmarks_model = os.path.join(__CURRENT_DIR__, 'Experiments/shape_predictor_68_face_landmarks.dat')
+        landmarks_model = os.path.join(__CURRENT_DIR__, '../Shared_models/shape_predictor_68_face_landmarks.dat')
         self.predictor = dlib.shape_predictor(landmarks_model)
         if load:
             self.pca = pickle.load(open(os.path.join(__CURRENT_DIR__, 'Models/PCAModel.sav'), 'rb'))
@@ -100,8 +98,6 @@ class FeatureExtractor:
         Returns:
             array: Extracted features array of length 22 (8 points (x, y) and 6 distances)
         """
-        # img = cv2.resize(img, target_img_size)
-
         # Detect the face
         rects = self.detector(img, 1)
 
@@ -116,15 +112,6 @@ class FeatureExtractor:
             # Get the landmark points    
             shape = self.predictor(cropped, box)
 
-            # Just for Testing TODO:Remove later 
-            # if self.flag:
-            #     print(rect.top(),rect.bottom(), rect.left(),rect.right())
-            #     # Display the image
-            #     image = img[:,:]
-            #     cv2.rectangle(image, (rect.left(), rect.top()),(rect.right(), rect.bottom()), (0, 0, 255), 1)
-            #     Utils.show_image(cropped, 'Landmark Detection')
-            #     self.flag = False
-            
             keypoints = [19,24,39,42,48,51,54,57]
             
             features = np.zeros(22, dtype="float")
@@ -162,8 +149,6 @@ class FeatureExtractor:
         Returns:
             array: Extracted features array of length 72
         """
-        # img = cv2.resize(img, target_img_size)
-
         # Detect the face
         rects = self.detector(img, 1)
 
@@ -182,15 +167,6 @@ class FeatureExtractor:
         # Get the landmark points    
         shape = self.predictor(cropped, box)
 
-        # Just for Testing TODO:Remove later 
-        # if self.flag:
-        #     print(rect.top(),rect.bottom(), rect.left(),rect.right())
-        #     # Display the image
-        #     image = img[:,:]
-        #     cv2.rectangle(image, (rect.left(), rect.top()),(rect.right(), rect.bottom()), (0, 0, 255), 1)
-        #     Utils.show_image(cropped, 'Landmark Detection')
-        #     self.flag = False
-        
         features = []
         for i in [17,18,19,20,21,37]:
             features.append(self.eculidianDistance(shape.part(i).x, shape.part(36).x, shape.part(i).y, shape.part(36).y))
@@ -332,11 +308,7 @@ class FeatureExtractor:
     def apply_gabor_filters(self, img, filters, target_img_size=(80,60)):
         cropped = cv2.resize(img, target_img_size)
         features = []
-        # fft_filters = [np.fft.fft2(i) for i in filters]
-        # img_fft = np.fft.fft2(img)
-        # a =  img_fft * fft_filters
-        # s = [np.fft.ifft2(i).flatten().real for i in a]
-        # for a in s: features.extend(a) 
+
         for filter in filters:
             filtered_img = cv2.filter2D(cropped,-1, filter)
             features.extend(filtered_img.flatten())

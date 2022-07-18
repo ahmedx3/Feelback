@@ -287,23 +287,23 @@ def nonMaxSuppression(faces, overlapThresh=0.3):
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
 
-    idxs = np.argsort(y2)
+    idxs = np.argsort(y1)
     
     while len(idxs) > 0:
-        last = len(idxs) - 1
-        i = idxs[last]
+        
+        i = idxs[0]
         pickedBoundries.append((x1[i], y1[i], x2[i], y2[i]))
 
-        xx1 = np.maximum(x1[i], x1[idxs[:last]])
-        yy1 = np.maximum(y1[i], y1[idxs[:last]])
-        xx2 = np.minimum(x2[i], x2[idxs[:last]])
-        yy2 = np.minimum(y2[i], y2[idxs[:last]])
+        xx1 = np.maximum(x1[i], x1[idxs[0:]])
+        yy1 = np.maximum(y1[i], y1[idxs[0:]])
+        xx2 = np.minimum(x2[i], x2[idxs[0:]])
+        yy2 = np.minimum(y2[i], y2[idxs[0:]])
 
         overlappingWidth = np.maximum(0, xx2 - xx1 + 1)
         overlappingHeight = np.maximum(0, yy2 - yy1 + 1)
 
-        overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[:last]]
+        overlapRatio = (overlappingWidth * overlappingHeight) / areas[idxs[0:]]
 
-        idxs = np.delete(idxs, np.concatenate(([last], np.where(overlapRatio > overlapThresh)[0])))
+        idxs = np.delete(idxs, np.concatenate(([0], np.where(overlapRatio > overlapThresh)[0])))
     
     return pickedBoundries

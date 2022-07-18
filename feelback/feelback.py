@@ -295,8 +295,8 @@ class Feelback:
                 # Emotion of the person is the most common emotion
                 emotion = emotions[np.argmax(count)]
 
-                # if person does pay attention in any frame, then attention is true for the whole second
-                attention = np.any(person_data['attention'])
+                # if person does pay attention more than 0.6 of the frame, then attention is true for the whole second
+                attention = person_data['attention'].sum() >= 0.6 * person_data.shape[0]
 
                 time_data = np.array([(time, person_id, emotion, attention)], dtype=self._time_data.dtype)
                 self._time_data = np.append(self._time_data, time_data)

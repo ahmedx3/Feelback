@@ -9,17 +9,22 @@ from http import HTTPStatus as Status
 from feelback_backend.routes.video import store_feelback_data_in_database
 import pickle
 import argparse
+import time
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='Load feelback data into the database without processing the video.')
     parser.add_argument('video_filename', type=str, help='Path to the video file')
-    parser.add_argument('--load-feelback', '-l', type=str, required=True, help='Path to feelback dumped pickle file')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--process', '-p', action='store_true', default=False, help='Process the Video')
+    group.add_argument('--load-feelback', '-l', type=str, help='Path to feelback dumped pickle file')
+
     parser.add_argument('--trailer', '-t', type=str, required=False, help='Path to Trailer Video File to Add')
     return parser.parse_args()
 
 
-def main(video_filename, trailer, feelback):
+def main(video_filename, trailer, feelback, process=False):
     app.testing = True
     client = app.test_client()
 
@@ -41,12 +46,28 @@ def main(video_filename, trailer, feelback):
     assert response.status_code == Status.CREATED
 
     video_id = response.json['data']['id']
-    store_feelback_data_in_database(video_id, feelback)
+
+    if process:
+        client.put(f'/api/v1/videos/{video_id}', json={
+            "fps": "native",
+            "save_annotated_video": True,
+            "annotations": []
+        })
+
+        response = client.get(f'/api/v1/videos/{video_id}')
+        while not response.json['data']['finished_processing']:
+            response = client.get(f'/api/v1/videos/{video_id}')
+            print(f'Processing... {response.json["data"]["progress"]}%')
+            time.sleep(3)
+
+        print(f'Processing Complete!')
+    else:
+        store_feelback_data_in_database(video_id, feelback)
 
 
 if __name__ == '__main__':
     args = get_args()
-    feelback = pickle.load(open(args.load_feelback, 'rb'))
-    main(args.video_filename, args.trailer, feelback)
+    feelback = pickle.load(open(args.load_feelback, 'rb')) if args.load_feelback else None
+    main(args.video_filename, args.trailer, feelback, args.process)
 
 

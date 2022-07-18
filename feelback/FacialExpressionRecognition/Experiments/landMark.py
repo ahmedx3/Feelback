@@ -5,14 +5,11 @@ import numpy as np
 import os
 import Utils
 
-arr = np.load('0_exp.npy')
-print(arr)
-
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor('./shape_predictor_68_face_landmarks.dat')
+predictor = dlib.shape_predictor(os.path.join(os.path.dirname( __file__),"../../Shared_models/shape_predictor_68_face_landmarks.dat"))
 
 path_to_file = os.path.join(os.path.dirname(
-    __file__), "../../Test/disgust.jpg")
+    __file__), "../../../Test/001.jpg")
 
 image = cv2.imread(path_to_file)
 # Convert the image color to grayscale
