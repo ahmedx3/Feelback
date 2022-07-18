@@ -10,6 +10,7 @@ if (__name__ == '__main__' and __package__ is None) or __package__ == '':
 import os
 import numpy as np
 import cv2
+from sklearn.metrics import f1_score
 from .FeaturesExtraction import ExtractHOGFeatures
 from sklearn.model_selection import train_test_split
 from sklearn import svm
@@ -19,6 +20,10 @@ import pickle
 import time
 from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from sklearn import metrics
 
 random_seed = 1
 random.seed(random_seed)
@@ -64,16 +69,22 @@ def train_classifier(path_to_dataset):
     D_before = len(features[0])
     pca = PCA(n_components=50)
     pca.fit(features)
-    filename = './Models/PCA_slowHOG.sav'
+    filename = './Models/PCA_v4.sav'
     pickle.dump(pca, open(filename, 'wb'))
     features = pca.transform(features)
     D_after = len(features[0])
-    print('Reduced the dimension from ', D_before, ' to ', D_after)
+    # print('Reduced the dimension from ', D_before, ' to ', D_after)
 
     # Since we don't want to know the performance of our classifier on images it has seen before
     # we are going to withhold some images that we will test the classifier on after training
     train_features, test_features, train_labels, test_labels = train_test_split(
         features, labels, test_size=0.2, random_state=random_seed, stratify=labels, shuffle=True)
+
+    # save test features and labels
+    filename = './Test_Features_v3.sav'
+    pickle.dump(test_features, open(filename, 'wb'))
+    filename = './Test_Labels_v3.sav'
+    pickle.dump(test_labels, open(filename, 'wb'))
 
     print('############## Training ', used_classifier, "##############")
     # Train the model only on the training features
@@ -84,6 +95,26 @@ def train_classifier(path_to_dataset):
     accuracy = model.score(test_features, test_labels)
     train_accuracy = model.score(train_features, train_labels)
 
+    # Calculate f1 score
+    f1 = f1_score(test_labels, model.predict(test_features), average='weighted')
+
+    print('f1 score: ', f1)
+
+    cnf_matrix = metrics.confusion_matrix(test_labels, model.predict(test_features))
+    class_names=[0,1] # name  of classes
+    fig, ax = plt.subplots()
+    tick_marks = np.arange(len(class_names))
+    plt.xticks(tick_marks, class_names)
+    plt.yticks(tick_marks, class_names)
+    # create heatmap
+    sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu" ,fmt='g')
+    ax.xaxis.set_label_position("top")
+    plt.tight_layout()
+    plt.title('Confusion matrix', y=1.1)
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+    # plt.show()
+
     print(used_classifier, ' Train accuracy:', train_accuracy *
           100, '%', ' Test accuracy:', accuracy * 100, '%')
 
@@ -92,7 +123,7 @@ def main():
     train_classifier("Data")
     classifier = classifiers[used_classifier]
     # save the model to disk
-    filename = './Models/Model_slowHOG.sav'
+    filename = './Models/Model_v4.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
 
