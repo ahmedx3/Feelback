@@ -16,7 +16,7 @@ from . import Utils
 
 # Load Saved model
 model: SVC = pickle.load(open(os.path.join(os.path.dirname(
-    __file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"), 'rb'))
+    __file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"), 'rb'))
 
 # Load dataset with extracted features
 print('Loading dataset and extract features. This will take time ...')

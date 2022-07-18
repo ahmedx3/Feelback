@@ -24,7 +24,7 @@ img = cv2.imread(path_to_file, cv2.IMREAD_GRAYSCALE)
 img = Preprocessing.preprocess_image(img)
 
 # model: SVC = pickle.load(open(os.path.join(os.path.dirname(
-#     __file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_87_86.model"), 'rb'))
+#     __file__), "Models_Gender/Kaggle_Tra_SVM_LPQ_86_84.model"), 'rb'))
 model: SVC = pickle.load(open(os.path.join(os.path.dirname(
     __file__), "Models_Age/UTK_SVM_localLBP_48_47.model"), 'rb'))
 
