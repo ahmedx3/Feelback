@@ -17,7 +17,7 @@ class GazeTracking(object):
 
     # _predictor is used to get facial landmarks of a given face
     # Use as static class variable to share the model between all objects to save memory and time during initialization
-    _predictor = dlib.shape_predictor(os.path.join(__CURRENT_DIR__, "trained_models/shape_predictor_68_face_landmarks.dat"))
+    _predictor = dlib.shape_predictor(os.path.join(__CURRENT_DIR__, "../../Shared_models/shape_predictor_68_face_landmarks.dat"))
 
     def __init__(self, right_threshold: float = 0.35, left_threshold: float = 0.75, blinking_threshold: float = 3.8):
         """
