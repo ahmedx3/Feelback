@@ -4,7 +4,7 @@ from sqlalchemy_utils import database_exists, create_database, drop_database
 from .config import DevelopmentConfig, ProductionConfig
 import os
 
-app = Flask(__name__, static_url_path='', static_folder='dist')
+app = Flask(__name__, static_url_path='/static', static_folder='dist')
 config = DevelopmentConfig if os.environ.get("FLASK_ENV") == "development" else ProductionConfig
 print(f"Using {config.ENV} configuration")
 app.config.from_object(config)
@@ -34,3 +34,9 @@ api.register_blueprint(video_insights_routes, url_prefix='/videos/<video_id>/ins
 api.register_blueprint(video_key_moments_routes, url_prefix='/videos/<video_id>/key_moments')
 
 app.register_blueprint(api, url_prefix='/api/v1')
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return app.send_static_file("index.html")
+
