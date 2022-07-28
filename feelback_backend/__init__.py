@@ -38,5 +38,8 @@ app.register_blueprint(api, url_prefix='/api/v1')
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
-    return app.send_static_file("index.html")
+    try:
+        return app.send_static_file(path)
+    except:
+        return app.send_static_file("index.html")
 
