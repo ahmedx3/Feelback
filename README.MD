@@ -8,7 +8,8 @@
 
 </br>
 
-Feelback is deployed at https://feelbackdemo.me
+~~Feelback is deployed at https://feelbackdemo.me~~
+***Update:*** Azure hosting subscription has ended.
 
 ---
 
